@@ -1,0 +1,392 @@
+@model PhieuSuaChua
+@{
+    // Partial for Check-In Modal - Reusable component
+}
+
+<div class="modal fade" id="checkInModal" tabindex="-1" aria-labelledby="checkInModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold" id="checkInModalLabel">
+                    <i class="bi bi-clipboard-check me-2"></i>Tiếp nhận thiết bị mới
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="checkInForm" asp-action="TaoPhieu" asp-controller="TiepNhan" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div class="row g-4">
+                        <!-- Left Column: Customer & Device Info -->
+                        <div class="col-lg-7">
+                            <!-- Customer Info Section -->
+                            <div class="mb-4">
+                                <h6 class="fw-bold text-uppercase mb-3 border-bottom pb-2 small">
+                                    <i class="bi bi-person me-2"></i>Thông tin khách hàng
+                                </h6>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-semibold">
+                                            Tên khách hàng <span class="text-danger">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white"><i class="bi bi-person"></i></span>
+                                            <input type="text" class="form-control" name="TenKhachHang" id="customerName" required />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-semibold">
+                                            Số điện thoại <span class="text-danger">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white"><i class="bi bi-telephone"></i></span>
+                                            <input type="tel" class="form-control" name="SoDienThoai" id="phoneNumber" required />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Device Info Section -->
+                            <div class="mb-4">
+                                <h6 class="fw-bold text-uppercase mb-3 border-bottom pb-2 small">
+                                    <i class="bi bi-phone me-2"></i>Thông tin thiết bị
+                                </h6>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-semibold">Serial / IMEI</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white"><i class="bi bi-upc-scan"></i></span>
+                                            <input type="text" class="form-control" name="SerialNumber" id="serialNumber" />
+                                        </div>
+                                        <div id="warrantyInfo" class="mt-2 small"></div>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label small fw-semibold">
+                                            Tên máy / Model <span class="text-danger">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white"><i class="bi bi-phone"></i></span>
+                                            <input type="text" class="form-control" name="TenThietBi" id="deviceModel" required />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-semibold">Mật khẩu màn hình</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white"><i class="bi bi-lock"></i></span>
+                                            <input type="text" class="form-control" name="MatKhauManHinh" id="passcode" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-semibold">Có bảo hành?</label>
+                                        <div class="form-check form-switch mt-2">
+                                            <input class="form-check-input" type="checkbox" name="CoBaoHanh" id="coBaoHanh" value="true" />
+                                            <label class="form-check-label small" for="coBaoHanh">Thiết bị còn bảo hành</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Problem Description -->
+                            <div class="mb-3 position-relative">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label small fw-semibold mb-0">
+                                        Mô tả lỗi / Yêu cầu <span class="text-danger">*</span>
+                                    </label>
+                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill py-0 px-2" id="btnAiQuote" onclick="analyzeQuote()">
+                                        <i class="bi bi-magic"></i> AI Báo giá
+                                    </button>
+                                </div>
+                                <textarea class="form-control" name="MoTaLoi" id="problemDescription" rows="3" required placeholder="VD: Khách làm rớt máy nát mặt kính, sọc nhẹ..."></textarea>
+                            </div>
+
+                            <!-- AI Quote Result -->
+                            <div id="aiQuoteResult" class="mb-3 p-3 rounded border border-primary d-none" style="background-color: #f8faff;">
+                                <h6 class="fw-bold text-primary mb-2"><i class="bi bi-robot me-2"></i>Chẩn đoán thông minh</h6>
+                                <p id="aiSuggestion" class="small mb-2"></p>
+                                <div id="aiParts" class="small mb-2"></div>
+                                <div class="d-flex justify-content-between text-danger fw-bold border-top pt-2">
+                                    <span>Tạm tính (Gồm tiền công):</span>
+                                    <span id="aiTotal">0đ</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Visual Inspector & Accessories -->
+                        <div class="col-lg-5">
+                            <!-- Visual Device Inspector -->
+                            <div class="card bg-light mb-3">
+                                <div class="card-body">
+                                    <h6 class="fw-bold text-uppercase mb-3 border-bottom pb-2 small">
+                                        <i class="bi bi-phone me-2"></i>Ngoại quan
+                                    </h6>
+                                    <div id="visualDeviceInspector" class="text-center">
+                                        <!-- VisualDeviceInspector component will be rendered here -->
+                                        <div class="device-frame" style="width: 160px; height: 288px; margin: 0 auto; border: 4px solid #1e293b; border-radius: 2rem; background: white; position: relative; cursor: crosshair;">
+                                            <div class="device-screen" style="position: absolute; inset: 2px; border-radius: 1.8rem; background: #f8fafc;">
+                                                <div class="device-notch" style="position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 48px; height: 16px; background: #1e293b; border-radius: 0 0 12px 12px;"></div>
+                                                <div id="scratchMarks" style="position: absolute; inset: 0;">
+                                                    <!-- Scratch marks will be added here -->
+                                                </div>
+                                                <div class="device-placeholder" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 12px;">
+                                                    Chạm để đánh dấu
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="mt-2 d-flex justify-content-center gap-2">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="undoMark()">
+                                                <i class="bi bi-arrow-counterclockwise"></i> Hoàn tác
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearMarks()">
+                                                <i class="bi bi-x-circle"></i> Xóa hết
+                                            </button>
+                                        </div>
+                                        <p class="text-muted small mt-2 mb-0">
+                                            <span id="markCount">0</span> điểm xước / cấn
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Security Check -->
+                            <div class="card bg-light mb-3">
+                                <div class="card-body">
+                                    <h6 class="fw-bold text-uppercase mb-3 small">
+                                        <i class="bi bi-shield-exclamation text-warning me-2"></i>Security Check
+                                    </h6>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="IsICloudRemoved" id="isICloudRemoved" />
+                                        <label class="form-check-label small" for="isICloudRemoved">
+                                            Đã thoát iCloud / Google Account
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="IsFindMyOff" id="isFindMyOff" />
+                                        <label class="form-check-label small" for="isFindMyOff">
+                                            Đã tắt Find My iPhone
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Accessories -->
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="fw-bold text-uppercase mb-3 small">
+                                        <i class="bi bi-box-seam me-2"></i>Phụ kiện kèm theo
+                                    </h6>
+                                    <div class="row g-2">
+                                        @{
+                                            var accessories = new[] { "Sạc (Củ sạc)", "Cáp kết nối", "Tai nghe", "Sim Card", "Ốp lưng / Bao da" };
+                                        }
+                                        @foreach (var accessory in accessories)
+                                        {
+                                            <div class="col-6">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="Accessories" value="@accessory" id="acc_@accessory.Replace(" ", "_")" />
+                                                    <label class="form-check-label small" for="acc_@accessory.Replace(" ", "_")">
+                                                        @accessory
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy bỏ</button>
+                    <button type="submit" class="btn btn-primary" id="submitCheckInBtn">
+                        <i class="bi bi-save me-2"></i>Lưu phiếu
+                    </button>
+                </div>
+            </form>
+            
+            <script>
+                // Handle form submission
+                document.getElementById('checkInForm')?.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const form = this;
+                    const formData = new FormData(form);
+                    const submitBtn = document.getElementById('submitCheckInBtn');
+                    
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang lưu...';
+                    }
+                    
+                    fetch(form.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'RequestVerificationToken': form.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            toastr.success(data.message || 'Tạo phiếu thành công!');
+                            setTimeout(() => {
+                                location.reload();
+                            }, 1500);
+                        } else {
+                            toastr.error(data.message || 'Có lỗi xảy ra.');
+                            if (submitBtn) {
+                                submitBtn.disabled = false;
+                                submitBtn.innerHTML = '<i class="bi bi-save me-2"></i>Lưu phiếu';
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        toastr.error('Có lỗi xảy ra khi tạo phiếu.');
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = '<i class="bi bi-save me-2"></i>Lưu phiếu';
+                        }
+                    });
+                });
+            </script>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Scratch marks array
+    let scratchMarks = [];
+    
+    // Initialize device inspector
+    document.addEventListener('DOMContentLoaded', function() {
+        const deviceFrame = document.querySelector('.device-frame');
+        if (deviceFrame) {
+            deviceFrame.addEventListener('click', function(e) {
+                const rect = this.getBoundingClientRect();
+                const x = ((e.clientX - rect.left) / rect.width) * 100;
+                const y = ((e.clientY - rect.top) / rect.height) * 100;
+                addMark(x, y);
+            });
+        }
+        
+        // Serial number warranty check
+        const serialInput = document.getElementById('serialNumber');
+        if (serialInput) {
+            serialInput.addEventListener('blur', function() {
+                checkWarranty(this.value);
+            });
+        }
+    });
+    
+    function addMark(x, y) {
+        scratchMarks.push({ x, y });
+        renderMarks();
+    }
+    
+    function renderMarks() {
+        const container = document.getElementById('scratchMarks');
+        const placeholder = document.querySelector('.device-placeholder');
+        const count = document.getElementById('markCount');
+        
+        if (!container) return;
+        
+        container.innerHTML = '';
+        scratchMarks.forEach(mark => {
+            const dot = document.createElement('div');
+            dot.style.cssText = `position: absolute; left: ${mark.x}%; top: ${mark.y}%; width: 16px; height: 16px; background: rgba(239, 68, 68, 0.8); border-radius: 50%; border: 2px solid white; transform: translate(-50%, -50%); box-shadow: 0 2px 4px rgba(0,0,0,0.2);`;
+            container.appendChild(dot);
+        });
+        
+        if (placeholder) {
+            placeholder.style.display = scratchMarks.length > 0 ? 'none' : 'flex';
+        }
+        
+        if (count) {
+            count.textContent = scratchMarks.length;
+        }
+    }
+    
+    function undoMark() {
+        scratchMarks.pop();
+        renderMarks();
+    }
+    
+    function clearMarks() {
+        scratchMarks = [];
+        renderMarks();
+    }
+    
+    async function checkWarranty(serial) {
+        if (!serial || serial.length < 5) return;
+        
+        const warrantyInfo = document.getElementById('warrantyInfo');
+        if (!warrantyInfo) return;
+        
+        try {
+            const response = await fetch(`/Home/Search?query=${encodeURIComponent(serial)}&mode=warranty`, {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                }
+            });
+            
+            // Handle response (simplified - actual implementation depends on your API)
+            warrantyInfo.innerHTML = '<span class="text-info">Đang kiểm tra...</span>';
+        } catch (error) {
+            console.error('Warranty check error:', error);
+        }
+    }
+    
+    async function analyzeQuote() {
+        const btn = document.getElementById('btnAiQuote');
+        const desc = document.getElementById('problemDescription').value;
+        const model = document.getElementById('deviceModel').value;
+        const resultBox = document.getElementById('aiQuoteResult');
+
+        if (!desc) {
+            toastr.warning('Vui lòng nhập mô tả lỗi máy để AI chẩn đoán.');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang xử lý...';
+
+        try {
+            const response = await fetch('/TiepNhan/AnalyzeQuote', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                },
+                body: JSON.stringify({ moTaLoi: desc, tenThietBi: model })
+            });
+            
+            const data = await response.json();
+            if (data && data.success === false) {
+                 toastr.error(data.message);
+            } else {
+                document.getElementById('aiSuggestion').textContent = data.giaiPhap || 'Không nhận diện được lỗi.';
+                
+                let partsHtml = '';
+                if (data.parts && data.parts.length > 0) {
+                     partsHtml = '<ul class="mb-0 ps-3">';
+                     data.parts.forEach(p => {
+                         partsHtml += `<li><strong>${p.tenLinhKien}</strong>: ${p.gia.toLocaleString('vi-VN')}đ (Kho: ${p.tonKho})</li>`;
+                     });
+                     partsHtml += '</ul>';
+                } else {
+                     partsHtml = '<span class="text-muted fst-italic">Không tìm thấy mã linh kiện phù hợp với Model thiết bị này.</span>';
+                }
+                
+                document.getElementById('aiParts').innerHTML = partsHtml;
+                document.getElementById('aiTotal').textContent = data.tongTienTamTinh ? data.tongTienTamTinh.toLocaleString('vi-VN') + 'đ' : '0đ';
+                resultBox.classList.remove('d-none');
+            }
+        } catch (e) {
+            console.error(e);
+            toastr.error('Lỗi khi kết nối với máy chủ AI.');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-magic"></i> AI Báo giá';
+        }
+    }
+</script>
+

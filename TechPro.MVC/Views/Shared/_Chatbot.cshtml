@@ -1,0 +1,413 @@
+<!-- AI Chatbot Widget -->
+<div id="chatbotWidget" class="chatbot-widget">
+    <div id="chatbotToggle" class="chatbot-toggle">
+        <i class="bi bi-robot"></i>
+    </div>
+    
+    <div id="chatbotWindow" class="chatbot-window" style="display: none;">
+        <div class="chatbot-header">
+            <div class="d-flex align-items-center gap-2">
+                <div class="chatbot-avatar">
+                    <i class="bi bi-robot"></i>
+                </div>
+                <div>
+                    <h6 class="mb-0 fw-bold">TechPro AI Assistant</h6>
+                    <small class="text-muted">Trợ lý tư vấn thông minh</small>
+                </div>
+            </div>
+            <button class="btn btn-sm btn-link text-muted" id="chatbotClose">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        
+        <div class="chatbot-messages" id="chatbotMessages">
+            <div class="chatbot-message bot-message">
+                <div class="message-avatar">
+                    <i class="bi bi-robot"></i>
+                </div>
+                <div class="message-content">
+                    <p>Xin chào! Tôi là trợ lý AI của TechPro Care. Tôi có thể giúp bạn:</p>
+                    <ul class="small">
+                        <li>Tư vấn về dịch vụ sửa chữa</li>
+                        <li>Hướng dẫn quy trình sửa chữa</li>
+                        <li>Tra cứu thông tin phiếu</li>
+                        <li>Giải đáp thắc mắc</li>
+                    </ul>
+                    <p class="mb-0">Bạn cần hỗ trợ gì hôm nay?</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chatbot-input-area">
+            <div class="input-group">
+                <input type="text" 
+                       class="form-control" 
+                       id="chatbotInput" 
+                       placeholder="Nhập câu hỏi của bạn..."
+                       autocomplete="off" />
+                <button class="btn btn-primary" id="chatbotSend" type="button">
+                    <i class="bi bi-send"></i>
+                </button>
+            </div>
+            <div class="quick-actions mt-2">
+                <button class="btn btn-sm btn-outline-secondary quick-action-btn" data-question="Giá thay màn hình iPhone 13 Pro bao nhiêu?">
+                    <i class="bi bi-phone me-1"></i>Giá thay màn hình
+                </button>
+                <button class="btn btn-sm btn-outline-secondary quick-action-btn" data-question="Thời gian sửa chữa mất bao lâu?">
+                    <i class="bi bi-clock me-1"></i>Thời gian sửa
+                </button>
+                <button class="btn btn-sm btn-outline-secondary quick-action-btn" data-question="Có bảo hành không?">
+                    <i class="bi bi-shield-check me-1"></i>Bảo hành
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.chatbot-widget {
+    position: fixed;
+    bottom: 100px;
+    right: 20px;
+    z-index: 999;
+}
+
+.chatbot-toggle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s, box-shadow 0.3s;
+    position: relative;
+}
+
+.chatbot-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+.chatbot-toggle i {
+    font-size: 24px;
+}
+
+.chatbot-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #ef4444;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    border: 2px solid white;
+}
+
+.chatbot-window {
+    position: absolute;
+    bottom: 80px;
+    right: 0;
+    width: 380px;
+    height: 600px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.chatbot-header {
+    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+    color: white;
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chatbot-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chatbot-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    background: #f8f9fa;
+}
+
+.chatbot-message {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    animation: slideIn 0.3s ease-out;
+}
+
+@@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.message-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.bot-message .message-avatar {
+    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+    color: white;
+}
+
+.user-message {
+    flex-direction: row-reverse;
+}
+
+.user-message .message-avatar {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.message-content {
+    flex: 1;
+    background: white;
+    padding: 12px 16px;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.user-message .message-content {
+    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+    color: white;
+}
+
+.message-content p {
+    margin: 0 0 8px 0;
+    line-height: 1.5;
+}
+
+.message-content ul {
+    margin: 8px 0;
+    padding-left: 20px;
+}
+
+.message-content small {
+    display: block;
+    margin-top: 8px;
+    opacity: 0.7;
+}
+
+.chatbot-input-area {
+    padding: 16px;
+    background: white;
+    border-top: 1px solid #e9ecef;
+}
+
+.quick-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.quick-action-btn {
+    font-size: 11px;
+    padding: 4px 8px;
+}
+
+.typing-indicator {
+    display: flex;
+    gap: 4px;
+    padding: 12px 16px;
+}
+
+.typing-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #667eea;
+    animation: typing 1.4s infinite;
+}
+
+.typing-dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-dot:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@@keyframes typing {
+    0%, 60%, 100% {
+        transform: translateY(0);
+        opacity: 0.7;
+    }
+    30% {
+        transform: translateY(-10px);
+        opacity: 1;
+    }
+}
+
+@@media (max-width: 768px) {
+    .chatbot-window {
+        width: calc(100vw - 40px);
+        height: calc(100vh - 100px);
+        bottom: 80px;
+        right: 20px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const toggle = document.getElementById('chatbotToggle');
+    const window = document.getElementById('chatbotWindow');
+    const close = document.getElementById('chatbotClose');
+    const sendBtn = document.getElementById('chatbotSend');
+    const input = document.getElementById('chatbotInput');
+    const messages = document.getElementById('chatbotMessages');
+    const quickActions = document.querySelectorAll('.quick-action-btn');
+    
+    let conversationHistory = '';
+
+    toggle.addEventListener('click', function() {
+        window.style.display = window.style.display === 'none' ? 'flex' : 'none';
+        if (window.style.display === 'flex') {
+            input.focus();
+        }
+    });
+
+    close.addEventListener('click', function() {
+        window.style.display = 'none';
+    });
+
+    function addMessage(text, isUser = false) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `chatbot-message ${isUser ? 'user-message' : 'bot-message'}`;
+        
+        const avatar = document.createElement('div');
+        avatar.className = 'message-avatar';
+        avatar.innerHTML = `<i class="bi ${isUser ? 'bi-person' : 'bi-robot'}"></i>`;
+        
+        const content = document.createElement('div');
+        content.className = 'message-content';
+        content.innerHTML = `<p>${escapeHtml(text)}</p>`;
+        
+        messageDiv.appendChild(avatar);
+        messageDiv.appendChild(content);
+        messages.appendChild(messageDiv);
+        
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+    function showTyping() {
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'chatbot-message bot-message';
+        typingDiv.id = 'typingIndicator';
+        typingDiv.innerHTML = `
+            <div class="message-avatar">
+                <i class="bi bi-robot"></i>
+            </div>
+            <div class="message-content">
+                <div class="typing-indicator">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            </div>
+        `;
+        messages.appendChild(typingDiv);
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+    function hideTyping() {
+        const typing = document.getElementById('typingIndicator');
+        if (typing) {
+            typing.remove();
+        }
+    }
+
+    function sendMessage() {
+        const message = input.value.trim();
+        if (!message) return;
+
+        addMessage(message, true);
+        input.value = '';
+        showTyping();
+
+        // Update history
+        conversationHistory += `\nKhách hàng: ${message}`;
+
+        $.ajax({
+            url: '/Chatbot/SendMessage',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                message: message,
+                history: conversationHistory
+            }),
+            success: function(response) {
+                hideTyping();
+                if (response.success) {
+                    addMessage(response.response);
+                    conversationHistory += `\nTrợ lý AI: ${response.response}`;
+                } else {
+                    addMessage('Xin lỗi, có lỗi xảy ra. Vui lòng thử lại sau.');
+                }
+            },
+            error: function() {
+                hideTyping();
+                addMessage('Xin lỗi, không thể kết nối với dịch vụ. Vui lòng liên hệ hotline 1900 6868.');
+            }
+        });
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+    input.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+
+    quickActions.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const question = this.getAttribute('data-question');
+            input.value = question;
+            sendMessage();
+        });
+    });
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+});
+</script>
+

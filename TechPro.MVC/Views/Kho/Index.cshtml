@@ -1,0 +1,180 @@
+@{
+    ViewData["Title"] = "Quản lý kho vận";
+    var activeTab = ViewBag.ActiveTab as string ?? "inventory";
+    var inventory = ViewBag.Inventory as IEnumerable<KhoLinhKien> ?? new List<KhoLinhKien>();
+    var partRequests = ViewBag.PartRequests as IEnumerable<YeuCauLinhKien> ?? new List<YeuCauLinhKien>();
+    var wasteReturns = ViewBag.WasteReturns as IEnumerable<TraXac> ?? new List<TraXac>();
+    var pendingRequestsCount = ViewBag.PendingRequestsCount as int? ?? 0;
+    var pendingWasteCount = ViewBag.PendingWasteCount as int? ?? 0;
+}
+
+<div class="mb-4">
+    <h2 class="fw-bold">Quản lý kho vận</h2>
+    <p class="text-muted mb-0">Theo dõi tồn kho, xuất nhập và trả xác linh kiện.</p>
+</div>
+
+<!-- Tabs -->
+<ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+        <a class="nav-link @(activeTab == "inventory" ? "active" : "")" href="@Url.Action("Index", new { tab = "inventory" })">
+            <i class="bi bi-box me-2"></i>Danh sách tồn kho
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(activeTab == "requests" ? "active" : "") position-relative" href="@Url.Action("Index", new { tab = "requests" })">
+            <i class="bi bi-clock-history me-2"></i>Yêu cầu xuất kho
+            @if (pendingRequestsCount > 0)
+            {
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">@pendingRequestsCount</span>
+            }
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(activeTab == "waste" ? "active" : "") position-relative" href="@Url.Action("Index", new { tab = "waste" })">
+            <i class="bi bi-recycle me-2"></i>Trả xác linh kiện
+            @if (pendingWasteCount > 0)
+            {
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning" style="font-size: 0.6rem;">@pendingWasteCount</span>
+            }
+        </a>
+    </li>
+</ul>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <!-- INVENTORY TAB -->
+        @if (activeTab == "inventory")
+        {
+            <form method="get" class="mb-4">
+                <input type="hidden" name="tab" value="inventory" />
+                <div class="input-group" style="max-width: 400px;">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" name="searchTerm" 
+                           value="@ViewBag.SearchTerm" placeholder="Tìm tên linh kiện, mã..." />
+                    <button type="submit" class="btn btn-outline-secondary">Tìm</button>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Tên linh kiện</th>
+                            <th>Danh mục</th>
+                            <th>Tương thích</th>
+                            <th class="text-end">Đơn giá</th>
+                            <th class="text-center">Tồn kho</th>
+                            <th class="text-center">Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in inventory)
+                        {
+                            <tr>
+                                <td class="fw-medium">@item.TenLinhKien</td>
+                                <td class="text-muted">@(item.DanhMuc ?? "N/A")</td>
+                                <td class="text-muted small">@(item.DanhSachModelTuongThich ?? "N/A")</td>
+                                <td class="text-end font-monospace">@item.GiaBan.ToString("N0")đ</td>
+                                <td class="text-center fw-bold">@item.SoLuongTon</td>
+                                <td class="text-center">
+                                    @if (item.SoLuongTon == 0)
+                                    {
+                                        <span class="badge bg-danger">
+                                            <i class="bi bi-exclamation-triangle me-1"></i>Hết hàng
+                                        </span>
+                                    }
+                                    else if (item.SoLuongTon < 5)
+                                    {
+                                        <span class="badge bg-warning">
+                                            <i class="bi bi-exclamation-triangle me-1"></i>Sắp hết
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">Sẵn sàng</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                        @if (!inventory.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted">Không tìm thấy linh kiện nào.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        <!-- REQUESTS TAB -->
+        @if (activeTab == "requests")
+        {
+            @await Html.PartialAsync("_PartRequestList", partRequests)
+        }
+
+        <!-- WASTE TAB -->
+        @if (activeTab == "waste")
+        {
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Mã phiếu</th>
+                            <th>Kỹ thuật viên</th>
+                            <th>Linh kiện trả về (Xác)</th>
+                            <th>Thời gian</th>
+                            <th class="text-end">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var waste in wasteReturns)
+                        {
+                            <tr>
+                                <td><span class="badge bg-primary">@waste.PhieuSuaChuaId</span></td>
+                                <td>@waste.TenKyThuatVien</td>
+                                <td class="fw-medium">@waste.TenLinhKien</td>
+                                <td>@waste.NgayTra.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="text-end">
+                                    @if (waste.TrangThai == "pending" && (User.IsInRole("Support") || User.IsInRole("StoreAdmin")))
+                                    {
+                                        <button class="btn btn-sm btn-primary" onclick="xacNhanTraXac('@waste.Id')">
+                                            <i class="bi bi-recycle me-1"></i>Xác nhận đã nhận
+                                        </button>
+                                    }
+                                    else if (waste.TrangThai == "returned")
+                                    {
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check-circle me-1"></i>Đã nhập kho xác
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">Chờ xác nhận</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                        @if (!wasteReturns.Any())
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center py-5 text-muted">Chưa có linh kiện hỏng nào cần trả về.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/warehouse.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script src="~/js/warehouse.js" asp-append-version="true"></script>
+}
+

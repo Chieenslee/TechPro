@@ -1,0 +1,147 @@
+@model IEnumerable<PhieuSuaChua>
+@{
+    ViewData["Title"] = "Quản lý trả máy";
+}
+
+<div class="space-y-6">
+    <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800">Quản lý trả máy & Thanh toán</h1>
+            <p class="text-slate-500 mt-1">Danh sách các thiết bị đã hoàn thành sửa chữa, chờ bàn giao cho khách.</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <!-- Filters -->
+        <div class="p-4 border-bottom border-slate-100 d-flex gap-3 flex-wrap bg-slate-50/50">
+            <form id="searchForm" class="d-flex gap-3 flex-wrap flex-grow-1">
+                <div class="position-relative flex-grow-1" style="min-width: 200px; max-width: 28rem;">
+                    <i data-lucide="search" class="position-absolute" style="left: 0.75rem; top: 50%; transform: translateY(-50%); color: #94a3b8; width: 18px; height: 18px; pointer-events: none;"></i>
+                    <input 
+                        type="text" 
+                        id="searchInput"
+                        name="searchTerm"
+                        value="@ViewBag.SearchTerm"
+                        placeholder="Tìm theo tên, SĐT, mã phiếu..." 
+                        class="w-100 ps-5 pe-4 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                    />
+                </div>
+                @{
+                    var selectedStatus = ViewBag.StatusFilter?.ToString() ?? "done";
+                }
+                <select id="statusFilter" name="status" class="px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-700 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                    @if (selectedStatus == "all")
+                    {
+                        <option value="all" selected>Tất cả trạng thái</option>
+                    }
+                    else
+                    {
+                        <option value="all">Tất cả trạng thái</option>
+                    }
+                    @if (selectedStatus == "done")
+                    {
+                        <option value="done" selected>Chờ khách lấy (Hoàn tất)</option>
+                    }
+                    else
+                    {
+                        <option value="done">Chờ khách lấy (Hoàn tất)</option>
+                    }
+                    @if (selectedStatus == "delivered")
+                    {
+                        <option value="delivered" selected>Đã trả khách</option>
+                    }
+                    else
+                    {
+                        <option value="delivered">Đã trả khách</option>
+                    }
+                </select>
+                <button type="submit" class="d-flex align-items-center gap-2 px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-medium">
+                    <i data-lucide="filter" class="icon" style="width: 18px; height: 18px;"></i>
+                    <span>Tìm kiếm</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Table -->
+        <div class="overflow-x-auto">
+            <table class="w-100 text-sm text-left">
+                <thead class="text-xs text-slate-500 uppercase bg-slate-50 border-bottom border-slate-100">
+                    <tr>
+                        <th class="px-6 py-3 font-semibold">Mã phiếu</th>
+                        <th class="px-6 py-3 font-semibold">Khách hàng</th>
+                        <th class="px-6 py-3 font-semibold">Thiết bị</th>
+                        <th class="px-6 py-3 font-semibold">Ngày nhận</th>
+                        <th class="px-6 py-3 font-semibold">Trạng thái</th>
+                        <th class="px-6 py-3 font-semibold text-end">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100" id="ticketTableBody">
+                    @if (Model != null && Model.Any())
+                    {
+                        @foreach (var ticket in Model)
+                        {
+                            <tr class="hover:bg-slate-50/80 transition-colors" style="cursor: pointer;" onclick="window.location.href='@Url.Action("ChiTiet", "KyThuat", new { id = ticket.Id })'">
+                                <td class="px-6 py-4">
+                                    <span class="font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">@ticket.Id</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="font-medium text-slate-900">@ticket.TenKhachHang</div>
+                                    <div class="text-slate-500 text-xs mt-0.5">@ticket.SoDienThoai</div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i data-lucide="smartphone" class="icon" style="width: 16px; height: 16px; color: #94a3b8;"></i>
+                                        <span class="text-slate-700">@ticket.TenThietBi</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-slate-600">
+                                    @ticket.NgayNhan.ToString("dd/MM/yyyy HH:mm")
+                                </td>
+                                <td class="px-6 py-4">
+                                    @{
+                                        var statusStyles = ticket.TrangThai switch
+                                        {
+                                            "pending" => "bg-yellow-100 text-yellow-700 border-yellow-200",
+                                            "repairing" => "bg-blue-100 text-blue-700 border-blue-200",
+                                            "waiting_parts" => "bg-orange-100 text-orange-700 border-orange-200",
+                                            "done" => "bg-green-100 text-green-700 border-green-200",
+                                            "delivered" => "bg-slate-100 text-slate-600 border-slate-200",
+                                            _ => "bg-slate-100 text-slate-600 border-slate-200"
+                                        };
+                                        var statusLabels = ticket.TrangThai switch
+                                        {
+                                            "pending" => "Chờ sửa",
+                                            "repairing" => "Đang sửa",
+                                            "waiting_parts" => "Chờ linh kiện",
+                                            "done" => "Chờ trả",
+                                            "delivered" => "Đã trả khách",
+                                            _ => ticket.TrangThai
+                                        };
+                                    }
+                                    <span class="px-2.5 py-1 rounded-full text-xs font-semibold border @statusStyles">@statusLabels</span>
+                                </td>
+                                <td class="px-6 py-4 text-end">
+                                    <button class="text-slate-400 hover:text-blue-600 transition-colors border-0 bg-transparent">
+                                        <i data-lucide="eye" class="icon" style="width: 20px; height: 20px;"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center text-slate-500">
+                                Không tìm thấy phiếu cần trả phù hợp.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/reception.css" asp-append-version="true" />
+}

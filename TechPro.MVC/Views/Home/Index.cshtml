@@ -1,0 +1,375 @@
+@model TechPro.Models.ViewModels.LandingPageViewModel
+@using TechPro.Models.ViewModels
+@{
+    ViewData["Title"] = "TechPro Care - Tra cứu sửa chữa & Bảo hành";
+    Layout = null;
+    
+    var errorMessage = TempData["ErrorMessage"]?.ToString();
+    var warrantyResult = TempData["WarrantyResult"] as WarrantyCheckViewModel;
+    var searchQuery = TempData["SearchQuery"]?.ToString() ?? "";
+    var searchMode = TempData["SearchMode"]?.ToString() ?? "repair";
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- AOS Animation CSS -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/landing.css" asp-append-version="true" />
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })">
+                <div class="logo-icon">
+                    <i class="bi bi-shield-check fs-5"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>TechPro<span class="care"> Care </span></h1>
+                    <span>Warranty Center</span>
+                </div>
+            </div>
+            
+            <nav class="nav-links">
+                <a href="#home" class="active" onclick="scrollToSection('home'); return false;">Trang chủ</a>
+                <a href="#about" onclick="scrollToSection('about'); return false;">Giới thiệu</a>
+                <a href="#services" onclick="scrollToSection('services'); return false;">Dịch vụ</a>
+                <a href="#policy" onclick="scrollToSection('policy'); return false;">Chính sách</a>
+                <a href="#contact" onclick="scrollToSection('contact'); return false;">Liên hệ</a>
+            </nav>
+            
+            <div class="nav-actions">
+                <a href="/Home/DatLich" class="btn-book">
+                    <i class="bi bi-calendar"></i>
+                    <span>Đặt lịch</span>
+                </a>
+                <a href="/Account/Login" class="btn-login">
+                    <i class="bi bi-box-arrow-in-right"></i>
+                    <span>Đăng nhập</span>
+                </a>
+            </div>
+            
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="bi bi-list fs-4"></i>
+            </button>
+        </div>
+        
+        <div class="mobile-menu" id="mobileMenu">
+            <div class="mobile-links">
+                <a href="#home" onclick="scrollToSection('home'); toggleMobileMenu(); return false;">Trang chủ</a>
+                <a href="#about" onclick="scrollToSection('about'); toggleMobileMenu(); return false;">Giới thiệu</a>
+                <a href="#services" onclick="scrollToSection('services'); toggleMobileMenu(); return false;">Dịch vụ</a>
+                <a href="#policy" onclick="scrollToSection('policy'); toggleMobileMenu(); return false;">Chính sách</a>
+                <a href="#contact" onclick="scrollToSection('contact'); toggleMobileMenu(); return false;">Liên hệ</a>
+                <a href="/Home/DatLich" class="btn-book w-100 text-center mt-3">Đặt lịch sửa chữa</a>
+                <a href="/Account/Login" class="btn-login w-100 text-center mt-2">Nhân viên đăng nhập</a>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Hero Search Section -->
+        <section id="home" class="hero-search-section">
+            <div class="hero-search-content" data-aos="fade-up" data-aos-duration="1000">
+                <div class="hero-badge">
+                    <i class="bi bi-award"></i>
+                    <span>Hệ thống bảo hành tiêu chuẩn quốc tế</span>
+                </div>
+                
+                <h1>
+                    <span id="heroTitle" class="typewriter">@(searchMode == "repair" ? "Tra cứu trạng thái" : "Kiểm tra thời hạn")</span><br/>
+                    <span class="gradient-text" id="heroSubtitle">@(searchMode == "repair" ? "Sửa chữa thiết bị" : "Bảo hành chính hãng")</span>
+                </h1>
+                
+                <p class="subtitle" data-aos="fade-up" data-aos-delay="200">
+                    Hệ thống tích hợp toàn diện giúp bạn theo dõi quy trình sửa chữa và kiểm tra thông tin bảo hành thiết bị nhanh chóng.
+                </p>
+                
+                <!-- Tab Switcher -->
+                <div class="tab-switcher">
+                    <div class="tab-container">
+                        <button class="tab-btn @(searchMode == "repair" ? "active" : "")" id="repairTab" onclick="setSearchMode('repair')">
+                            <i class="bi bi-wrench"></i>
+                            <span>Tra cứu sửa chữa</span>
+                        </button>
+                        <button class="tab-btn @(searchMode == "warranty" ? "active" : "")" id="warrantyTab" onclick="setSearchMode('warranty')">
+                            <i class="bi bi-calendar-check"></i>
+                            <span>Kiểm tra bảo hành</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Search Box -->
+                <div class="search-container glass-panel" data-aos="zoom-in" data-aos-delay="400">
+                    <form method="post" asp-action="Search" class="search-form">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="mode" id="searchModeInput" value="@searchMode" />
+                        <i class="bi bi-search search-icon"></i>
+                        <input 
+                            type="text" 
+                            class="search-input" 
+                            id="searchInput"
+                            name="query"
+                            value="@searchQuery"
+                            placeholder="@(searchMode == "repair" ? "Mã phiếu / SĐT..." : "Số Serial / IMEI...")"
+                            required
+                        />
+                        <button type="submit" class="search-btn" id="searchBtn">
+                            Tra cứu
+                        </button>
+                    </form>
+                    
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="error-message show">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <span>@errorMessage</span>
+                        </div>
+                    }
+                    
+                    @if (warrantyResult != null)
+                    {
+                        <div class="warranty-result-card">
+                            <div class="d-flex align-items-center gap-4">
+                                <div class="warranty-icon @(warrantyResult.IsValid ? "valid" : "invalid")">
+                                    <i class="bi bi-@(warrantyResult.IsValid ? "check-circle" : "exclamation-triangle") fs-3"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h4 class="fw-bold text-slate-900 mb-1">@warrantyResult.Model</h4>
+                                    <p class="text-sm fw-bold mb-1 @(warrantyResult.IsValid ? "text-success" : "text-danger")">
+                                        @(warrantyResult.IsValid ? "✓ Còn hạn bảo hành" : "⚠ Hết hạn bảo hành")
+                                    </p>
+                                    <p class="text-xs text-slate-500 mt-1 mb-0">
+                                        Ngày hết hạn: <span class="font-monospace text-slate-700">@warrantyResult.EndDate</span>
+                                    </p>
+                                </div>
+                                <button type="button" onclick="closeWarrantyResult()" class="p-2 hover:bg-slate-100 rounded-circle border-0 bg-transparent">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </section>
+        
+        <!-- About Section -->
+        <section id="about" class="about-section">
+            <div class="about-container">
+                <div class="about-image" data-aos="fade-right">
+                    <div class="blur-circle"></div>
+                    <img src="~/images/image_home_1.png" alt="Kỹ thuật viên" />
+                    <div class="badge-card floating">
+                        <div class="badge-content">
+                            <div class="number">10+</div>
+                            <div>
+                                <p style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #64748b; margin: 0;">Năm kinh nghiệm</p>
+                                <p style="font-weight: 700; color: #0f172a; margin: 0;">Uy tín hàng đầu</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="about-text" data-aos="fade-left">
+                    <div class="label">Về TechPro Care</div>
+                    <h2>Chuyên gia sửa chữa thiết bị công nghệ của bạn</h2>
+                    <p>
+                        TechPro Care được thành lập với sứ mệnh mang lại sự an tâm tuyệt đối cho khách hàng. Chúng tôi hiểu rằng điện thoại, máy tính không chỉ là thiết bị, mà còn là dữ liệu và công việc của bạn.
+                    </p>
+                    <div class="about-features">
+                        <div class="about-feature">
+                            <i class="bi bi-check-circle check-icon"></i>
+                            <p>
+                                <strong>Đội ngũ kỹ thuật viên tay nghề cao:</strong> Được đào tạo bài bản, chứng chỉ quốc tế.
+                            </p>
+                        </div>
+                        <div class="about-feature">
+                            <i class="bi bi-check-circle check-icon"></i>
+                            <p>
+                                <strong>Quy trình minh bạch:</strong> Khách hàng được ký tên lên linh kiện và quan sát trực tiếp.
+                            </p>
+                        </div>
+                        <div class="about-feature">
+                            <i class="bi bi-check-circle check-icon"></i>
+                            <p>
+                                <strong>Cam kết bảo mật dữ liệu:</strong> Tuyệt đối không xâm phạm dữ liệu cá nhân của khách hàng.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Services Section -->
+        <section id="services" class="services-section">
+            <div class="services-container">
+                <div class="section-label" data-aos="fade-up">Dịch vụ của chúng tôi</div>
+                <h2 data-aos="fade-up" data-aos-delay="100">Giải pháp toàn diện cho mọi thiết bị</h2>
+                <div class="services-grid">
+                    @{ int delay = 0; }
+                    @foreach (var dichVu in Model.DichVus)
+                    {
+                        <div class="service-card" data-aos="fade-up" data-aos-delay="@delay">
+                            <div class="icon"><i class="bi bi-@dichVu.Icon"></i></div>
+                            <h3>@dichVu.Ten</h3>
+                            <p>@dichVu.MoTa</p>
+                        </div>
+                        delay += 100;
+                    }
+                </div>
+            </div>
+        </section>
+        
+        <!-- Policy Section -->
+        <section id="policy" class="policy-section">
+            <div class="policy-container">
+                <div class="policy-card" data-aos="zoom-in-up">
+                    <div class="policy-content">
+                        <div class="policy-text">
+                            <h2>Chính sách bảo hành <span class="highlight">Vàng</span></h2>
+                            <p>
+                                Chúng tôi cam kết chất lượng dịch vụ bằng những chính sách bảo hành tốt nhất thị trường, đặt quyền lợi khách hàng lên hàng đầu.
+                            </p>
+                            <div class="policy-grid">
+                                @foreach (var chinhSach in Model.ChinhSaches)
+                                {
+                                    <div class="policy-item">
+                                        <h4>@chinhSach.TieuDe</h4>
+                                        <p>@chinhSach.MoTa</p>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <div class="policy-image" data-aos="fade-left" data-aos-delay="300">
+                            <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop" alt="Policy" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Contact Section -->
+        <section id="contact" class="contact-section">
+            <div class="contact-container">
+                <div class="contact-header">
+                    <div class="section-label">Liên hệ với chúng tôi</div>
+                    <h2>Hệ thống cửa hàng TechPro Care</h2>
+                </div>
+                <div class="contact-grid">
+                    <div class="contact-info">
+                        <div class="contact-card">
+                            <div class="icon-wrapper" style="background-color: #eff6ff; color: #2563eb;">
+                                <i class="bi bi-geo-alt fs-4"></i>
+                            </div>
+                            <h4>Trụ sở chính</h4>
+                            <p>@Model.ThongTinLienHe.DiaChi</p>
+                        </div>
+                        <div class="contact-card">
+                            <div class="icon-wrapper" style="background-color: #dcfce7; color: #22c55e;">
+                                <i class="bi bi-telephone fs-4"></i>
+                            </div>
+                            <h4>Tổng đài hỗ trợ</h4>
+                            <p>@Model.ThongTinLienHe.Hotline</p>
+                        </div>
+                        <div class="contact-card">
+                            <div class="icon-wrapper" style="background-color: #f3e8ff; color: #9333ea;">
+                                <i class="bi bi-envelope fs-4"></i>
+                            </div>
+                            <h4>Email liên hệ</h4>
+                            <p>@Model.ThongTinLienHe.Email<br/>@Model.ThongTinLienHe.EmailBusiness</p>
+                        </div>
+                    </div>
+                    <div class="map-container">
+                        <div class="map-content">
+                            <div class="map-form-card">
+                                <h4>Bạn cần tư vấn ngay?</h4>
+                                <p>Để lại thông tin, kỹ thuật viên sẽ gọi lại trong 5 phút.</p>
+                                <form onsubmit="event.preventDefault(); toastr.success('Cảm ơn bạn! Chúng tôi sẽ liên hệ sớm nhất.');">
+                                    <input type="text" placeholder="Số điện thoại của bạn" />
+                                    <button type="submit">Gửi yêu cầu</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-col">
+                    <h4>TechPro Care</h4>
+                    <p style="font-size: 14px; line-height: 1.6; margin: 0;">Hệ thống sửa chữa & bảo hành thiết bị công nghệ hàng đầu Việt Nam.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Liên kết</h4>
+                    <ul>
+                        <li><a href="#home" onclick="scrollToSection('home'); return false;">Trang chủ</a></li>
+                        <li><a href="#about" onclick="scrollToSection('about'); return false;">Về chúng tôi</a></li>
+                        <li><a href="#services" onclick="scrollToSection('services'); return false;">Dịch vụ</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Hỗ trợ</h4>
+                    <ul>
+                        <li><a href="#policy" onclick="scrollToSection('policy'); return false;">Chính sách bảo hành</a></li>
+                        <li><a href="#home" onclick="scrollToSection('home'); return false;">Tra cứu đơn hàng</a></li>
+                        <li><a href="#contact" onclick="scrollToSection('contact'); return false;">Câu hỏi thường gặp</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Liên hệ</h4>
+                    <ul style="list-style: none;">
+                        <li>Hotline: 1900 6868</li>
+                        <li>Email: support@techpro.com</li>
+                        <li>Địa chỉ: 123 Tech Street, Hà Nội</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                © 2026 TechPro Care. All rights reserved.
+            </div>
+        </footer>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="~/js/landing.js" asp-append-version="true"></script>
+    <script>
+        AOS.init({
+            once: true,
+            offset: 100,
+        });
+    </script>
+    
+    <!-- AI Chatbot Widget (for customers) -->
+    @await Html.PartialAsync("_Chatbot")
+    
+    <!-- Social Contact Widget -->
+    @await Html.PartialAsync("_SocialContactWidget")
+</body>
+</html>

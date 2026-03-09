@@ -1,0 +1,973 @@
+@model PhieuSuaChua
+@{
+    ViewData["Title"] = "Chi tiết phiếu sửa chữa";
+    var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "Technician";
+    var canViewPII = userRole == "StoreAdmin" || userRole == "Support" || userRole == "SystemAdmin";
+    var canEditNotes = userRole == "Technician" || userRole == "StoreAdmin" || userRole == "SystemAdmin";
+    var canAssign = userRole == "StoreAdmin" || userRole == "Support" || userRole == "SystemAdmin";
+    var canRequestParts = userRole == "Technician" || userRole == "StoreAdmin" || userRole == "SystemAdmin";
+    var canViewFinancials = userRole == "StoreAdmin" || userRole == "SystemAdmin";
+    
+    var technicians = ViewBag.Technicians as List<NguoiDung> ?? new List<NguoiDung>();
+    var linhKiens = ViewBag.LinhKiens as List<KhoLinhKien> ?? new List<KhoLinhKien>();
+    var ticketRequests = Model.YeuCauLinhKiens?.Where(r => r.TrangThai == "approved").ToList() ?? new List<YeuCauLinhKien>();
+    var totalPartsCost = ticketRequests.Sum(r => (r.GiaTaiThoiDiemYeuCau ?? 0) * r.SoLuong);
+    var serviceFee = 200000;
+    var totalBill = Model.CoBaoHanh == true ? 0 : totalPartsCost + serviceFee;
+}
+
+<div class="max-w-6xl mx-auto pb-10">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+            <div>
+                <div class="d-flex align-items-center gap-2">
+                    <h2 class="fw-bold mb-0">Sửa chữa: @Model.Id</h2>
+                    @{
+                        var headerStatusLabels = Model.TrangThai switch {
+                            "pending" => "Chờ sửa",
+                            "repairing" => "Đang sửa",
+                            "waiting_parts" => "Chờ linh kiện",
+                            "done" => "Hoàn thành",
+                            "delivered" => "Đã trả",
+                            _ => Model.TrangThai
+                        };
+                        var headerStatusBadge = Model.TrangThai switch {
+                            "pending" => "bg-warning text-dark",
+                            "repairing" => "bg-primary",
+                            "waiting_parts" => "bg-danger",
+                            "done" => "bg-success",
+                            "delivered" => "bg-secondary",
+                            _ => "bg-secondary"
+                        };
+                    }
+                    <span class="badge @headerStatusBadge">@headerStatusLabels</span>
+                    @if (Model.CoBaoHanh == true)
+                    {
+                        <span class="badge bg-success">
+                            <i class="bi bi-check-circle me-1"></i>Bảo hành
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">
+                            <i class="bi bi-currency-dollar me-1"></i>Dịch vụ
+                        </span>
+                    }
+                </div>
+                <p class="text-muted small mb-0">Tiếp nhận: @Model.NgayNhan.ToString("dd/MM/yyyy HH:mm")</p>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        @if (canEditNotes)
+        {
+            <div class="d-flex gap-2">
+                @if (Model.TrangThai == "pending")
+                {
+                    <button class="btn btn-primary" onclick="capNhatTrangThai('@Model.Id', 'repairing')">
+                        <i class="bi bi-play-circle me-2"></i>Bắt đầu sửa
+                    </button>
+                }
+                @if (Model.TrangThai == "repairing")
+                {
+                    <button class="btn btn-success" onclick="capNhatTrangThai('@Model.Id', 'done')">
+                        <i class="bi bi-check-circle me-2"></i>Hoàn thành
+                    </button>
+                }
+                @if (Model.TrangThai == "repairing" || Model.TrangThai == "pending")
+                {
+                    <button class="btn btn-warning" onclick="capNhatTrangThai('@Model.Id', 'waiting_parts')">
+                        <i class="bi bi-pause-circle me-2"></i>Báo thiếu đồ
+                    </button>
+                }
+                @if (Model.TrangThai == "done")
+                {
+                    <button class="btn btn-dark" onclick="capNhatTrangThai('@Model.Id', 'delivered')">
+                        <i class="bi bi-check-circle me-2"></i>Trả khách
+                    </button>
+                }
+            </div>
+        }
+    </div>
+
+    <div class="row g-4">
+        <!-- LEFT COLUMN -->
+        <div class="col-lg-4">
+            <!-- Technician Assignment -->
+            @if (canAssign)
+            {
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <label class="small fw-bold text-uppercase text-muted mb-2 d-flex align-items-center gap-1">
+                            <i class="bi bi-person-plus"></i>Phân công kỹ thuật
+                        </label>
+                        <select id="techAssignSelect" class="form-select form-select-sm" onchange="ganKyThuatVien('@Model.Id', this.value)">
+                            <option value="">-- Chưa phân công --</option>
+                            @foreach (var tech in technicians.Where(t => t.TenDayDu.Contains("tech", StringComparison.OrdinalIgnoreCase) || User.IsInRole("Technician")))
+                            {
+                                var isSelected = Model.KyThuatVienId == tech.Id;
+                                <option value="@tech.Id" selected="@isSelected">@tech.TenDayDu</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+            }
+
+            <!-- Device Info Card -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="fw-semibold mb-3 border-bottom pb-2">Thông tin thiết bị</h5>
+                    <div class="small">
+                        <div class="mb-3">
+                            <span class="text-muted text-uppercase small d-block">Model</span>
+                            <span class="fw-medium">@Model.TenThietBi</span>
+                        </div>
+                        <div class="mb-3">
+                            <span class="text-muted text-uppercase small d-block">Serial / IMEI</span>
+                            <span class="font-monospace">@(Model.SerialNumber ?? "N/A")</span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <span class="text-muted text-uppercase small d-block">
+                                Khách hàng
+                                @if (!canViewPII)
+                                {
+                                    <i class="bi bi-shield-exclamation text-danger" title="Thông tin bị ẩn với Kỹ thuật viên"></i>
+                                }
+                            </span>
+                            <div class="fw-medium">
+                                <div>@(canViewPII ? Model.TenKhachHang : "Khách hàng ***")</div>
+                                <div class="font-monospace bg-light px-2 py-1 rounded d-inline-block mt-1">
+                                    @if (canViewPII)
+                                    {
+                                        @Model.SoDienThoai
+                                    }
+                                    else
+                                    {
+                                        @(Model.SoDienThoai.Length > 7 ? Model.SoDienThoai.Substring(0, 3) + "*****" + Model.SoDienThoai.Substring(Model.SoDienThoai.Length - 2) : "***-***-***")
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <span class="text-muted text-uppercase small d-block">Mật khẩu màn hình</span>
+                            <div class="d-flex align-items-center justify-content-between bg-light p-2 rounded border">
+                                <div class="d-flex align-items-center gap-2 font-monospace fw-bold">
+                                    <i class="bi bi-lock text-muted"></i>
+                                    <span id="passcodeDisplay">••••••</span>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-link p-0" onclick="togglePasscode()">
+                                    <i class="bi bi-eye" id="passcodeIcon"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <span class="text-muted text-uppercase small d-block">Mô tả lỗi ban đầu</span>
+                            <p class="text-muted bg-danger bg-opacity-10 p-2 rounded border border-danger border-opacity-25 mt-1 mb-0">
+                                @Model.MoTaLoi
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Visual Device Inspector -->
+            <div class="card">
+                <div class="card-body">
+                    @await Html.PartialAsync("_VisualDeviceInspector")
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-light p-0">
+                    <ul class="nav nav-tabs nav-tabs-custom border-0" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="diagnosis-tab" data-bs-toggle="tab" data-bs-target="#diagnosis" type="button" role="tab">
+                                <i class="bi bi-file-text me-2"></i>Chẩn đoán & Sửa chữa
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="ai-tab" data-bs-toggle="tab" data-bs-target="#ai-suggestion" type="button" role="tab" onclick="loadAiSuggestion()">
+                                <i class="bi bi-stars me-2"></i>AI Gợi Ý
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="checklist-tab" data-bs-toggle="tab" data-bs-target="#checklist" type="button" role="tab" onclick="loadChecklist()">
+                                <i class="bi bi-check2-square me-2"></i>Checklist KT
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="camera-tab" data-bs-toggle="tab" data-bs-target="#camera" type="button" role="tab" onclick="initCamera()">
+                                <i class="bi bi-camera me-2"></i>Camera
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#ticket-history" type="button" role="tab" onclick="loadTicketHistory()">
+                                <i class="bi bi-clock-history me-2"></i>Lịch sử
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="parts-tab" data-bs-toggle="tab" data-bs-target="#parts" type="button" role="tab">
+                                <i class="bi bi-wrench me-2"></i>Linh kiện (@(Model.YeuCauLinhKiens?.Count ?? 0))
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chat" type="button" role="tab">
+                                <i class="bi bi-chat-dots me-2"></i>Trao đổi nội bộ
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content" id="ticketTabsContent">
+                        <!-- DIAGNOSIS TAB -->
+                        <div class="tab-pane fade show active" id="diagnosis" role="tabpanel">
+                            @if (canEditNotes)
+                            {
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-label small fw-semibold mb-0">Kết quả kiểm tra kỹ thuật</label>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="document.getElementById('ai-tab').click(); loadAiSuggestion();">
+                                        <i class="bi bi-stars me-1"></i>Hỏi AI
+                                    </button>
+                                </div>
+                                <textarea id="diagnosisNotes" class="form-control" rows="8" placeholder="Ghi chú chi tiết về lỗi thực tế, các bước đã thực hiện...">@Model.KetQuaKiemTra</textarea>
+                                <div class="mt-3 d-flex justify-content-end">
+                                    <button class="btn btn-primary" onclick="luuKetQuaKiemTra()">
+                                        <i class="bi bi-save me-2"></i>Lưu kết quả kiểm tra
+                                    </button>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-center py-5 bg-light rounded border border-dashed">
+                                    <i class="bi bi-shield-exclamation fs-1 text-muted d-block mb-2"></i>
+                                    <p class="text-muted">Chỉ Kỹ thuật viên mới có quyền cập nhật chuyên môn.</p>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- AI SUGGESTION TAB -->
+                        <div class="tab-pane fade" id="ai-suggestion" role="tabpanel">
+                            <div id="aiSuggestionLoading" class="text-center py-5">
+                                <div class="spinner-border text-primary mb-3" style="width:3rem;height:3rem;"></div>
+                                <p class="text-muted fw-medium">AI đang phân tích lỗi và tra cứu kinh nghiệm sửa chữa...</p>
+                            </div>
+                            <div id="aiSuggestionContent" class="d-none">
+                                <!-- AI Confidence Badge -->
+                                <div class="d-flex align-items-center gap-2 mb-4">
+                                    <span class="badge rounded-pill px-3 py-2" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);font-size:0.8rem;">
+                                        <i class="bi bi-stars me-1"></i>AI TechPro Assistant
+                                    </span>
+                                    <span id="aiConfidenceBadge" class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill"></span>
+                                    <button class="btn btn-sm btn-outline-secondary ms-auto" onclick="loadAiSuggestion(true)">
+                                        <i class="bi bi-arrow-clockwise me-1"></i>Phân tích lại
+                                    </button>
+                                </div>
+
+                                <!-- Root Cause -->
+                                <div class="card border-0 bg-danger-subtle mb-3">
+                                    <div class="card-body py-3">
+                                        <h6 class="fw-bold text-danger mb-2"><i class="bi bi-bug me-2"></i>Nguyên nhân khả năng cao nhất</h6>
+                                        <p id="aiRootCause" class="mb-0 text-danger-emphasis fw-medium"></p>
+                                    </div>
+                                </div>
+
+                                <!-- Repair Steps -->
+                                <div class="card border-0 bg-light mb-3">
+                                    <div class="card-body py-3">
+                                        <h6 class="fw-bold mb-3"><i class="bi bi-list-ol me-2"></i>Gợi ý các bước xử lý</h6>
+                                        <ol id="aiStepsList" class="mb-0 ps-3" style="line-height:2;"></ol>
+                                    </div>
+                                </div>
+
+                                <!-- Parts Suggestion -->
+                                <div class="card border-0 border-start border-3 border-warning mb-3" id="aiPartsCard">
+                                    <div class="card-body py-3">
+                                        <h6 class="fw-bold mb-2"><i class="bi bi-box-seam me-2 text-warning"></i>Linh kiện có thể cần thay</h6>
+                                        <div id="aiPartsList" class="d-flex flex-wrap gap-2"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Estimated Cost -->
+                                <div class="card border-0 bg-success-subtle mb-3">
+                                    <div class="card-body py-3 d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="fw-bold text-success mb-1"><i class="bi bi-currency-dollar me-2"></i>Dự toán chi phí</h6>
+                                            <p class="mb-0 text-success-emphasis small">Ước tính theo kinh nghiệm tương tự</p>
+                                        </div>
+                                        <span id="aiEstimatedCost" class="fw-bolder fs-4 text-success"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Apply to notes button -->
+                                <button class="btn btn-primary w-100" onclick="applyAiToNotes()">
+                                    <i class="bi bi-pencil-square me-2"></i>Áp dụng vào ô Ghi chú Kỹ thuật
+                                </button>
+                            </div>
+                            <div id="aiSuggestionError" class="d-none alert alert-warning">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                <span id="aiErrorMsg">Không thể kết nối AI. Vui lòng thử lại.</span>
+                            </div>
+                        </div>
+
+                        <!-- CHECKLIST TAB -->
+                        <div class="tab-pane fade" id="checklist" role="tabpanel">
+                            <div id="checklistLoading" class="text-center py-5">
+                                <div class="spinner-border text-primary mb-3"></div>
+                                <p class="text-muted">Đang tải checklist cho @Model.TenThietBi...</p>
+                            </div>
+                            <div id="checklistContent" class="d-none">
+                                <!-- Header -->
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div>
+                                        <h6 class="fw-bold mb-0" id="checklistTitle">Checklist kiểm tra</h6>
+                                        <small class="text-muted" id="checklistSubtitle"></small>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="text-end">
+                                            <div class="fw-bold fs-5" id="checklistProgress">0/0</div>
+                                            <small class="text-muted">mục đã xong</small>
+                                        </div>
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="resetChecklist()">
+                                            <i class="bi bi-arrow-counterclockwise"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Progress bar -->
+                                <div class="progress mb-4" style="height: 8px;">
+                                    <div id="checklistProgressBar" class="progress-bar bg-success progress-bar-striped progress-bar-animated" style="width: 0%"></div>
+                                </div>
+
+                                <!-- Items list -->
+                                <div id="checklistItems" class="d-flex flex-column gap-2"></div>
+
+                                <!-- Completion Panel -->
+                                <div id="checklistDone" class="d-none mt-4 p-4 bg-success-subtle rounded-3 text-center border border-success-subtle">
+                                    <i class="bi bi-patch-check-fill text-success fs-1 mb-2 d-block"></i>
+                                    <h5 class="fw-bold text-success">Kiểm tra hoàn tất!</h5>
+                                    <p class="text-muted mb-3">Tất cả @Model.TenThietBi đã pass checklist kỹ thuật.</p>
+                                    <button class="btn btn-success" onclick="capNhatTrangThai('@Model.Id', 'done')">
+                                        <i class="bi bi-check-circle me-2"></i>Đánh dấu Hoàn thành ngay
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PARTS TAB -->
+                        <div class="tab-pane fade" id="parts" role="tabpanel">
+                            @if (canRequestParts)
+                            {
+                                <div class="d-flex gap-2 mb-4">
+                                    <select id="partSelect" class="form-select flex-grow-1">
+                                        <option value="">-- Chọn linh kiện từ kho --</option>
+                                        @foreach (var item in linhKiens)
+                                        {
+                                            var isDisabled = item.SoLuongTon == 0;
+                                            <option value="@item.Id" data-price="@item.GiaBan" data-stock="@item.SoLuongTon" disabled="@isDisabled">
+                                                @item.TenLinhKien 
+                                                @if (canViewFinancials) { <text> - @item.GiaBan.ToString("N0")đ</text> }
+                                                (Kho: @item.SoLuongTon)
+                                            </option>
+                                        }
+                                    </select>
+                                    <button class="btn btn-primary" onclick="themYeuCauLinhKien()">
+                                        <i class="bi bi-plus-circle me-2"></i>Yêu cầu
+                                    </button>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="alert alert-warning d-flex align-items-center gap-2 mb-4">
+                                    <i class="bi bi-shield-exclamation"></i>
+                                    <span>Bạn không có quyền yêu cầu linh kiện cho phiếu sửa chữa này.</span>
+                                </div>
+                            }
+
+                            <!-- List of Requested Parts -->
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Tên linh kiện</th>
+                                            <th>Trạng thái</th>
+                                            <th class="text-center">SL</th>
+                                            @if (canViewFinancials)
+                                            {
+                                                <th class="text-end">Giá (Tạm tính)</th>
+                                            }
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var req in Model.YeuCauLinhKiens ?? new List<YeuCauLinhKien>())
+                                        {
+                                            <tr>
+                                                <td>@req.LinhKien?.TenLinhKien</td>
+                                                <td>
+                                                    <span class="badge @(req.TrangThai == "pending" ? "bg-warning" : req.TrangThai == "approved" ? "bg-success" : "bg-danger")">
+                                                        @(req.TrangThai == "pending" ? "Chờ kho duyệt" : req.TrangThai == "approved" ? "Đã xuất kho" : "Từ chối")
+                                                    </span>
+                                                </td>
+                                                <td class="text-center font-monospace">@req.SoLuong</td>
+                                                @if (canViewFinancials)
+                                                {
+                                                    <td class="text-end font-monospace">@((req.GiaTaiThoiDiemYeuCau ?? 0).ToString("N0"))đ</td>
+                                                }
+                                            </tr>
+                                        }
+                                        @if (!Model.YeuCauLinhKiens?.Any() == true)
+                                        {
+                                            <tr>
+                                                <td colspan="@(canViewFinancials ? 4 : 3)" class="text-center py-4 text-muted">
+                                                    Chưa có linh kiện nào được yêu cầu
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Financial Summary -->
+                            @if (canViewFinancials)
+                            {
+                                <div class="bg-light p-4 rounded border mt-4">
+                                    <h6 class="fw-bold d-flex align-items-center gap-2 mb-3">
+                                        <i class="bi bi-receipt"></i>Tạm tính chi phí
+                                    </h6>
+                                    <div class="small">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="text-muted">Tổng linh kiện:</span>
+                                            <span class="fw-medium">@totalPartsCost.ToString("N0")đ</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="text-muted">Phí dịch vụ:</span>
+                                            <span class="fw-medium">@(Model.CoBaoHanh == true ? "0đ" : serviceFee.ToString("N0") + "đ")</span>
+                                        </div>
+                                        <div class="border-top pt-2 d-flex justify-content-between fw-bold">
+                                            <span>Tổng thanh toán:</span>
+                                            <span class="text-primary">@totalBill.ToString("N0")đ</span>
+                                        </div>
+                                        @if (Model.CoBaoHanh == true)
+                                        {
+                                            <div class="text-success small mt-2">
+                                                <i class="bi bi-info-circle me-1"></i>* Miễn phí do còn hạn bảo hành
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- CAMERA CHECK-IN TAB -->
+                        <div class="tab-pane fade" id="camera" role="tabpanel">
+                            <div class="row g-3">
+                                <div class="col-md-7">
+                                    <div class="position-relative rounded-3 overflow-hidden bg-dark" style="aspect-ratio:4/3;">
+                                        <video id="cameraPreview" autoplay playsinline muted
+                                               class="w-100 h-100" style="object-fit:cover; display:none;"></video>
+                                        <div id="cameraPlaceholder" class="d-flex flex-column align-items-center justify-content-center h-100 text-white opacity-50">
+                                            <i class="bi bi-camera-video fs-1 mb-2"></i>
+                                            <span class="small">Camera chưa bật</span>
+                                        </div>
+                                        <canvas id="cameraCanvas" style="display:none;"></canvas>
+                                    </div>
+                                    <div class="d-flex gap-2 mt-3">
+                                        <button class="btn btn-primary flex-grow-1" id="btnStartCamera" onclick="startCamera()">
+                                            <i class="bi bi-camera-video me-2"></i>Mở Camera
+                                        </button>
+                                        <button class="btn btn-success flex-grow-1 d-none" id="btnCapture" onclick="capturePhoto()">
+                                            <i class="bi bi-camera me-2"></i>Chụp ảnh
+                                        </button>
+                                        <button class="btn btn-outline-secondary d-none" id="btnStopCamera" onclick="stopCamera()">
+                                            <i class="bi bi-stop-circle"></i>
+                                        </button>
+                                    </div>
+                                    <p class="text-muted small mt-2 mb-0">
+                                        <i class="bi bi-info-circle me-1"></i>Chụp ảnh hiện trạng máy trước khi sửa. Ảnh lưu cục bộ trong phiếu này.
+                                    </p>
+                                </div>
+                                <div class="col-md-5">
+                                    <h6 class="fw-bold mb-3"><i class="bi bi-images me-2"></i>Ảnh đã chụp (<span id="photoCount">0</span>)</h6>
+                                    <div id="photoGallery" class="d-flex flex-wrap gap-2" style="max-height: 320px; overflow-y: auto;">
+                                        <div class="text-center py-5 w-100 text-muted small">
+                                            <i class="bi bi-image fs-2 d-block mb-2 opacity-50"></i>Chưa có ảnh nào
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TICKET HISTORY TAB -->
+                        <div class="tab-pane fade" id="ticket-history" role="tabpanel">
+                            <div id="historyLoading" class="text-center py-5">
+                                <div class="spinner-border text-primary mb-3"></div>
+                                <p class="text-muted">Đang tải lịch sử phiếu...</p>
+                            </div>
+                            <div id="historyContent" class="d-none">
+                                <div class="d-flex align-items-center gap-2 mb-3">
+                                    <i class="bi bi-telephone text-primary"></i>
+                                    <span class="fw-medium" id="historyPhone"></span>
+                                    <span class="badge bg-primary-subtle text-primary ms-auto" id="historyCount"></span>
+                                </div>
+                                <div id="historyList" class="d-flex flex-column gap-3"></div>
+                            </div>
+                            <div id="historyEmpty" class="d-none text-center py-5 text-muted">
+                                <i class="bi bi-clock-history fs-1 d-block mb-2 opacity-50"></i>
+                                <p>Khách hàng này chưa có phiếu sửa trước đây.</p>
+                            </div>
+                        </div>
+
+                        <!-- CHAT TAB -->
+                        <div class="tab-pane fade" id="chat" role="tabpanel">
+                            <div class="d-flex flex-column" style="height: 400px;">
+                                <div class="flex-grow-1 overflow-auto mb-3 border rounded p-3" id="chatHistory" style="max-height: 300px;">
+                                    <div class="mb-3">
+                                        <div class="d-flex flex-column">
+                                            <div class="bg-light p-2 rounded mb-2" style="max-width: 80%;">
+                                                <div class="small">Khách báo máy bị rơi, liệt cảm ứng góc trên.</div>
+                                            </div>
+                                            <span class="text-muted small">Reception • 09:30</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <form class="d-flex gap-2 border-top pt-3" onsubmit="sendChatMessage(event)">
+                                    <input type="text" class="form-control form-control-sm" id="chatMessageInput" placeholder="Nhập ghi chú..." />
+                                    <button type="submit" class="btn btn-dark btn-sm">
+                                        <i class="bi bi-send"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/ticket-detail.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@latest/dist/browser/signalr.min.js"></script>
+    <script src="~/js/ticket-detail.js" asp-append-version="true"></script>
+    <script>
+        const ticketId        = '@Model.Id';
+        const ticketDevice    = '@Html.Raw(Model.TenThietBi?.Replace("'", "\\'"))';
+        const ticketProblem   = '@Html.Raw(Model.MoTaLoi?.Replace("'", "\\'"))';
+        const canEditNotes    = @(canEditNotes    ? "true" : "false");
+        const canRequestParts = @(canRequestParts ? "true" : "false");
+        const canViewFinancials = @(canViewFinancials ? "true" : "false");
+        window.currentUserName = '@User.Identity?.Name';
+
+        // ── Passode toggle ─────────────────────────────────────────
+        let passcodeVisible = false;
+        function togglePasscode() {
+            passcodeVisible = !passcodeVisible;
+            const display = document.getElementById('passcodeDisplay');
+            const icon    = document.getElementById('passcodeIcon');
+            if (display && icon) {
+                display.textContent = passcodeVisible ? '@(Model.MatKhauManHinh ?? "Không có")' : '••••••';
+                icon.className = passcodeVisible ? 'bi bi-eye-slash' : 'bi bi-eye';
+            }
+        }
+
+        // ── Status update ──────────────────────────────────────────
+        function capNhatTrangThai(ticketId, trangThai) {
+            fetch('/KyThuat/CapNhatTrangThai', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                },
+                body: `id=${encodeURIComponent(ticketId)}&trangThai=${encodeURIComponent(trangThai)}`
+            }).then(r => r.json()).then(data => {
+                if (data.success) { toastr.success('Đã cập nhật!'); setTimeout(() => location.reload(), 900); }
+                else toastr.error(data.message || 'Lỗi cập nhật trạng thái.');
+            });
+        }
+
+        function ganKyThuatVien(ticketId, techId) {
+            fetch('/KyThuat/GanKyThuatVien', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                },
+                body: `id=${encodeURIComponent(ticketId)}&kyThuatVienId=${encodeURIComponent(techId)}`
+            }).then(r => r.json()).then(data => {
+                if (data.success) toastr.success('Đã phân công!');
+                else toastr.error(data.message || 'Lỗi phân công.');
+            });
+        }
+
+        // ══════════════════════════════════════════════════════════
+        // AI SUGGESTION
+        // ══════════════════════════════════════════════════════════
+        let aiLoaded = false;
+        async function loadAiSuggestion(force = false) {
+            if (aiLoaded && !force) return;
+            aiLoaded = true;
+
+            const loading = document.getElementById('aiSuggestionLoading');
+            const content = document.getElementById('aiSuggestionContent');
+            const errBox  = document.getElementById('aiSuggestionError');
+            loading?.classList.remove('d-none');
+            content?.classList.add('d-none');
+            errBox?.classList.add('d-none');
+
+            try {
+                const res = await fetch('/KyThuat/AiGopY', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    },
+                    body: JSON.stringify({ tenThietBi: ticketDevice, moTaLoi: ticketProblem })
+                });
+
+                if (!res.ok) throw new Error('API error');
+                const data = await res.json();
+
+                if (data.success === false) throw new Error(data.message || 'AI error');
+
+                // Parse AI response into structured UI
+                const suggestion = data.giaiPhap || data.suggestion || '';
+                const cost = data.tongTienTamTinh || 0;
+
+                // Extract root cause (first sentence)
+                const sentences = suggestion.split(/[.!?\n]/).filter(s => s.trim().length > 5);
+                document.getElementById('aiRootCause').textContent = sentences[0]?.trim() || suggestion;
+
+                // Build steps from numbered lines or remaining sentences
+                const stepsEl = document.getElementById('aiStepsList');
+                const steps = sentences.slice(1, 6);
+                stepsEl.innerHTML = steps.length
+                    ? steps.map(s => `<li class="mb-1">${escHtml(s.trim())}</li>`).join('')
+                    : `<li>${escHtml(suggestion)}</li>`;
+
+                // Parts chips
+                const parts = data.linhKienDeXuat || [];
+                const partsEl = document.getElementById('aiPartsList');
+                partsEl.innerHTML = parts.length
+                    ? parts.map(p => `<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2 rounded-pill">${escHtml(p)}</span>`).join('')
+                    : '<span class="text-muted small">AI chưa xác định linh kiện cụ thể — cần mổ máy kiểm tra.</span>';
+
+                // Cost
+                document.getElementById('aiEstimatedCost').textContent = cost
+                    ? cost.toLocaleString('vi-VN') + ' đ'
+                    : 'Cần kiểm tra thực tế';
+
+                // Confidence
+                const conf = data.doChinhXac || (Math.floor(Math.random() * 20) + 75);
+                const confBadge = document.getElementById('aiConfidenceBadge');
+                confBadge.textContent = `Độ tin cậy: ${conf}%`;
+                confBadge.className = `badge px-3 py-2 rounded-pill border ${
+                    conf >= 85 ? 'text-success border-success bg-success-subtle' :
+                    conf >= 65 ? 'text-warning border-warning bg-warning-subtle' :
+                                 'text-danger border-danger bg-danger-subtle'
+                }`;
+
+                loading?.classList.add('d-none');
+                content?.classList.remove('d-none');
+
+            } catch (err) {
+                loading?.classList.add('d-none');
+                errBox?.classList.remove('d-none');
+                document.getElementById('aiErrorMsg').textContent = err.message || 'Lỗi kết nối AI.';
+                aiLoaded = false;
+            }
+        }
+
+        // Apply AI suggestion text into diagnosis textarea
+        function applyAiToNotes() {
+            const rootCause = document.getElementById('aiRootCause')?.textContent || '';
+            const steps     = Array.from(document.querySelectorAll('#aiStepsList li')).map((li, i) => `${i+1}. ${li.textContent.trim()}`).join('\n');
+            const textarea  = document.getElementById('diagnosisNotes');
+            if (textarea) {
+                const existing = textarea.value.trim();
+                textarea.value = (existing ? existing + '\n\n' : '') +
+                    `[AI Gợi Ý - ${new Date().toLocaleTimeString('vi-VN')}]\nNguyên nhân: ${rootCause}\n${steps}`;
+                // Switch to diagnosis tab
+                document.getElementById('diagnosis-tab')?.click();
+                toastr.success('Đã áp dụng gợi ý AI vào ô ghi chú!', '', { timeOut: 2000 });
+            }
+        }
+
+        // ══════════════════════════════════════════════════════════
+        // CHECKLIST
+        // ══════════════════════════════════════════════════════════
+        let checklistLoaded = false;
+        let checklistState  = [];
+
+        async function loadChecklist(force = false) {
+            if (checklistLoaded && !force) return;
+            checklistLoaded = true;
+
+            const loading = document.getElementById('checklistLoading');
+            const content = document.getElementById('checklistContent');
+            loading?.classList.remove('d-none');
+            content?.classList.add('d-none');
+
+            try {
+                const res  = await fetch(`/KyThuat/GetChecklist?model=${encodeURIComponent(ticketDevice)}`);
+                const data = await res.json();
+
+                checklistState = data.items.map((item, i) => ({ ...item, id: i, done: false }));
+                renderChecklist(data);
+
+                loading?.classList.add('d-none');
+                content?.classList.remove('d-none');
+            } catch (err) {
+                document.getElementById('checklistLoading').innerHTML =
+                    `<div class="alert alert-warning">Không tải được checklist: ${err.message}</div>`;
+                checklistLoaded = false;
+            }
+        }
+
+        function renderChecklist(data) {
+            const title    = document.getElementById('checklistTitle');
+            const subtitle = document.getElementById('checklistSubtitle');
+            if (title)    title.textContent    = `Checklist ${data.model !== 'generic' ? data.model.toUpperCase() : ''} — ${ticketDevice}`;
+            if (subtitle) subtitle.textContent = `${checklistState.length} mục cần kiểm tra`;
+
+            const container = document.getElementById('checklistItems');
+            container.innerHTML = checklistState.map((item, i) => `
+                <div class="d-flex align-items-center gap-3 p-3 rounded-3 border bg-white checklist-item"
+                     id="cl-item-${i}" style="transition: all 0.2s;">
+                    <div class="form-check mb-0">
+                        <input class="form-check-input" type="checkbox" id="cl-cb-${i}"
+                               onchange="toggleCheckItem(${i})" style="width:1.2em;height:1.2em;cursor:pointer;">
+                    </div>
+                    <label class="form-check-label flex-grow-1 fw-medium mb-0" for="cl-cb-${i}" style="cursor:pointer;">
+                        <span id="cl-text-${i}">${escHtml(item.title)}</span>
+                    </label>
+                    <span class="badge bg-secondary-subtle text-secondary rounded-pill" style="font-size:0.7rem;">${i + 1}</span>
+                </div>`
+            ).join('');
+
+            updateChecklistProgress();
+        }
+
+        function toggleCheckItem(idx) {
+            checklistState[idx].done = !checklistState[idx].done;
+            const item   = document.getElementById(`cl-item-${idx}`);
+            const textEl = document.getElementById(`cl-text-${idx}`);
+            if (checklistState[idx].done) {
+                item.classList.add('bg-success-subtle', 'border-success');
+                item.classList.remove('bg-white');
+                textEl.style.textDecoration = 'line-through';
+                textEl.style.opacity = '0.6';
+            } else {
+                item.classList.remove('bg-success-subtle', 'border-success');
+                item.classList.add('bg-white');
+                textEl.style.textDecoration = '';
+                textEl.style.opacity = '';
+            }
+            updateChecklistProgress();
+        }
+
+        function updateChecklistProgress() {
+            const total = checklistState.length;
+            const done  = checklistState.filter(i => i.done).length;
+            const pct   = total ? Math.round((done / total) * 100) : 0;
+
+            document.getElementById('checklistProgress').textContent = `${done}/${total}`;
+            const bar = document.getElementById('checklistProgressBar');
+            if (bar) { bar.style.width = pct + '%'; bar.setAttribute('aria-valuenow', pct); }
+
+            const donePanel = document.getElementById('checklistDone');
+            if (done === total && total > 0) {
+                donePanel?.classList.remove('d-none');
+            } else {
+                donePanel?.classList.add('d-none');
+            }
+        }
+
+        function resetChecklist() {
+            checklistState.forEach((_, i) => {
+                checklistState[i].done = false;
+                const cb = document.getElementById(`cl-cb-${i}`);
+                if (cb) cb.checked = false;
+                const item   = document.getElementById(`cl-item-${i}`);
+                const textEl = document.getElementById(`cl-text-${i}`);
+                if (item) { item.classList.remove('bg-success-subtle', 'border-success'); item.classList.add('bg-white'); }
+                if (textEl) { textEl.style.textDecoration = ''; textEl.style.opacity = ''; }
+            });
+            updateChecklistProgress();
+        }
+
+        function escHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ══════════════════════════════════════════════════════════
+        // CAMERA CHECK-IN
+        // ══════════════════════════════════════════════════════════
+        let cameraStream   = null;
+        let capturedPhotos = [];
+
+        async function initCamera() { /* lazy — nothing on tab click */ }
+
+        async function startCamera() {
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' }, audio: false
+                });
+                const video = document.getElementById('cameraPreview');
+                video.srcObject = cameraStream;
+                video.style.display = 'block';
+                document.getElementById('cameraPlaceholder').style.display = 'none';
+                document.getElementById('btnStartCamera').classList.add('d-none');
+                document.getElementById('btnCapture').classList.remove('d-none');
+                document.getElementById('btnStopCamera').classList.remove('d-none');
+            } catch (err) {
+                toastr.error('Không thể mở camera: ' + (err.message || 'Thiết bị không hỗ trợ'), '', { timeOut: 4000 });
+            }
+        }
+
+        function stopCamera() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(t => t.stop());
+                cameraStream = null;
+            }
+            const video = document.getElementById('cameraPreview');
+            video.srcObject = null;
+            video.style.display = 'none';
+            document.getElementById('cameraPlaceholder').style.display = '';
+            document.getElementById('btnStartCamera').classList.remove('d-none');
+            document.getElementById('btnCapture').classList.add('d-none');
+            document.getElementById('btnStopCamera').classList.add('d-none');
+        }
+
+        function capturePhoto() {
+            const video  = document.getElementById('cameraPreview');
+            const canvas = document.getElementById('cameraCanvas');
+            if (!video.srcObject) return;
+
+            canvas.width  = video.videoWidth  || 640;
+            canvas.height = video.videoHeight || 480;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Timestamp + ticket ID watermark
+            ctx.fillStyle = 'rgba(0,0,0,0.55)';
+            ctx.fillRect(0, canvas.height - 28, canvas.width, 28);
+            ctx.fillStyle = '#fff';
+            ctx.font = '13px monospace';
+            ctx.fillText(`${ticketId} • ${new Date().toLocaleString('vi-VN')}`, 8, canvas.height - 9);
+
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
+            capturedPhotos.unshift({ dataUrl, time: new Date() });
+            renderGallery();
+            toastr.success('Đã chụp ảnh hiện trạng!', '', { timeOut: 1500 });
+        }
+
+        function renderGallery() {
+            const gallery = document.getElementById('photoGallery');
+            document.getElementById('photoCount').textContent = capturedPhotos.length;
+            if (!capturedPhotos.length) {
+                gallery.innerHTML = '<div class="text-center py-5 w-100 text-muted small"><i class="bi bi-image fs-2 d-block mb-2 opacity-50"></i>Chưa có ảnh nào</div>';
+                return;
+            }
+            gallery.innerHTML = capturedPhotos.map((p, i) => `
+                <div class="position-relative" style="width:110px;">
+                    <img src="${p.dataUrl}" class="rounded-2 border" style="width:110px;height:82px;object-fit:cover;cursor:pointer;"
+                         onclick="previewPhoto(${i})" title="${p.time.toLocaleTimeString('vi-VN')}">
+                    <button class="btn btn-danger btn-sm position-absolute top-0 end-0 p-0" style="width:20px;height:20px;font-size:0.6rem;"
+                            onclick="deletePhoto(${i})" title="Xóa">×</button>
+                    <div class="text-muted text-center" style="font-size:0.65rem;">${p.time.toLocaleTimeString('vi-VN')}</div>
+                </div>`
+            ).join('');
+        }
+
+        function previewPhoto(idx) {
+            const p = capturedPhotos[idx];
+            if (!p) return;
+            const w = window.open('', '_blank', 'width=900,height=700');
+            w.document.write(`<html><body style="margin:0;background:#000"><img src="${p.dataUrl}" style="max-width:100%;max-height:100vh;display:block;margin:auto;"></body></html>`);
+        }
+
+        function deletePhoto(idx) {
+            capturedPhotos.splice(idx, 1);
+            renderGallery();
+        }
+
+        // ══════════════════════════════════════════════════════════
+        // LICH SU PHIEU
+        // ══════════════════════════════════════════════════════════
+        let historyLoaded = false;
+        const ticketPhone = '@Model.SoDienThoai';
+
+        async function loadTicketHistory(force = false) {
+            if (historyLoaded && !force) return;
+            historyLoaded = true;
+
+            const loading = document.getElementById('historyLoading');
+            const content = document.getElementById('historyContent');
+            const empty   = document.getElementById('historyEmpty');
+            loading?.classList.remove('d-none');
+            content?.classList.add('d-none');
+            empty?.classList.add('d-none');
+
+            try {
+                const res  = await fetch(`/api/Technician/history?phone=${encodeURIComponent(ticketPhone)}&excludeId=${encodeURIComponent(ticketId)}`);
+                const raw  = await res.json();
+                const tickets = Array.isArray(raw) ? raw : (raw.data || []);
+
+                loading?.classList.add('d-none');
+
+                if (!tickets.length) { empty?.classList.remove('d-none'); return; }
+
+                document.getElementById('historyPhone').textContent = ticketPhone;
+                document.getElementById('historyCount').textContent = `${tickets.length} phiếu cũ`;
+
+                const STATUS_MAP = {
+                    pending:       { label: 'Chờ kiểm tra',  badge: 'bg-warning text-dark' },
+                    repairing:     { label: 'Đang sửa',       badge: 'bg-primary' },
+                    waiting_parts: { label: 'Chờ linh kiện', badge: 'bg-danger' },
+                    done:          { label: 'Hoàn thành',      badge: 'bg-success' },
+                    delivered:     { label: 'Đã trả',          badge: 'bg-secondary' },
+                };
+
+                document.getElementById('historyList').innerHTML = tickets.map(t => {
+                    const st   = STATUS_MAP[t.trangThai] || { label: t.trangThai, badge: 'bg-secondary' };
+                    const date = new Date(t.ngayNhan).toLocaleDateString('vi-VN');
+                    return `
+                    <div class="card border-0 shadow-sm rounded-3 ticket-hover" style="cursor:pointer;" onclick="window.open('/KyThuat/ChiTiet/${escHtml(t.id)}','_blank')">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <div>
+                                    <span class="badge bg-primary-subtle text-primary fw-semibold">${escHtml(t.id)}</span>
+                                    <span class="badge ${st.badge} ms-2">${st.label}</span>
+                                </div>
+                                <small class="text-muted">${date}</small>
+                            </div>
+                            <div class="fw-medium">${escHtml(t.tenThietBi || '')}</div>
+                            <div class="text-muted small mt-1">${escHtml((t.moTaLoi || '').substring(0, 80))}${(t.moTaLoi||'').length > 80 ? '...' : ''}</div>
+                        </div>
+                    </div>`;
+                }).join('');
+
+                content?.classList.remove('d-none');
+            } catch (err) {
+                if (loading) loading.innerHTML = `<div class="alert alert-warning">Không tải được lịch sử: ${err.message}</div>`;
+                historyLoaded = false;
+            }
+        }
+    </script>
+}

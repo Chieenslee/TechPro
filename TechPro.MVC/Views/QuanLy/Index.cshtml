@@ -1,0 +1,338 @@
+@model TechPro.Models.DashboardViewModel
+@{
+    ViewData["Title"] = "Báo cáo & Hiệu suất";
+    var totalRevenue = Model.TotalRevenue;
+    var revenueChange = Model.RevenueChange;
+    var totalTickets = Model.TotalTickets;
+    var thisMonthTickets = Model.ThisMonthTickets;
+    var revenueData = Model.RevenueData;
+}
+
+<div class="mb-4">
+    <h2 class="fw-bold">Báo cáo & Hiệu suất</h2>
+    <p class="text-muted mb-0">Tổng quan tình hình kinh doanh và cảnh báo rủi ro.</p>
+</div>
+
+<!-- Stat Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-muted small mb-1">Tổng doanh thu (Tháng)</p>
+                        <h3 class="fw-bold mb-2">@totalRevenue.ToString("N0") ₫</h3>
+                        <div class="d-flex align-items-center gap-1 text-success small">
+                            <i class="bi bi-arrow-up"></i>
+                            <span>@revenueChange.ToString("F1")% so với tháng trước</span>
+                        </div>
+                    </div>
+                    <div class="bg-primary bg-opacity-10 p-3 rounded">
+                        <i class="bi bi-currency-dollar text-primary fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-muted small mb-1">Tổng phiếu tiếp nhận</p>
+                        <h3 class="fw-bold mb-2">@totalTickets</h3>
+                        <div class="text-muted small">
+                            <span>Trung bình @(thisMonthTickets / DateTime.Now.Day) phiếu/ngày</span>
+                        </div>
+                    </div>
+                    <div class="bg-purple bg-opacity-10 p-3 rounded">
+                        <i class="bi bi-file-text text-purple fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-muted small mb-1">Tỷ lệ bảo hành / quay lại</p>
+                        <h3 class="fw-bold mb-2">2.4%</h3>
+                        <div class="d-flex align-items-center gap-1 text-success small">
+                            <i class="bi bi-arrow-down"></i>
+                            <span>Giảm 0.8% so với tháng trước</span>
+                        </div>
+                    </div>
+                    <div class="bg-warning bg-opacity-10 p-3 rounded">
+                        <i class="bi bi-arrow-repeat text-warning fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="fw-semibold mb-0">Doanh thu 7 ngày gần nhất</h5>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-secondary active" onclick="changeChartPeriod('7days')">7 ngày</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="changeChartPeriod('30days')">30 ngày</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="changeChartPeriod('90days')">90 ngày</button>
+                    </div>
+                </div>
+                <canvas id="revenueChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h5 class="fw-semibold mb-4">Trạng thái phiếu</h5>
+                <canvas id="statusChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Advanced Analytics -->
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h5 class="fw-semibold mb-4">Top linh kiện bán chạy</h5>
+                <canvas id="topPartsChart" height="150"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h5 class="fw-semibold mb-4">Hiệu suất kỹ thuật viên</h5>
+                <canvas id="technicianChart" height="150"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+@using System.Text.Json
+@{
+    var statusData = Model.StatusData;
+    var topParts = Model.TopParts;
+    var techPerformance = Model.TechPerformance;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold">Báo cáo & Hiệu suất</h2>
+        <p class="text-muted mb-0">Tổng quan tình hình kinh doanh và cảnh báo rủi ro.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary btn-sm" onclick="exportRevenue()">
+            <i class="bi bi-file-earmark-excel me-2"></i>Xuất Excel
+        </button>
+        <button class="btn btn-outline-danger btn-sm" onclick="printReport()">
+            <i class="bi bi-printer me-2"></i>In báo cáo
+        </button>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/manager.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script src="~/js/manager.js" asp-append-version="true"></script>
+    <script>
+        const revenueData = @Html.Raw(JsonSerializer.Serialize(revenueData));
+        const statusData = @Html.Raw(JsonSerializer.Serialize(statusData));
+        const topParts = @Html.Raw(JsonSerializer.Serialize(topParts));
+        const techPerformance = @Html.Raw(JsonSerializer.Serialize(techPerformance));
+        
+        let revenueChart, statusChart, topPartsChart, technicianChart;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            initRevenueChart();
+            initStatusChart();
+            initTopPartsChart();
+            initTechnicianChart();
+        });
+
+        function initRevenueChart() {
+            const ctx = document.getElementById('revenueChart');
+            if (ctx) {
+                revenueChart = new Chart(ctx.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: revenueData.map(d => d.Name),
+                        datasets: [{
+                            label: 'Doanh thu (VNĐ)',
+                            data: revenueData.map(d => d.Value),
+                            backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            borderWidth: 2,
+                            borderRadius: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return (context.parsed.y / 1000000).toFixed(1) + 'M ₫';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return (value / 1000000).toFixed(0) + 'M';
+                                    }
+                                },
+                                grid: { display: false }
+                            },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+            }
+        }
+
+        function initStatusChart() {
+            const ctx = document.getElementById('statusChart');
+            if (ctx && statusData && statusData.length > 0) {
+                const statusLabels = {
+                    'pending': 'Chờ sửa',
+                    'repairing': 'Đang sửa',
+                    'waiting_parts': 'Chờ linh kiện',
+                    'done': 'Hoàn tất',
+                    'delivered': 'Đã trả'
+                };
+                
+                statusChart = new Chart(ctx.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: statusData.map(s => statusLabels[s.Status] || s.Status),
+                        datasets: [{
+                            data: statusData.map(s => s.Count),
+                            backgroundColor: [
+                                'rgba(255, 193, 7, 0.8)',
+                                'rgba(13, 110, 253, 0.8)',
+                                'rgba(255, 152, 0, 0.8)',
+                                'rgba(25, 135, 84, 0.8)',
+                                'rgba(108, 117, 125, 0.8)'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        }
+                    }
+                });
+            }
+        }
+
+        function initTopPartsChart() {
+            const ctx = document.getElementById('topPartsChart');
+            if (ctx && topParts && topParts.length > 0) {
+                topPartsChart = new Chart(ctx.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: topParts.map(p => p.PartName),
+                        datasets: [{
+                            label: 'Số lượng',
+                            data: topParts.map(p => p.Quantity),
+                            backgroundColor: 'rgba(147, 51, 234, 0.5)',
+                            borderColor: 'rgba(147, 51, 234, 1)',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        indexAxis: 'y',
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+            }
+        }
+
+        function initTechnicianChart() {
+            const ctx = document.getElementById('technicianChart');
+            if (ctx && techPerformance && techPerformance.length > 0) {
+                technicianChart = new Chart(ctx.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: techPerformance.map(t => t.TechName),
+                        datasets: [{
+                            label: 'Hoàn thành',
+                            data: techPerformance.map(t => t.Completed),
+                            backgroundColor: 'rgba(34, 197, 94, 0.5)',
+                            borderColor: 'rgba(34, 197, 94, 1)',
+                            borderWidth: 2
+                        }, {
+                            label: 'Tổng',
+                            data: techPerformance.map(t => t.Total),
+                            backgroundColor: 'rgba(156, 163, 175, 0.5)',
+                            borderColor: 'rgba(156, 163, 175, 1)',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        }
+                    }
+                });
+            }
+        }
+
+        function changeChartPeriod(period) {
+            document.querySelectorAll('.btn-group button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            toastr.info('Đang tải dữ liệu ' + period);
+        }
+
+        function exportRevenue() {
+            const fromDate = new Date();
+            fromDate.setDate(fromDate.getDate() - 30);
+            const toDate = new Date();
+            window.location.href = `/Export/ExportRevenueExcel?fromDate=${fromDate.toISOString().split('T')[0]}&toDate=${toDate.toISOString().split('T')[0]}`;
+        }
+
+        function printReport() {
+            window.print();
+        }
+    </script>
+    
+    <style>
+        @@media print {
+            .sidebar, .header, .btn, nav { display: none !important; }
+            .main-content { margin-left: 0 !important; }
+            .card { border: 1px solid #000 !important; page-break-inside: avoid; }
+        }
+    </style>
+}
+

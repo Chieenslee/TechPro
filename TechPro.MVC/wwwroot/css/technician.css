@@ -1,0 +1,57 @@
+/* Technician Page CSS - Kanban Board Style */
+
+.space-y-6 > * + * {
+    margin-top: 1.5rem;
+}
+
+.ticket-card {
+    transition: all 0.2s;
+    border: 1px solid #e2e8f0;
+}
+
+.ticket-card:hover {
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    transform: translateY(-2px);
+}
+
+/* Kanban column styles */
+.card-body.overflow-auto {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.card-body.overflow-auto::-webkit-scrollbar {
+    width: 6px;
+}
+
+.card-body.overflow-auto::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+.card-body.overflow-auto::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.card-body.overflow-auto::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Empty state */
+.border-dashed {
+    border-style: dashed;
+}
+
+/* Status colors */
+.bg-warning {
+    background-color: #fbbf24;
+}
+
+.bg-info {
+    background-color: #3b82f6;
+}
+
+.bg-success {
+    background-color: #22c55e;
+}
+

@@ -1,0 +1,150 @@
+@{
+    ViewData["Title"] = "Trả máy";
+    var tickets = ViewBag.Tickets as IEnumerable<PhieuSuaChua> ?? new List<PhieuSuaChua>();
+    var searchTerm = ViewBag.SearchTerm as string ?? "";
+    var status = ViewBag.Status as string ?? "";
+}
+
+<div class="mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold">Trả máy</h2>
+            <p class="text-muted mb-0">Danh sách thiết bị đã sửa xong, sẵn sàng trả khách.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" action="@Url.Action("Index")" class="row g-3">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-white">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" class="form-control" name="searchTerm" value="@searchTerm" placeholder="Tìm theo tên, SĐT, mã phiếu..." />
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" name="status">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="done" selected="@(status == "done")">Hoàn thành</option>
+                    <option value="delivered" selected="@(status == "delivered")">Đã trả</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search me-2"></i>Tìm kiếm
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tickets Table -->
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Mã phiếu</th>
+                        <th>Khách hàng</th>
+                        <th>Thiết bị</th>
+                        <th>Ngày nhận</th>
+                        <th>Kỹ thuật viên</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var ticket in tickets)
+                    {
+                        <tr>
+                            <td>
+                                <a href="@Url.Action("ChiTiet", new { id = ticket.Id })" class="text-decoration-none fw-semibold">
+                                    @ticket.Id
+                                </a>
+                            </td>
+                            <td>
+                                <div>@ticket.TenKhachHang</div>
+                                <small class="text-muted">@ticket.SoDienThoai</small>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-phone text-muted"></i>
+                                    <span>@ticket.TenThietBi</span>
+                                </div>
+                                @if (!string.IsNullOrEmpty(ticket.SerialNumber))
+                                {
+                                    <small class="text-muted">SN: @ticket.SerialNumber</small>
+                                }
+                            </td>
+                            <td>@ticket.NgayNhan.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@(ticket.KyThuatVien?.TenDayDu ?? "N/A")</td>
+                            <td>
+                                <span class="badge bg-@(ticket.TrangThai == "done" ? "success" : "info")">
+                                    @(ticket.TrangThai == "done" ? "Hoàn thành" : "Đã trả")
+                                </span>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <a href="@Url.Action("ChiTiet", new { id = ticket.Id })" class="btn btn-sm btn-outline-primary" title="Xem chi tiết">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    @if (ticket.TrangThai == "done")
+                                    {
+                                        <button class="btn btn-sm btn-success" onclick="xacNhanTra('@ticket.Id')" title="Xác nhận trả máy">
+                                            <i class="bi bi-check-circle me-1"></i>Trả máy
+                                        </button>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    @if (!tickets.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                <p class="mb-0">Không có thiết bị nào sẵn sàng trả</p>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function xacNhanTra(ticketId) {
+            if (!confirm('Xác nhận trả máy cho khách hàng?')) {
+                return;
+            }
+
+            $.ajax({
+                url: '@Url.Action("XacNhanTra")',
+                type: 'POST',
+                data: { id: ticketId },
+                headers: {
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        toastr.success(response.message);
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        toastr.error(response.message);
+                    }
+                },
+                error: function() {
+                    toastr.error('Có lỗi xảy ra.');
+                }
+            });
+        }
+    </script>
+}
+

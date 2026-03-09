@@ -1,0 +1,358 @@
+@model TechPro.Models.ViewModels.WarrantyCheckViewModel
+@{
+    ViewData["Title"] = "Tra cứu bảo hành";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - TechPro Care</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        
+        @@keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @@keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        @@keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        @@keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+        
+        .animate-fade-in-up {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+        
+        .animate-scale-in {
+            animation: scaleIn 0.6s ease-out forwards;
+        }
+        
+        .sticky-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        
+        .warranty-card {
+            background: white;
+            border-radius: 24px;
+            padding: 3rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .warranty-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 25px 30px -5px rgba(0, 0, 0, 0.15), 0 15px 15px -5px rgba(0, 0, 0, 0.06);
+        }
+        
+        .warranty-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 300px;
+            height: 300px;
+            background: linear-gradient(135deg, rgba(13, 110, 253, 0.1) 0%, rgba(79, 70, 229, 0.1) 100%);
+            border-radius: 50%;
+            transform: translate(30%, -30%);
+        }
+        
+        .warranty-card.valid::before {
+            background: linear-gradient(135deg, rgba(25, 135, 84, 0.1) 0%, rgba(20, 108, 67, 0.1) 100%);
+        }
+        
+        .warranty-card.invalid::before {
+            background: linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(176, 42, 55, 0.1) 100%);
+        }
+        
+        .warranty-icon {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 2rem;
+            font-size: 4rem;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .warranty-icon.valid {
+            background: linear-gradient(135deg, #198754 0%, #146c43 100%);
+            color: white;
+            box-shadow: 0 10px 25px rgba(25, 135, 84, 0.3);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        .warranty-icon.invalid {
+            background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
+            color: white;
+            box-shadow: 0 10px 25px rgba(220, 53, 69, 0.3);
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .status-badge.valid {
+            background: linear-gradient(135deg, #198754 0%, #146c43 100%);
+            color: white;
+            box-shadow: 0 10px 15px -3px rgba(25, 135, 84, 0.3);
+        }
+        
+        .status-badge.invalid {
+            background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
+            color: white;
+            box-shadow: 0 10px 15px -3px rgba(220, 53, 69, 0.3);
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .info-item {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 1.5rem;
+            border-radius: 16px;
+            border-left: 4px solid #0d6efd;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .info-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .info-item.valid {
+            border-left-color: #198754;
+        }
+        
+        .info-item.invalid {
+            border-left-color: #dc3545;
+        }
+        
+        .info-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .info-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #212529;
+        }
+        
+        .action-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            margin-top: 2rem;
+        }
+        
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #0d6efd 0%, #4f46e5 100%);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            box-shadow: 0 10px 15px -3px rgba(13, 110, 253, 0.3);
+            transition: all 0.3s;
+        }
+        
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 20px -3px rgba(13, 110, 253, 0.4);
+            color: white;
+        }
+        
+        @@media (max-width: 768px) {
+            .warranty-card {
+                padding: 2rem 1.5rem;
+                border-radius: 16px;
+            }
+            
+            .warranty-icon {
+                width: 100px;
+                height: 100px;
+                font-size: 3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sticky Header -->
+    <div class="sticky-top sticky-header px-4 py-3">
+        <div class="container-fluid">
+            <div class="d-flex align-items-center justify-content-between">
+                <a href="/" class="d-flex align-items-center gap-2 text-decoration-none text-dark fw-medium">
+                    <i class="bi bi-chevron-left fs-5"></i>
+                    <span class="d-none d-sm-inline">Quay lại trang chủ</span>
+                    <span class="d-sm-none">Quay lại</span>
+                </a>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="bg-primary text-white p-2 rounded">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <span class="fw-bold d-none d-sm-inline">TechPro Care</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                @if (Model != null)
+                {
+                    <div class="warranty-card @(Model.IsValid ? "valid" : "invalid") animate-fade-in-up">
+                        <div class="text-center position-relative" style="z-index: 10;">
+                            <div class="warranty-icon @(Model.IsValid ? "valid" : "invalid") animate-scale-in">
+                                <i class="bi bi-@(Model.IsValid ? "check-circle" : "exclamation-triangle")"></i>
+                            </div>
+                            
+                            <h1 class="display-4 fw-bold text-dark mb-3">@Model.Model</h1>
+                            
+                            <div class="status-badge @(Model.IsValid ? "valid" : "invalid")">
+                                @if (Model.IsValid)
+                                {
+                                    <i class="bi bi-check-circle me-2"></i>
+                                    <span>Còn hạn bảo hành</span>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    <span>Hết hạn bảo hành</span>
+                                }
+                            </div>
+                            
+                            <div class="info-grid">
+                                <div class="info-item @(Model.IsValid ? "valid" : "invalid")">
+                                    <div class="info-label">
+                                        <i class="bi bi-upc-scan me-1"></i>
+                                        Serial Number
+                                    </div>
+                                    <div class="info-value font-monospace">@Model.SerialNumber</div>
+                                </div>
+                                
+                                <div class="info-item @(Model.IsValid ? "valid" : "invalid")">
+                                    <div class="info-label">
+                                        <i class="bi bi-calendar-check me-1"></i>
+                                        Ngày mua
+                                    </div>
+                                    <div class="info-value">@Model.PurchaseDate</div>
+                                </div>
+                                
+                                <div class="info-item @(Model.IsValid ? "valid" : "invalid")">
+                                    <div class="info-label">
+                                        <i class="bi bi-calendar-x me-1"></i>
+                                        Ngày hết hạn
+                                    </div>
+                                    <div class="info-value">@Model.EndDate</div>
+                                </div>
+                            </div>
+                            
+                            <div class="action-card">
+                                <h3 class="fw-bold text-dark mb-3">
+                                    <i class="bi bi-info-circle text-primary me-2"></i>
+                                    Thông tin bảo hành
+                                </h3>
+                                <p class="text-muted mb-4">
+                                    @if (Model.IsValid)
+                                    {
+                                        <span>Thiết bị của bạn vẫn còn trong thời hạn bảo hành. Bạn có thể mang đến bất kỳ chi nhánh TechPro Care nào để được hỗ trợ sửa chữa miễn phí.</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Thiết bị của bạn đã hết thời hạn bảo hành. Bạn vẫn có thể mang đến TechPro Care để được tư vấn và sửa chữa với giá ưu đãi.</span>
+                                    }
+                                </p>
+                                
+                                <div class="d-flex flex-column flex-sm-row gap-3">
+                                    <a href="/Home/DatLich" class="btn btn-primary-custom flex-fill text-center text-decoration-none">
+                                        <i class="bi bi-calendar-check me-2"></i>
+                                        Đặt lịch sửa chữa
+                                    </a>
+                                    <a href="tel:19006868" class="btn btn-outline-primary flex-fill text-center text-decoration-none">
+                                        <i class="bi bi-phone me-2"></i>
+                                        Gọi hotline: 1900 6868
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="warranty-card animate-fade-in-up">
+                        <div class="text-center">
+                            <i class="bi bi-exclamation-triangle text-warning" style="font-size: 4rem;"></i>
+                            <h2 class="fw-bold text-dark mt-3 mb-2">Không tìm thấy thông tin</h2>
+                            <p class="text-muted mb-4">Không tìm thấy thông tin bảo hành với Serial Number này.</p>
+                            <a href="/" class="btn btn-primary">Quay lại trang chủ</a>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+

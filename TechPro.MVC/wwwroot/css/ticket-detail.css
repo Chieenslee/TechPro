@@ -1,0 +1,55 @@
+/* Ticket Detail Page CSS */
+
+.max-w-6xl {
+    max-width: 72rem;
+}
+
+.mx-auto {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.pb-10 {
+    padding-bottom: 2.5rem;
+}
+
+/* Tab styles */
+.nav-tabs-custom .nav-link {
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: #64748b;
+    font-weight: 500;
+    padding: 1rem;
+    transition: all 0.2s;
+}
+
+.nav-tabs-custom .nav-link:hover {
+    color: #1e293b;
+    border-bottom-color: #e2e8f0;
+}
+
+.nav-tabs-custom .nav-link.active {
+    color: #2563eb;
+    border-bottom-color: #2563eb;
+    background: white;
+}
+
+/* Chat styles */
+#chatHistory {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+#chatHistory::-webkit-scrollbar {
+    width: 6px;
+}
+
+#chatHistory::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+#chatHistory::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+

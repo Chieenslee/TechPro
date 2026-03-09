@@ -1,0 +1,6 @@
+@TechPro.API_HostAddress = http://localhost:5078
+
+GET {{TechPro.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

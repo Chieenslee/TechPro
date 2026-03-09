@@ -1,0 +1,127 @@
+@using System.Security.Claims
+
+@{
+    var user = User;
+    var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? "support";
+    
+    // Map ASP.NET roles to React roles
+    var reactRole = userRole switch
+    {
+        "SystemAdmin" => "system_admin",
+        "StoreAdmin" => "store_admin",
+        "Technician" => "technician",
+        "Support" => "support",
+        _ => "support"
+    };
+    
+    var menuItems = new List<dynamic>
+    {
+        // System Admin Menu (Chain Management)
+        new { Label = "Tổng quan mạng lưới", Path = "/Chain", Icon = "globe", Roles = new[] { "SystemAdmin" }, ReactIcon = "Globe" },
+        new { Label = "Quản lý cửa hàng", Path = "/Chain?tab=stores", Icon = "shop", Roles = new[] { "SystemAdmin" }, ReactIcon = "Store" },
+        new { Label = "Quản trị nhân sự", Path = "/Chain?tab=staff", Icon = "people", Roles = new[] { "SystemAdmin" }, ReactIcon = "Users" },
+        new { Label = "Kho tổng", Path = "/Chain?tab=inventory", Icon = "box", Roles = new[] { "SystemAdmin" }, ReactIcon = "Package" },
+        
+        // Store Admin / Staff Menu
+        new { Label = "Tổng quan", Path = "/QuanLy", Icon = "speedometer2", Roles = new[] { "StoreAdmin" }, ReactIcon = "LayoutDashboard" },
+        new { Label = "Tiếp nhận máy", Path = "/TiepNhan", Icon = "clipboard-check", Roles = new[] { "Support", "StoreAdmin" }, ReactIcon = "ClipboardList" },
+        new { Label = "Trả máy", Path = "/TraMay", Icon = "arrow-counterclockwise", Roles = new[] { "Support", "StoreAdmin" }, ReactIcon = "RotateCcw" },
+        new { Label = "Kỹ thuật", Path = "/KyThuat", Icon = "wrench", Roles = new[] { "Technician", "StoreAdmin", "Support" }, ReactIcon = "Wrench" },
+        new { Label = "Kho linh kiện", Path = "/Kho", Icon = "box", Roles = new[] { "Support", "StoreAdmin" }, ReactIcon = "Package" },
+        new { Label = "Báo cáo", Path = "/QuanLy/BaoCao", Icon = "graph-up", Roles = new[] { "StoreAdmin" }, ReactIcon = "BarChart3" },
+        new { Label = "Cấu hình cửa hàng", Path = "/QuanLy/CauHinh", Icon = "gear", Roles = new[] { "StoreAdmin" }, ReactIcon = "Settings" }
+    };
+    
+    var filteredMenuItems = menuItems.Where(item => 
+    {
+        var rolesArray = item.Roles as string[];
+        if (rolesArray == null) return false;
+        return Array.Exists(rolesArray, r => string.Equals(r, userRole, StringComparison.OrdinalIgnoreCase));
+    }).ToList();
+    
+    // Helper function to check active state
+    bool IsActive(string itemPath, string currentPath, string currentQuery)
+    {
+        if (userRole != "SystemAdmin")
+        {
+            return currentPath.Equals(itemPath, StringComparison.OrdinalIgnoreCase);
+        }
+        
+        // For System Admin using query params
+        if (itemPath == "/Chain")
+        {
+            return currentPath.Equals("/Chain", StringComparison.OrdinalIgnoreCase) && 
+                   (string.IsNullOrEmpty(currentQuery) || currentQuery.Contains("tab=overview"));
+        }
+        
+        return (currentPath + currentQuery).Equals(itemPath, StringComparison.OrdinalIgnoreCase);
+    }
+    
+    var currentPath = Context.Request.Path.Value ?? "";
+    var currentQuery = Context.Request.QueryString.Value ?? "";
+}
+
+<aside class="sidebar" id="sidebar" onclick="event.stopPropagation()">
+    <!-- Branding -->
+    <div class="sidebar-header">
+        <div class="sidebar-brand">
+            <div class="brand-icon @(userRole == "SystemAdmin" ? "system-admin" : "store-admin")">
+                <i data-lucide="@(userRole == "SystemAdmin" ? "network" : "store")" class="icon"></i>
+            </div>
+            <span class="brand-text">
+                @(userRole == "SystemAdmin" ? "TechPro Central" : "TechPro Store")
+            </span>
+        </div>
+    </div>
+    
+    <!-- Navigation -->
+    <nav class="sidebar-nav">
+        <div class="menu-section-label">Menu</div>
+        
+        @foreach (var item in filteredMenuItems)
+        {
+            var isActive = IsActive(item.Path, currentPath, currentQuery);
+            var iconClass = item.Icon switch
+            {
+                "globe" => "bi-globe",
+                "shop" => "bi-shop",
+                "people" => "bi-people",
+                "box" => "bi-box-seam",
+                "speedometer2" => "bi-speedometer2",
+                "clipboard-check" => "bi-clipboard-check",
+                "arrow-counterclockwise" => "bi-arrow-counterclockwise",
+                "wrench" => "bi-wrench",
+                "graph-up" => "bi-graph-up-arrow",
+                "gear" => "bi-gear",
+                _ => "bi-circle"
+            };
+            <a 
+                href="@item.Path" 
+                class="nav-link @(isActive ? "active" : "") @(userRole == "SystemAdmin" && isActive ? "system-admin" : "")"
+                onclick="toggleSidebar();"
+            >
+                <i class="bi @iconClass"></i>
+                <span>@item.Label</span>
+            </a>
+        }
+    </nav>
+    
+    <!-- Footer / Logout -->
+    <div class="sidebar-footer">
+        <form asp-controller="Account" asp-action="Logout" method="post" class="w-100">
+            <button type="submit" class="logout-btn">
+                <i data-lucide="log-out" class="icon"></i>
+                <span>Đăng xuất</span>
+            </button>
+        </form>
+    </div>
+</aside>
+
+<script>
+    // Initialize icons in sidebar after DOM loads
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    });
+</script>

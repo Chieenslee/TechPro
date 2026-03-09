@@ -1,0 +1,95 @@
+@model CuaHang
+@{
+    ViewData["Title"] = "Cấu hình cửa hàng";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold">Cấu hình cửa hàng</h2>
+        <p class="text-muted mb-0">Thiết lập thông tin chung, vận hành và mẫu in ấn.</p>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<form asp-action="CauHinh" method="post">
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0 fw-bold">Thông tin cửa hàng</h5>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-2">
+                    <label class="form-label">Logo</label>
+                    <div class="border border-dashed rounded p-3 text-center" style="width: 120px; height: 120px;">
+                        @if (!string.IsNullOrEmpty(Model?.LogoUrl))
+                        {
+                            <img src="@Model.LogoUrl" alt="Logo" class="img-fluid" />
+                        }
+                        else
+                        {
+                            <i class="bi bi-upload fs-3 text-muted"></i>
+                        }
+                    </div>
+                </div>
+                <div class="col-md-10">
+                    <div class="mb-3">
+                        <label asp-for="TenCuaHang" class="form-label">Tên cửa hàng <span class="text-danger">*</span></label>
+                        <input asp-for="TenCuaHang" class="form-control" required />
+                        <span asp-validation-for="TenCuaHang" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="DiaChi" class="form-label">Địa chỉ</label>
+                <input asp-for="DiaChi" class="form-control" />
+                <span asp-validation-for="DiaChi" class="text-danger"></span>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Hotline" class="form-label">Hotline</label>
+                    <input asp-for="Hotline" class="form-control" />
+                    <span asp-validation-for="Hotline" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="AdminEmail" class="form-label">Email liên hệ</label>
+                    <input asp-for="AdminEmail" type="email" class="form-control" />
+                    <span asp-validation-for="AdminEmail" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0 fw-bold">Mẫu in hóa đơn</h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label asp-for="MauInHoaDon" class="form-label">Mẫu in hóa đơn</label>
+                <textarea asp-for="MauInHoaDon" class="form-control" rows="4" placeholder="Nhập mẫu in hóa đơn..."></textarea>
+                <span asp-validation-for="MauInHoaDon" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    @Html.AntiForgeryToken()
+    <div class="d-flex justify-content-end">
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-save me-2"></i>Lưu thay đổi
+        </button>
+    </div>
+</form>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+

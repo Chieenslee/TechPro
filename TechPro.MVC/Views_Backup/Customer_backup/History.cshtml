@@ -1,0 +1,89 @@
+@{
+    ViewData["Title"] = "Lịch sử khách hàng";
+    var phoneNumber = ViewBag.PhoneNumber as string ?? "";
+    var tickets = ViewBag.Tickets as IEnumerable<PhieuSuaChua> ?? new List<PhieuSuaChua>();
+    var warrantyDevices = ViewBag.WarrantyDevices as IEnumerable<ThietBiBan> ?? new List<ThietBiBan>();
+    var totalSpent = ViewBag.TotalSpent as decimal? ?? 0;
+}
+
+<div class="mb-4">
+    <h2 class="fw-bold">Lịch sử khách hàng</h2>
+    <p class="text-muted mb-0">Số điện thoại: <strong>@phoneNumber</strong></p>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <p class="text-muted small mb-1">Tổng số phiếu</p>
+                <h3 class="fw-bold mb-0">@tickets.Count()</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <p class="text-muted small mb-1">Tổng chi tiêu</p>
+                <h3 class="fw-bold mb-0">@totalSpent.ToString("N0") ₫</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <p class="text-muted small mb-1">Thiết bị bảo hành</p>
+                <h3 class="fw-bold mb-0">@warrantyDevices.Count()</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-light">
+        <h5 class="mb-0">Lịch sử sửa chữa</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Mã phiếu</th>
+                        <th>Thiết bị</th>
+                        <th>Ngày nhận</th>
+                        <th>Trạng thái</th>
+                        <th>Kỹ thuật viên</th>
+                        <th>Chi phí</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var ticket in tickets)
+                    {
+                        var cost = ticket.YeuCauLinhKiens?
+                            .Where(y => y.TrangThai == "approved")
+                            .Sum(y => (y.GiaTaiThoiDiemYeuCau ?? 0) * y.SoLuong) ?? 0;
+                        
+                        <tr>
+                            <td><a href="@Url.Action("ChiTiet", "KyThuat", new { id = ticket.Id })" class="text-decoration-none">@ticket.Id</a></td>
+                            <td>@ticket.TenThietBi</td>
+                            <td>@ticket.NgayNhan.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                <span class="badge bg-@(ticket.TrangThai == "done" ? "success" : ticket.TrangThai == "repairing" ? "info" : "warning")">
+                                    @ticket.TrangThai
+                                </span>
+                            </td>
+                            <td>@(ticket.KyThuatVien?.TenDayDu ?? "N/A")</td>
+                            <td>@(cost > 0 ? cost.ToString("N0") + " ₫" : "-")</td>
+                        </tr>
+                    }
+                    @if (!tickets.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">Chưa có lịch sử sửa chữa</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+

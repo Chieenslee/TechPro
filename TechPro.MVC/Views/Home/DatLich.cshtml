@@ -1,0 +1,485 @@
+@model LichHen
+@{
+    ViewData["Title"] = "Đặt lịch sửa chữa";
+    Layout = null;
+    var success = TempData["BookingSuccess"]?.ToString();
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - TechPro Care</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
+            min-height: 100vh;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: -10;
+            background-image: url('https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?q=80&w=2069&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-color: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: -9;
+        }
+        
+        @@keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @@keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @@keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @@keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .animate-fade-in-up {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+        
+        .animate-slide-in-left {
+            animation: slideInLeft 0.6s ease-out forwards;
+        }
+        
+        .animate-slide-in-right {
+            animation: slideInRight 0.6s ease-out forwards;
+        }
+        
+        .sticky-header {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(12px) saturate(180%);
+            -webkit-backdrop-filter: blur(12px) saturate(180%);
+            border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        .benefits-card {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(12px) saturate(180%);
+            -webkit-backdrop-filter: blur(12px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 24px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .benefits-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 20px -3px rgba(0, 0, 0, 0.15);
+        }
+        
+        .benefit-item {
+            transition: transform 0.3s;
+        }
+        
+        .benefit-item:hover {
+            transform: translateX(8px);
+        }
+        
+        .benefit-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            transition: transform 0.3s;
+        }
+        
+        .benefit-item:hover .benefit-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
+        
+        .support-card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: white;
+            border-radius: 20px;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+        
+        .support-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            animation: pulse 3s ease-in-out infinite;
+        }
+        
+        .form-card {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(12px) saturate(180%);
+            -webkit-backdrop-filter: blur(12px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .form-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 25px 30px -5px rgba(0, 0, 0, 0.15), 0 15px 15px -5px rgba(0, 0, 0, 0.06);
+        }
+        
+        .form-header {
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            color: white;
+            padding: 1.5rem 2rem;
+        }
+        
+        .form-input {
+            position: relative;
+        }
+        
+        .form-input i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            z-index: 10;
+        }
+        
+        .form-input input,
+        .form-input select,
+        .form-input textarea {
+            padding-left: 3rem;
+            background: rgba(255, 255, 255, 0.8);
+            border: 2px solid white;
+            border-radius: 12px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        
+        .form-input input:focus,
+        .form-input select:focus,
+        .form-input textarea:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+            outline: none;
+        }
+        
+        .btn-submit {
+            background: linear-gradient(135deg, #0d6efd 0%, #4f46e5 100%);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            box-shadow: 0 10px 15px -3px rgba(13, 110, 253, 0.3);
+            transition: all 0.3s;
+        }
+        
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 20px -3px rgba(13, 110, 253, 0.4);
+        }
+        
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #0d6efd 0%, #4f46e5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        @@media (max-width: 768px) {
+            .benefits-card, .form-card {
+                border-radius: 16px;
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="sticky-top sticky-header">
+        <div class="container-fluid px-4 py-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <a href="/" class="d-flex align-items-center gap-2 text-decoration-none text-dark fw-medium">
+                    <i class="bi bi-chevron-left fs-5"></i>
+                    <span class="d-none d-sm-inline">Quay lại trang chủ</span>
+                    <span class="d-sm-none">Quay lại</span>
+                </a>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="bg-primary text-white p-2 rounded">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <span class="fw-bold d-none d-sm-inline">TechPro Care</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container py-5">
+        <div class="row g-5">
+            <!-- Left Side: Benefits & Info -->
+            <div class="col-lg-5 d-flex flex-column gap-4">
+                <div class="animate-slide-in-left" style="animation-delay: 0.1s;" data-aos="fade-right">
+                    <span class="text-primary fw-bold text-uppercase small">Đặt lịch nhanh chóng</span>
+                    <h1 class="display-4 fw-bold text-dark mt-2 mb-4">
+                        Không cần chờ đợi.<br/>
+                        <span class="gradient-text">Sửa chữa ngay lập tức.</span>
+                    </h1>
+                    <p class="text-muted fs-5">
+                        Đặt lịch trước giúp kỹ thuật viên chuẩn bị linh kiện và dễ dàng xử lý thiết bị của bạn ngay khi bạn đến cửa hàng.
+                    </p>
+                </div>
+
+                <div class="benefits-card animate-slide-in-left" style="animation-delay: 0.2s;" data-aos="fade-right" data-aos-delay="150">
+                    <div class="d-flex flex-column gap-4">
+                        <div class="benefit-item d-flex align-items-start gap-3">
+                            <div class="benefit-icon bg-success bg-opacity-10 text-success flex-shrink-0">
+                                <i class="bi bi-check-circle"></i>
+                            </div>
+                            <div>
+                                <h4 class="fw-bold text-dark mb-1">Tiết kiệm thời gian</h4>
+                                <p class="text-muted mb-0">Giảm 50% thời gian chờ đợi tại cửa hàng. Được phục vụ ngay khi đến.</p>
+                            </div>
+                        </div>
+                        <div class="benefit-item d-flex align-items-start gap-3">
+                            <div class="benefit-icon bg-primary bg-opacity-10 text-primary flex-shrink-0">
+                                <i class="bi bi-check-circle"></i>
+                            </div>
+                            <div>
+                                <h4 class="fw-bold text-dark mb-1">Linh kiện sẵn sàng</h4>
+                                <p class="text-muted mb-0">Kỹ thuật viên kiểm tra kho và giữ linh kiện chính hãng cho riêng bạn.</p>
+                            </div>
+                        </div>
+                        <div class="benefit-item d-flex align-items-start gap-3">
+                            <div class="benefit-icon bg-info bg-opacity-10 text-info flex-shrink-0">
+                                <i class="bi bi-check-circle"></i>
+                            </div>
+                            <div>
+                                <h4 class="fw-bold text-dark mb-1">Tư vấn chuyên sâu</h4>
+                                <p class="text-muted mb-0">Được sắp xếp kỹ thuật viên chuyên môn cao nhất cho dòng máy của bạn.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="support-card animate-slide-in-left" style="animation-delay: 0.3s;" data-aos="fade-up" data-aos-delay="300">
+                    <div class="position-relative" style="z-index: 10;">
+                        <h4 class="fw-bold mb-2">Cần hỗ trợ gấp?</h4>
+                        <p class="text-white-50 mb-3">Gọi ngay hotline để được tư vấn trực tiếp.</p>
+                        <a href="tel:19006868" class="d-inline-flex align-items-center gap-2 bg-white text-dark px-4 py-2 rounded-lg fw-bold text-decoration-none transition-all hover:bg-light">
+                            <i class="bi bi-phone"></i>
+                            <span>1900 6868</span>
+                        </a>
+                    </div>
+                    <div class="position-absolute end-0 bottom-0 opacity-25" style="z-index: 1;">
+                        <i class="bi bi-phone" style="font-size: 150px;"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Form -->
+            <div class="col-lg-7">
+                <div class="form-card animate-slide-in-right" style="animation-delay: 0.1s;" data-aos="zoom-in" data-aos-delay="100">
+                    <div class="form-header">
+                        <h2 class="fw-bold mb-1">Thông tin đặt lịch</h2>
+                        <p class="text-white-50 mb-0 small">Vui lòng điền đầy đủ thông tin bên dưới.</p>
+                    </div>
+                    
+                    <form id="bookingForm" class="p-4 p-md-5" method="post" asp-action="DatLich">
+                        @Html.AntiForgeryToken()
+                        @if (!string.IsNullOrEmpty(success))
+                        {
+                            <div class="alert alert-success d-flex align-items-center gap-2 mb-4">
+                                <i class="bi bi-check-circle"></i>
+                                <span>@success</span>
+                            </div>
+                        }
+                        
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-6">
+                                <label class="d-block fw-medium text-dark mb-2">Họ và tên</label>
+                                <div class="form-input">
+                                    <i class="bi bi-person"></i>
+                                    <input asp-for="HoTen" type="text" required class="form-control py-3" placeholder="Nguyễn Văn A" />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="d-block fw-medium text-dark mb-2">Số điện thoại</label>
+                                <div class="form-input">
+                                    <i class="bi bi-phone"></i>
+                                    <input asp-for="SoDienThoai" type="tel" required class="form-control py-3" placeholder="0912..." />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="d-block fw-medium text-dark mb-2">Thiết bị cần sửa</label>
+                            <div class="form-input">
+                                <i class="bi bi-phone"></i>
+                                <input asp-for="ThietBi" type="text" required class="form-control py-3" placeholder="Ví dụ: iPhone 13 Pro Max, Samsung S23..." />
+                            </div>
+                        </div>
+
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-6">
+                                <label class="d-block fw-medium text-dark mb-2">Chi nhánh</label>
+                                <div class="form-input">
+                                    <i class="bi bi-geo-alt"></i>
+                                    <select asp-for="ChiNhanh" class="form-select py-3" required>
+                                        <option value="TechPro Hà Nội - 123 Cầu Giấy">TechPro Hà Nội - 123 Cầu Giấy</option>
+                                        <option value="TechPro Đà Nẵng - 45 Nguyễn Văn Linh">TechPro Đà Nẵng - 45 Nguyễn Văn Linh</option>
+                                        <option value="TechPro HCM - 88 Nguyễn Huệ">TechPro HCM - 88 Nguyễn Huệ</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <label class="d-block fw-medium text-dark mb-2">Ngày</label>
+                                        <div class="form-input">
+                                            <i class="bi bi-calendar"></i>
+                                            <input asp-for="NgayHen" type="date" required class="form-control py-3" />
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="d-block fw-medium text-dark mb-2">Giờ</label>
+                                        <div class="form-input">
+                                            <i class="bi bi-clock"></i>
+                                            <select asp-for="GioHen" required class="form-select py-3">
+                                                <option value="">Chọn giờ</option>
+                                                <option value="08:30">08:30</option>
+                                                <option value="09:00">09:00</option>
+                                                <option value="09:30">09:30</option>
+                                                <option value="10:00">10:00</option>
+                                                <option value="10:30">10:30</option>
+                                                <option value="11:00">11:00</option>
+                                                <option value="13:30">13:30</option>
+                                                <option value="14:00">14:00</option>
+                                                <option value="14:30">14:30</option>
+                                                <option value="15:00">15:00</option>
+                                                <option value="15:30">15:30</option>
+                                                <option value="16:00">16:00</option>
+                                                <option value="16:30">16:30</option>
+                                                <option value="17:00">17:00</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="d-block fw-medium text-dark mb-2">Mô tả lỗi <span class="text-muted small">(Tùy chọn)</span></label>
+                            <div class="form-input">
+                                <i class="bi bi-chat-dots" style="top: 16px; transform: none;"></i>
+                                <textarea asp-for="MoTaLoi" rows="3" class="form-control py-3" placeholder="Mô tả sơ qua về tình trạng máy..."></textarea>
+                            </div>
+                        </div>
+
+                        <button type="submit" id="submitBtn" class="btn-submit w-100 d-flex align-items-center justify-content-center gap-2">
+                            <span id="submitText">Xác nhận đặt lịch</span>
+                            <span id="submitLoader" class="spinner-border spinner-border-sm d-none" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </span>
+                        </button>
+                        
+                        <p class="text-center text-muted small mt-3 mb-0">
+                            Bằng việc đặt lịch, bạn đồng ý để TechPro Care liên hệ xác nhận thông tin.
+                        </p>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    
+    <script>
+        AOS.init({
+            once: true,
+            offset: 50,
+        });
+
+        $(document).ready(function() {
+            @if (!string.IsNullOrEmpty(success))
+            {
+                <text>
+                Swal.fire({
+                    title: 'Thành công!',
+                    text: '@Html.Raw(success)',
+                    icon: 'success',
+                    confirmButtonText: 'Tuyệt vời',
+                    confirmButtonColor: '#2563eb',
+                    backdrop: `rgba(0,0,0,0.4)`
+                });
+                </text>
+            }
+
+            $('#bookingForm').on('submit', function() {
+                $('#submitBtn').prop('disabled', true);
+                $('#submitText').text('Đang xử lý...');
+                $('#submitLoader').removeClass('d-none');
+            });
+        });
+    </script>
+</body>
+</html>

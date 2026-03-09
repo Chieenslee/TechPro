@@ -1,0 +1,161 @@
+@{
+    var marks = ViewBag.ScratchMarks as List<dynamic> ?? new List<dynamic>();
+    var readOnly = ViewBag.ReadOnly as bool? ?? false;
+}
+
+<div class="visual-device-inspector">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <label class="text-uppercase small fw-bold text-muted">Mô phỏng thiết bị</label>
+        @if (!readOnly)
+        {
+            <div class="d-flex gap-1">
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="saveScratchMarks()" title="Lưu đánh dấu">
+                    <i class="bi bi-save"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="undoMark()" title="Hoàn tác">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearMarks()" title="Xóa hết">
+                    <i class="bi bi-x-circle"></i>
+                </button>
+            </div>
+        }
+    </div>
+    
+    <!-- Phone Frame Container -->
+    <div 
+        class="device-frame mx-auto @(readOnly ? "" : "cursor-pointer")" 
+        id="deviceFrame"
+        style="width: 160px; height: 288px; border: 4px solid #1e293b; border-radius: 2rem; background: white; position: relative; @(readOnly ? "cursor: default;" : "cursor: crosshair;")"
+        @if (!readOnly) { <text>onclick="handleDeviceClick(event)"</text> }
+    >
+        <!-- Screen Bezel Simulation -->
+        <div class="device-screen" style="position: absolute; inset: 2px; border-radius: 1.8rem; background: #f8fafc; border: 1px solid #e2e8f0;"></div>
+        
+        <!-- Notch/Camera Area Simulation -->
+        <div class="device-notch" style="position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 48px; height: 16px; background: #1e293b; border-radius: 0 0 12px 12px; z-index: 10;"></div>
+        
+        <!-- Marks Container -->
+        <div id="scratchMarksContainer" style="position: absolute; inset: 0; pointer-events: none;">
+            @foreach (var mark in marks)
+            {
+                <div class="scratch-mark" style="position: absolute; left: @(mark.x)%; top: @(mark.y)%; width: 16px; height: 16px; background: rgba(239, 68, 68, 0.8); border-radius: 50%; border: 2px solid white; transform: translate(-50%, -50%); box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
+            }
+        </div>
+        
+        <!-- Helper Text -->
+        @if (marks.Count == 0)
+        {
+            <div class="device-placeholder" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; color: #94a3b8; font-size: 12px; z-index: 5;">
+                @(readOnly ? "Hoàn hảo" : "Chạm để đánh dấu")
+            </div>
+        }
+    </div>
+    
+    <p class="text-muted small text-center mt-2 mb-0">
+        <span id="markCount">@marks.Count</span> điểm xước / cấn
+    </p>
+</div>
+
+@if (!readOnly)
+{
+    <script>
+        // Use global scratchMarks from ticket-detail.js if available, otherwise create local
+        if (typeof scratchMarks === 'undefined') {
+            window.scratchMarks = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(marks));
+        }
+        
+        function handleDeviceClick(event) {
+            const frame = document.getElementById('deviceFrame');
+            const rect = frame.getBoundingClientRect();
+            const x = ((event.clientX - rect.left) / rect.width) * 100;
+            const y = ((event.clientY - rect.top) / rect.height) * 100;
+            addMark(x, y);
+        }
+        
+        function addMark(x, y) {
+            if (!window.scratchMarks) window.scratchMarks = [];
+            window.scratchMarks.push({ x, y });
+            renderMarks();
+        }
+        
+        function renderMarks() {
+            const container = document.getElementById('scratchMarksContainer');
+            const placeholder = document.querySelector('.device-placeholder');
+            const count = document.getElementById('markCount');
+            
+            if (!container) return;
+            
+            const marks = window.scratchMarks || [];
+            container.innerHTML = '';
+            marks.forEach(mark => {
+                const dot = document.createElement('div');
+                dot.className = 'scratch-mark';
+                dot.style.cssText = `position: absolute; left: ${mark.x}%; top: ${mark.y}%; width: 16px; height: 16px; background: rgba(239, 68, 68, 0.8); border-radius: 50%; border: 2px solid white; transform: translate(-50%, -50%); box-shadow: 0 2px 4px rgba(0,0,0,0.2);`;
+                container.appendChild(dot);
+            });
+            
+            if (placeholder) {
+                placeholder.style.display = marks.length > 0 ? 'none' : 'flex';
+            }
+            
+            if (count) {
+                count.textContent = marks.length;
+            }
+        }
+        
+        function undoMark() {
+            if (!window.scratchMarks) window.scratchMarks = [];
+            window.scratchMarks.pop();
+            renderMarks();
+        }
+        
+        function clearMarks() {
+            window.scratchMarks = [];
+            renderMarks();
+        }
+        
+        // Expose saveScratchMarks if not already defined
+        if (typeof saveScratchMarks === 'undefined') {
+            window.saveScratchMarks = function() {
+                if (!window.scratchMarks) window.scratchMarks = [];
+                const marks = window.scratchMarks;
+                
+                $.ajax({
+                    url: `/KyThuat/SaveScratchMarks?ticketId=${typeof ticketId !== 'undefined' ? ticketId : ''}`,
+                    type: 'POST',
+                    data: JSON.stringify(marks),
+                    contentType: 'application/json',
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(res) {
+                        if (res.success) {
+                            toastr.success('Đã lưu đánh dấu xước');
+                        } else {
+                            toastr.error(res.message || 'Không lưu được đánh dấu.');
+                        }
+                    },
+                    error: function() {
+                        toastr.error('Có lỗi xảy ra.');
+                    }
+                });
+            };
+        }
+        
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', function() {
+            renderMarks();
+        });
+        
+        // Re-render when marks are updated from ticket-detail.js
+        if (typeof fetchScratchMarks !== 'undefined') {
+            const originalFetch = fetchScratchMarks;
+            fetchScratchMarks = function() {
+                originalFetch();
+                setTimeout(renderMarks, 100);
+            };
+        }
+    </script>
+}
+

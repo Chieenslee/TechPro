@@ -1,0 +1,272 @@
+<!-- Social Contact Widget -->
+<div id="socialContactWidget" class="social-contact-widget">
+    <div id="socialContactToggle" class="social-contact-toggle">
+        <i class="bi bi-chat-dots" id="socialOpenIcon"></i>
+        <i class="bi bi-x-lg" id="socialCloseIcon" style="display: none;"></i>
+    </div>
+    
+    <div id="socialContactMenu" class="social-contact-menu">
+        <div class="social-contact-item" data-platform="messenger" data-url="https://m.me/techprocare">
+            <div class="social-icon messenger">
+                <i class="bi bi-messenger"></i>
+            </div>
+            <span class="social-label">Messenger</span>
+        </div>
+        
+        <div class="social-contact-item" data-platform="zalo" data-url="https://zalo.me/19006868">
+            <div class="social-icon zalo">
+                <i class="bi bi-chat-text"></i>
+            </div>
+            <span class="social-label">Zalo</span>
+        </div>
+        
+        <div class="social-contact-item" data-platform="youtube" data-url="https://youtube.com/channel/techprocare">
+            <div class="social-icon youtube">
+                <i class="bi bi-youtube"></i>
+            </div>
+            <span class="social-label">YouTube</span>
+        </div>
+        
+        <div class="social-contact-item" data-platform="telegram" data-url="https://t.me/techprocare">
+            <div class="social-icon telegram">
+                <i class="bi bi-telegram"></i>
+            </div>
+            <span class="social-label">Telegram</span>
+        </div>
+        
+        <div class="social-contact-item" data-platform="facebook" data-url="https://facebook.com/techprocare">
+            <div class="social-icon facebook">
+                <i class="bi bi-facebook"></i>
+            </div>
+            <span class="social-label">Facebook</span>
+        </div>
+        
+        <div class="social-contact-item" data-platform="tiktok" data-url="https://tiktok.com/@@techprocare">
+            <div class="social-icon tiktok">
+                <i class="bi bi-tiktok"></i>
+            </div>
+            <span class="social-label">TikTok</span>
+        </div>
+        
+        <div class="social-contact-item" data-platform="phone" data-url="tel:19006868">
+            <div class="social-icon phone">
+                <i class="bi bi-telephone-fill"></i>
+            </div>
+            <span class="social-label">Gọi ngay</span>
+        </div>
+        
+        <div class="social-contact-item" data-platform="email" data-url="mailto:support@techprocare.vn">
+            <div class="social-icon email">
+                <i class="bi bi-envelope-fill"></i>
+            </div>
+            <span class="social-label">Email</span>
+        </div>
+    </div>
+</div>
+
+<style>
+.social-contact-widget {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 998;
+}
+
+.social-contact-toggle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s, box-shadow 0.3s;
+    position: relative;
+    z-index: 1001;
+}
+
+.social-contact-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+.social-contact-toggle i {
+    font-size: 24px;
+    transition: transform 0.3s;
+    position: absolute;
+}
+
+.social-contact-toggle.active #socialOpenIcon {
+    transform: rotate(180deg);
+    opacity: 0;
+}
+
+.social-contact-toggle.active #socialCloseIcon {
+    transform: rotate(0deg);
+    opacity: 1;
+}
+
+.social-contact-menu {
+    position: absolute;
+    bottom: 0;
+    right: 70px;
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    align-items: center;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateX(20px);
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+.social-contact-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: white;
+    padding: 12px 16px;
+    border-radius: 50px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    transition: all 0.3s;
+    min-width: 140px;
+    position: relative;
+    opacity: 0;
+    transform: translateX(10px);
+    pointer-events: none;
+}
+
+.social-contact-menu.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: all;
+}
+
+.social-contact-menu.active .social-contact-item {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: all;
+}
+
+.social-contact-item:hover {
+    transform: translateX(-5px) !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+}
+
+.social-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.social-icon.messenger { background: linear-gradient(135deg, #0084ff 0%, #0066cc 100%); }
+.social-icon.zalo { background: linear-gradient(135deg, #0068ff 0%, #0047ab 100%); }
+.social-icon.youtube { background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%); }
+.social-icon.telegram { background: linear-gradient(135deg, #0088cc 0%, #006699 100%); }
+.social-icon.facebook { background: linear-gradient(135deg, #1877f2 0%, #0d5dbf 100%); }
+.social-icon.tiktok { background: linear-gradient(135deg, #000000 0%, #333333 100%); }
+.social-icon.phone { background: linear-gradient(135deg, #25d366 0%, #128c7e 100%); }
+.social-icon.email { background: linear-gradient(135deg, #ea4335 0%, #c5221f 100%); }
+
+.social-label {
+    font-weight: 500;
+    color: #1e293b;
+    white-space: nowrap;
+}
+
+@@media (max-width: 768px) {
+    .social-contact-widget {
+        bottom: 100px;
+        right: 15px;
+    }
+    
+    .social-contact-menu {
+        right: 70px;
+        flex-wrap: wrap;
+        max-width: calc(100vw - 100px);
+    }
+    
+    .social-contact-item {
+        min-width: 120px;
+        padding: 10px 14px;
+    }
+    
+    .social-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const toggle = document.getElementById('socialContactToggle');
+    const menu = document.getElementById('socialContactMenu');
+    const openIcon = document.getElementById('socialOpenIcon');
+    const closeIcon = document.getElementById('socialCloseIcon');
+    const items = document.querySelectorAll('.social-contact-item');
+    
+    let isOpen = false;
+    
+    toggle.addEventListener('click', function(e) {
+        e.stopPropagation();
+        isOpen = !isOpen;
+        
+        if (isOpen) {
+            menu.classList.add('active');
+            toggle.classList.add('active');
+            
+            // Animate items horizontally from right to left
+            items.forEach((item, index) => {
+                setTimeout(() => {
+                    item.style.transform = 'translateX(0)';
+                    item.style.opacity = '1';
+                }, index * 30);
+            });
+        } else {
+            // Animate back (hide)
+            items.forEach((item, index) => {
+                setTimeout(() => {
+                    item.style.transform = 'translateX(10px)';
+                    item.style.opacity = '0';
+                }, index * 20);
+            });
+            
+            setTimeout(() => {
+                menu.classList.remove('active');
+            }, 300);
+            
+            toggle.classList.remove('active');
+        }
+    });
+    
+    items.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const url = this.getAttribute('data-url');
+            if (url) {
+                window.open(url, '_blank');
+            }
+        });
+    });
+    
+    // Close on outside click
+    document.addEventListener('click', function(e) {
+        if (isOpen && !toggle.contains(e.target) && !menu.contains(e.target)) {
+            toggle.click();
+        }
+    });
+});
+</script>

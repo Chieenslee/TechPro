@@ -1,0 +1,142 @@
+@{
+    ViewData["Title"] = "Đăng nhập hệ thống";
+    Layout = null;
+    
+    var errorMessage = TempData["Error"]?.ToString();
+    var loginMode = TempData["LoginMode"]?.ToString() ?? "store";
+    var tenantId = TempData["TenantId"]?.ToString() ?? "";
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - TechPro Care</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/login.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <!-- Header -->
+            <div class="login-header">
+                <div class="login-icon">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <h1>Đăng nhập hệ thống</h1>
+                <p>Quản lý Dịch vụ Ủy Quyền</p>
+            </div>
+
+            <!-- Form -->
+            <div class="login-body">
+                <!-- Login Mode Toggle -->
+                <div class="login-mode-toggle">
+                    <button type="button" class="mode-btn @(loginMode == "store" ? "active" : "")" data-mode="store" onclick="switchLoginMode('store')">
+                        <i class="bi bi-shop"></i> Cửa hàng
+                    </button>
+                    <button type="button" class="mode-btn @(loginMode == "system" ? "active" : "")" data-mode="system" onclick="switchLoginMode('system')">
+                        <i class="bi bi-diagram-3"></i> Quản trị chuỗi
+                    </button>
+                </div>
+
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="error-message">
+                        <i class="bi bi-exclamation-circle"></i>
+                        <span>@errorMessage</span>
+                    </div>
+                }
+
+                <form method="post" asp-action="Login" id="loginForm" class="login-form">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="loginMode" id="loginModeInput" value="@loginMode" />
+
+                    <div class="input-field">
+                        <label>Email</label>
+                        <div class="input-wrapper">
+                            <i class="bi bi-envelope"></i>
+                            <input type="email" name="email" id="emailInput" placeholder="admin@store.com" required />
+                        </div>
+                    </div>
+
+                    <!-- Mã cửa hàng - Only visible in store mode -->
+                    <div class="input-field @(loginMode == "system" ? "d-none" : "")" id="tenantIdField">
+                        <label>Mã cửa hàng</label>
+                        <div class="input-wrapper">
+                            <i class="bi bi-shop"></i>
+                            <input type="text" name="tenantId" id="tenantIdInput" value="@tenantId" placeholder="Ví dụ: STORE-001" />
+                        </div>
+                    </div>
+
+                    <div class="input-field">
+                        <label>Mật khẩu</label>
+                        <div class="input-wrapper">
+                            <i class="bi bi-lock"></i>
+                            <input type="password" name="password" id="passwordInput" placeholder="••••••••" required />
+                        </div>
+                    </div>
+
+                    <button type="submit" id="submitBtn" class="login-submit-btn">
+                        <span id="submitText">Đăng nhập</span>
+                        <i class="bi bi-arrow-right" id="submitIcon"></i>
+                        <span id="submitLoader" class="spinner-border spinner-border-sm d-none" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </span>
+                    </button>
+                </form>
+
+                <!-- Quick Login / Footer -->
+                <div class="login-footer">
+                    <p class="demo-label">Tài khoản Demo Cửa Hàng</p>
+                    <div class="demo-buttons mb-3">
+                        <button type="button" class="demo-btn demo-btn-purple" onclick="quickLogin('store', 'admin@techpro.com', 'STORE-001')" id="demoStoreAdmin">
+                            <i class="bi bi-person-badge"></i>
+                            <span>Quản lý</span>
+                        </button>
+                        <button type="button" class="demo-btn demo-btn-blue" onclick="quickLogin('store', 'support@techpro.com', 'STORE-001')" id="demoSupport">
+                            <i class="bi bi-person-gear"></i>
+                            <span>Lễ tân</span>
+                        </button>
+                        <button type="button" class="demo-btn demo-btn-teal" onclick="quickLogin('store', 'kho@techpro.com', 'STORE-001')" id="demoKho" style="background-color: rgba(32, 201, 151, 0.1); color: #20c997; border-color: rgba(32, 201, 151, 0.2);">
+                            <i class="bi bi-box-seam"></i>
+                            <span>Thủ Kho</span>
+                        </button>
+                        <button type="button" class="demo-btn demo-btn-orange" onclick="quickLogin('store', 'tech@techpro.com', 'STORE-001')" id="demoTech">
+                            <i class="bi bi-wrench"></i>
+                            <span>Kỹ thuật</span>
+                        </button>
+                    </div>
+
+                    <p class="demo-label border-top pt-3">Tài khoản Demo Tổng Cục</p>
+                    <div class="demo-buttons">
+                        <button type="button" class="demo-btn demo-btn-indigo" onclick="quickLogin('system', 'sysadmin@techpro.com')" id="demoSysadmin">
+                            <i class="bi bi-building-gear"></i>
+                            <span>Admin Chuỗi</span>
+                        </button>
+                    </div>
+
+                    <div class="login-link">
+                        <a href="/">
+                            <i class="bi bi-search"></i>
+                            <span>Tra cứu đơn hàng khách lẻ</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/login.js" asp-append-version="true"></script>
+</body>
+</html>

@@ -1,0 +1,130 @@
+@model CuaHang
+@{
+    ViewData["Title"] = "Chi tiết cửa hàng";
+    var storeRevenue = ViewBag.StoreRevenue as decimal? ?? 0;
+    var thisMonthRevenue = ViewBag.ThisMonthRevenue as decimal? ?? 0;
+    var totalTickets = ViewBag.TotalTickets as int? ?? 0;
+    var thisMonthTickets = ViewBag.ThisMonthTickets as int? ?? 0;
+}
+
+<div class="mb-4">
+    <a href="@Url.Action("Index", new { tab = "stores" })" class="btn btn-outline-secondary mb-2">
+        <i class="bi bi-arrow-left me-2"></i>Quay lại
+    </a>
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold mb-0">@Model.TenCuaHang</h2>
+            <p class="text-muted mb-0">@Model.DiaChi</p>
+        </div>
+        <div>
+            <span class="badge bg-@(Model.TrangThai == "active" ? "success" : "secondary") fs-6">
+                @Model.TrangThai
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <p class="text-muted small mb-1">Doanh thu tháng này</p>
+                <h4 class="fw-bold mb-0">@thisMonthRevenue.ToString("N0") ₫</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <p class="text-muted small mb-1">Tổng doanh thu</p>
+                <h4 class="fw-bold mb-0">@storeRevenue.ToString("N0") ₫</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <p class="text-muted small mb-1">Tổng phiếu</p>
+                <h4 class="fw-bold mb-0">@totalTickets</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <p class="text-muted small mb-1">Phiếu tháng này</p>
+                <h4 class="fw-bold mb-0">@thisMonthTickets</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Store Info -->
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Thông tin cửa hàng</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="text-muted small">Tên cửa hàng</label>
+                    <div class="fw-semibold">@Model.TenCuaHang</div>
+                </div>
+                <div class="mb-3">
+                    <label class="text-muted small">Địa chỉ</label>
+                    <div>@(Model.DiaChi ?? "Chưa có")</div>
+                </div>
+                <div class="mb-3">
+                    <label class="text-muted small">Hotline</label>
+                    <div>@(Model.Hotline ?? "Chưa có")</div>
+                </div>
+                <div class="mb-3">
+                    <label class="text-muted small">Email quản lý</label>
+                    <div>@(Model.AdminEmail ?? "Chưa có")</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Nhân sự (@Model.NhanViens?.Count ?? 0)</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Nhân viên</th>
+                                <th>Vai trò</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var staff in Model.NhanViens ?? new List<NguoiDung>())
+                            {
+                                <tr>
+                                    <td>
+                                        <div>@staff.TenDayDu</div>
+                                        <small class="text-muted">@staff.Email</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">Staff</span>
+                                    </td>
+                                </tr>
+                            }
+                            @if (!Model.NhanViens?.Any() == true)
+                            {
+                                <tr>
+                                    <td colspan="2" class="text-center text-muted py-3">Chưa có nhân viên</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

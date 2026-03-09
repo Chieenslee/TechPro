@@ -1,0 +1,355 @@
+/* Login Page CSS - Tách từ Login.cshtml */
+
+.login-container {
+    min-height: 100vh;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 28rem;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+/* Header */
+.login-header {
+    padding: 2rem 2rem 1.5rem;
+    text-align: center;
+    background: white;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.login-icon {
+    width: 3rem;
+    height: 3rem;
+    background: #2563eb;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.2);
+}
+
+.login-icon i {
+    color: white;
+    font-size: 1.5rem;
+}
+
+.login-header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 0.25rem;
+}
+
+.login-header p {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin: 0;
+}
+
+/* Body */
+.login-body {
+    padding: 2rem;
+}
+
+/* Login Mode Toggle */
+.login-mode-toggle {
+    display: flex;
+    padding: 0.25rem;
+    background: #f1f5f9;
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.mode-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: 0.375rem;
+    transition: all 0.2s;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    cursor: pointer;
+}
+
+.mode-btn:hover {
+    color: #475569;
+}
+
+.mode-btn.active {
+    background: white;
+    color: #0f172a;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.mode-btn.active[data-mode="system"] {
+    color: #2563eb;
+}
+
+.mode-btn i {
+    font-size: 1rem;
+}
+
+/* Error Message */
+.error-message {
+    margin-bottom: 1.5rem;
+    padding: 0.75rem;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+    font-size: 0.875rem;
+    border-radius: 0.375rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.error-message i {
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+/* Form */
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.input-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.input-field label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 0.375rem;
+}
+
+.input-wrapper {
+    position: relative;
+}
+
+.input-wrapper i {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 1.125rem;
+    pointer-events: none;
+}
+
+.input-wrapper input {
+    width: 100%;
+    padding: 0.625rem 1rem 0.625rem 2.5rem;
+    background: white;
+    border: 1px solid #cbd5e1;
+    color: #0f172a;
+    font-size: 0.875rem;
+    border-radius: 0.375rem;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.input-wrapper input::placeholder {
+    color: #94a3b8;
+}
+
+.input-wrapper input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.input-field.d-none {
+    display: none;
+}
+
+/* Submit Button */
+.login-submit-btn {
+    width: 100%;
+    background: #2563eb;
+    color: white;
+    font-weight: 600;
+    padding: 0.625rem;
+    border-radius: 0.375rem;
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.login-submit-btn:hover:not(:disabled) {
+    background: #1d4ed8;
+}
+
+.login-submit-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.login-submit-btn i {
+    font-size: 1.125rem;
+}
+
+.login-submit-btn .spinner-border {
+    width: 1rem;
+    height: 1rem;
+    border-width: 2px;
+}
+
+/* Footer */
+.login-footer {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #f1f5f9;
+}
+
+.demo-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 1rem;
+    letter-spacing: 0.05em;
+}
+
+.demo-buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.demo-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s;
+    gap: 0.25rem;
+    border: 1px solid transparent;
+    cursor: pointer;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.demo-btn:hover:not(:disabled) {
+    transform: scale(1.05);
+}
+
+.demo-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.demo-btn i {
+    font-size: 1.125rem;
+}
+
+.demo-btn span {
+    font-size: 0.625rem;
+    font-weight: 700;
+}
+
+.demo-btn-indigo {
+    background: #eef2ff;
+    color: #4f46e5;
+}
+
+.demo-btn-indigo:hover:not(:disabled) {
+    background: #e0e7ff;
+}
+
+.demo-btn-purple {
+    background: #faf5ff;
+    color: #9333ea;
+}
+
+.demo-btn-purple:hover:not(:disabled) {
+    background: #f3e8ff;
+}
+
+.demo-btn-blue {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.demo-btn-blue:hover:not(:disabled) {
+    background: #dbeafe;
+}
+
+.demo-btn-orange {
+    background: #fff7ed;
+    color: #ea580c;
+}
+
+.demo-btn-orange:hover:not(:disabled) {
+    background: #ffedd5;
+}
+
+.login-link {
+    text-align: center;
+}
+
+.login-link a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #475569;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.login-link a:hover {
+    color: #2563eb;
+}
+
+.login-link a i {
+    font-size: 1rem;
+}
+
+/* Animation */
+@keyframes slide-in-from-top {
+    from {
+        transform: translateY(-10px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.input-field.animate-in {
+    animation: slide-in-from-top 0.3s ease-out;
+}
+

@@ -1,0 +1,125 @@
+/* Reception Page CSS - Tách riêng từ View */
+
+.space-y-6 > * + * {
+    margin-top: 1.5rem;
+}
+
+.text-2xl {
+    font-size: 1.5rem;
+    line-height: 2rem;
+}
+
+.font-bold {
+    font-weight: 700;
+}
+
+.text-slate-800 {
+    color: #1e293b;
+}
+
+.text-slate-500 {
+    color: #64748b;
+}
+
+.bg-blue-600 {
+    background-color: #2563eb;
+}
+
+.hover\:bg-blue-700:hover {
+    background-color: #1d4ed8;
+}
+
+.rounded-xl {
+    border-radius: 0.75rem;
+}
+
+.border-slate-200 {
+    border-color: #e2e8f0;
+}
+
+.shadow-sm {
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+/* Table styles */
+table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+tbody tr {
+    transition: background-color 0.2s;
+}
+
+tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+/* Status badges */
+.bg-yellow-100 {
+    background-color: #fef3c7;
+}
+
+.text-yellow-700 {
+    color: #a16207;
+}
+
+.border-yellow-200 {
+    border-color: #fde68a;
+}
+
+.bg-blue-100 {
+    background-color: #dbeafe;
+}
+
+.text-blue-700 {
+    color: #1d4ed8;
+}
+
+.border-blue-200 {
+    border-color: #bfdbfe;
+}
+
+.bg-orange-100 {
+    background-color: #fed7aa;
+}
+
+.text-orange-700 {
+    color: #c2410c;
+}
+
+.border-orange-200 {
+    border-color: #fdba74;
+}
+
+.bg-green-100 {
+    background-color: #dcfce7;
+}
+
+.text-green-700 {
+    color: #15803d;
+}
+
+.border-green-200 {
+    border-color: #bbf7d0;
+}
+
+.bg-slate-100 {
+    background-color: #f1f5f9;
+}
+
+.text-slate-600 {
+    color: #475569;
+}
+
+.border-slate-200 {
+    border-color: #e2e8f0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .text-2xl {
+        font-size: 1.25rem;
+    }
+}
+

@@ -1,0 +1,138 @@
+/* Dark Mode Styles */
+.dark-mode {
+    --bs-body-bg: #1a1a1a;
+    --bs-body-color: #e0e0e0;
+    --bs-card-bg: #2d2d2d;
+    --bs-border-color: #404040;
+}
+
+.dark-mode .card {
+    background-color: var(--bs-card-bg);
+    border-color: var(--bs-border-color);
+    color: var(--bs-body-color);
+}
+
+.dark-mode .sidebar {
+    background-color: #252525;
+    border-color: var(--bs-border-color);
+}
+
+.dark-mode .nav-link {
+    color: #d0d0d0;
+}
+
+.dark-mode .nav-link:hover,
+.dark-mode .nav-link.active {
+    background-color: #3a3a3a;
+    color: white;
+}
+
+.dark-mode .table {
+    color: var(--bs-body-color);
+}
+
+.dark-mode .table-hover tbody tr:hover {
+    background-color: #3a3a3a;
+}
+
+/* Stats Animation */
+.stat-card {
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* Loading Skeleton */
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Smooth Scroll */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Print Styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .chatbot-widget,
+    .sidebar,
+    .header,
+    .btn {
+        display: none !important;
+    }
+}
+
+/* Accessibility */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* Focus Styles */
+*:focus-visible {
+    outline: 2px solid #667eea;
+    outline-offset: 2px;
+}
+
+/* Responsive Images */
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.dark-mode ::-webkit-scrollbar-track {
+    background: #2d2d2d;
+}
+
+.dark-mode ::-webkit-scrollbar-thumb {
+    background: #555;
+}
+
+.dark-mode ::-webkit-scrollbar-thumb:hover {
+    background: #777;
+}
+

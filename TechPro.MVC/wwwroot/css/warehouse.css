@@ -1,0 +1,49 @@
+/* Warehouse Page CSS */
+
+.nav-tabs .nav-link {
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: #64748b;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.nav-tabs .nav-link:hover {
+    color: #1e293b;
+    border-bottom-color: #e2e8f0;
+}
+
+.nav-tabs .nav-link.active {
+    color: #2563eb;
+    border-bottom-color: #2563eb;
+    background: transparent;
+}
+
+/* Badge notifications */
+.position-relative .badge {
+    font-size: 0.6rem;
+    padding: 0.25rem 0.5rem;
+}
+
+/* Table improvements */
+.table-hover tbody tr {
+    transition: background-color 0.15s;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+/* Status badges */
+.bg-warning {
+    background-color: #fbbf24 !important;
+}
+
+.bg-success {
+    background-color: #22c55e !important;
+}
+
+.bg-danger {
+    background-color: #ef4444 !important;
+}
+

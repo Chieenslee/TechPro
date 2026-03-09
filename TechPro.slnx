@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/TechPro.MVC/">
+    <Project Path="TechPro.MVC/TechPro.csproj" />
+  </Folder>
+  <Project Path="TechPro.API/TechPro.API.csproj" />
+</Solution>
