@@ -153,5 +153,33 @@ namespace TechPro.API.Controllers
             
             return Ok(marks);
         }
+        [HttpGet("history")]
+        public async Task<IActionResult> GetHistory(string? phone, string? excludeId)
+        {
+            if (string.IsNullOrWhiteSpace(phone))
+                return Ok(Array.Empty<object>());
+
+            var query = _context.PhieuSuaChuas
+                .Where(p => p.SoDienThoai == phone);
+
+            if (!string.IsNullOrEmpty(excludeId))
+                query = query.Where(p => p.Id != excludeId);
+
+            var tickets = await query
+                .OrderByDescending(p => p.NgayNhan)
+                .Take(20)
+                .Select(p => new {
+                    p.Id,
+                    p.TenThietBi,
+                    p.MoTaLoi,
+                    p.TrangThai,
+                    p.NgayNhan,
+                    p.SoDienThoai,
+                    p.KyThuatVienId
+                })
+                .ToListAsync();
+
+            return Ok(tickets);
+        }
     }
 }
