@@ -92,7 +92,7 @@ namespace TechPro.Controllers
             if (mode == "repair")
             {
                 // Tìm phiếu sửa chữa
-                var response = await client.GetAsync($"api/Tickets/search?query={Uri.EscapeDataString(query)}");
+                var response = await client.GetAsync($"api/TiepNhan/search?query={Uri.EscapeDataString(query)}");
                 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -114,7 +114,7 @@ namespace TechPro.Controllers
             else
             {
                 // Kiểm tra bảo hành
-                var response = await client.GetAsync($"api/Devices/search?query={Uri.EscapeDataString(query)}");
+                var response = await client.GetAsync($"api/TiepNhan/device-warranty?serial={Uri.EscapeDataString(query)}");
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -160,7 +160,7 @@ namespace TechPro.Controllers
             PhieuSuaChua? phieu = null;
             if (!string.IsNullOrEmpty(id))
             {
-                 var response = await client.GetAsync($"api/Tickets/{id}");
+                 var response = await client.GetAsync($"api/TiepNhan/{id}");
                  if (response.IsSuccessStatusCode)
                  {
                      phieu = await response.Content.ReadFromJsonAsync<PhieuSuaChua>();
@@ -169,7 +169,7 @@ namespace TechPro.Controllers
             else
             {
                 // Dung search API
-                var response = await client.GetAsync($"api/Tickets/search?query={Uri.EscapeDataString(q)}");
+                var response = await client.GetAsync($"api/TiepNhan/search?query={Uri.EscapeDataString(q)}");
                 if (response.IsSuccessStatusCode)
                 {
                     phieu = await response.Content.ReadFromJsonAsync<PhieuSuaChua>();
@@ -259,7 +259,7 @@ namespace TechPro.Controllers
         public async Task<IActionResult> XacNhanBaoGia(string ticketId)
         {
             var client = _httpClientFactory.CreateClient("TechProAPI");
-            var response = await client.PostAsync($"api/Tickets/{ticketId}/confirm", null);
+            var response = await client.PostAsync($"api/TiepNhan/{ticketId}/XacNhanBaoGia", null);
 
             if (response.IsSuccessStatusCode)
             {

@@ -20,24 +20,27 @@
             <i class="bi bi-box me-2"></i>Danh sách tồn kho
         </a>
     </li>
-    <li class="nav-item">
-        <a class="nav-link @(activeTab == "requests" ? "active" : "") position-relative" href="@Url.Action("Index", new { tab = "requests" })">
-            <i class="bi bi-clock-history me-2"></i>Yêu cầu xuất kho
-            @if (pendingRequestsCount > 0)
-            {
-                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">@pendingRequestsCount</span>
-            }
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link @(activeTab == "waste" ? "active" : "") position-relative" href="@Url.Action("Index", new { tab = "waste" })">
-            <i class="bi bi-recycle me-2"></i>Trả xác linh kiện
-            @if (pendingWasteCount > 0)
-            {
-                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning" style="font-size: 0.6rem;">@pendingWasteCount</span>
-            }
-        </a>
-    </li>
+    @if (User.IsInRole("StoreAdmin") || User.IsInRole("SystemAdmin"))
+    {
+        <li class="nav-item">
+            <a class="nav-link @(activeTab == "requests" ? "active" : "") position-relative" href="@Url.Action("Index", new { tab = "requests" })">
+                <i class="bi bi-clock-history me-2"></i>Yêu cầu xuất kho
+                @if (pendingRequestsCount > 0)
+                {
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">@pendingRequestsCount</span>
+                }
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(activeTab == "waste" ? "active" : "") position-relative" href="@Url.Action("Index", new { tab = "waste" })">
+                <i class="bi bi-recycle me-2"></i>Trả xác linh kiện
+                @if (pendingWasteCount > 0)
+                {
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning" style="font-size: 0.6rem;">@pendingWasteCount</span>
+                }
+            </a>
+        </li>
+    }
 </ul>
 
 <div class="card shadow-sm">
@@ -47,17 +50,17 @@
         {
             <form method="get" class="mb-4">
                 <input type="hidden" name="tab" value="inventory" />
-                <div class="input-group" style="max-width: 400px;">
-                    <span class="input-group-text"><i class="bi bi-search"></i></span>
-                    <input type="text" class="form-control" name="searchTerm" 
+                <div class="input-group bg-slate-50 border border-slate-200 rounded-pill overflow-hidden shadow-sm custom-focus-ring" style="max-width: 400px;">
+                    <span class="input-group-text bg-transparent border-0 text-slate-400 pe-1"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control border-0 bg-transparent shadow-none custom-input" name="searchTerm" 
                            value="@ViewBag.SearchTerm" placeholder="Tìm tên linh kiện, mã..." />
-                    <button type="submit" class="btn btn-outline-secondary">Tìm</button>
+                    <button type="submit" class="btn btn-primary px-3 rounded-pill hover-lift shadow-sm m-1 fw-medium" style="font-size: 0.9rem;">Tìm</button>
                 </div>
             </form>
 
             <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead class="table-light">
+                <table class="table table-hover align-middle mb-0 pos-table">
+                    <thead class="bg-slate-50 text-uppercase small fw-bold" style="letter-spacing: 0.5px; color: #64748b;">
                         <tr>
                             <th>Tên linh kiện</th>
                             <th>Danh mục</th>
@@ -117,8 +120,8 @@
         @if (activeTab == "waste")
         {
             <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead class="table-light">
+                <table class="table table-hover align-middle mb-0 pos-table">
+                    <thead class="bg-slate-50 text-uppercase small fw-bold" style="letter-spacing: 0.5px; color: #64748b;">
                         <tr>
                             <th>Mã phiếu</th>
                             <th>Kỹ thuật viên</th>
@@ -171,6 +174,15 @@
 @Html.AntiForgeryToken()
 
 @section Styles {
+    <style>
+        .custom-focus-ring:focus-within {
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15) !important;
+            border-color: #86b7fe !important;
+        }
+        .pos-table th { font-weight: 700; white-space: nowrap; color: #64748b; }
+        .hover-lift { transition: transform 0.2s; }
+        .hover-lift:hover { transform: translateY(-2px); }
+    </style>
     <link rel="stylesheet" href="~/css/warehouse.css" asp-append-version="true" />
 }
 

@@ -115,5 +115,45 @@ namespace TechPro.Controllers
             }
             return RedirectToAction("Index", "Home");
         }
+
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword(string oldPassword, string newPassword, string confirmPassword)
+        {
+            if (newPassword != confirmPassword)
+            {
+                return Json(new { success = false, message = "Mật khẩu xác nhận không khớp!" });
+            }
+
+            var email = User.Identity?.Name;
+            if (string.IsNullOrEmpty(email)) return Json(new { success = false, message = "Chưa đăng nhập!" });
+
+            var payload = new 
+            {
+                Email = email,
+                OldPassword = oldPassword,
+                NewPassword = newPassword
+            };
+
+            var client = _httpClientFactory.CreateClient("TechProAPI");
+            var json = JsonSerializer.Serialize(payload);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await client.PostAsync("api/Auth/change-password", content);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                return Json(new { success = true, message = "Đổi mật khẩu thành công!" });
+            }
+
+            var errBody = await response.Content.ReadAsStringAsync();
+            try {
+                var errObj = JsonSerializer.Deserialize<dynamic>(errBody);
+                return Json(new { success = false, message = errObj?.GetProperty("message").GetString() ?? "Đổi mật khẩu thất bại." });
+            } catch {
+                return Json(new { success = false, message = "Lỗi khi đổi mật khẩu!" });
+            }
+        }
     }
 }

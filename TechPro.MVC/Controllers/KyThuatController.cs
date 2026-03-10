@@ -7,6 +7,7 @@ using System.Security.Claims;
 namespace TechPro.Controllers
 {
     [Authorize(Roles = "Technician,StoreAdmin,SystemAdmin")]
+    [Route("Technician/[controller]/{action=Index}/{id?}")]
     public class KyThuatController : Controller
     {
         private readonly IHttpClientFactory _httpClientFactory;
@@ -16,8 +17,11 @@ namespace TechPro.Controllers
             _httpClientFactory = httpClientFactory;
         }
 
-        public async Task<IActionResult> Index(string? status = null)
+        public async Task<IActionResult> Index(string? status = null, string? searchTerm = null)
         {
+            ViewBag.SearchTerm = searchTerm;
+            ViewBag.StatusFilter = status ?? "all";
+            
             var client = _httpClientFactory.CreateClient("TechProAPI");
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var userRole = User.FindFirstValue(ClaimTypes.Role);
@@ -34,6 +38,10 @@ namespace TechPro.Controllers
             if (User.IsInRole("Technician"))
             {
                 queryParams += $"&assigneeId={userId}";
+            }
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                queryParams += $"&searchTerm={Uri.EscapeDataString(searchTerm)}";
             }
 
             var response = await client.GetAsync($"api/Technician/tickets{queryParams}");
@@ -97,7 +105,9 @@ namespace TechPro.Controllers
             return Json(new { success = response.IsSuccessStatusCode });
         }
 
+        // Only StoreAdmin/SysAdmin can assign tickets to specific technicians
         [HttpPost]
+        [Authorize(Roles = "StoreAdmin,SystemAdmin")]
         public async Task<IActionResult> GanKyThuatVien(string id, string kyThuatVienId)
         {
              var client = _httpClientFactory.CreateClient("TechProAPI");
@@ -185,6 +195,32 @@ namespace TechPro.Controllers
                 return Content(data, "application/json");
             }
             return Json(new List<object>());
+        }
+
+        // Technician tracks their OWN part requests status
+        [HttpGet]
+        public async Task<IActionResult> LinhKien()
+        {
+            var client = _httpClientFactory.CreateClient("TechProAPI");
+            var userId = User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier);
+            var response = await client.GetAsync($"api/Inventory/dashboard");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var dto = await response.Content.ReadFromJsonAsync<TechPro.Models.DTOs.InventoryDashboardDto>();
+                if (dto != null)
+                {
+                    // For Technician: only show THEIR OWN part requests
+                    ViewBag.MyPartRequests = dto.PartRequests;
+                    ViewBag.IsReadOnly = true;
+                }
+            }
+            else
+            {
+                ViewBag.MyPartRequests = new List<object>();
+            }
+
+            return View();
         }
         [HttpPost]
         public async Task<IActionResult> AiGopY([FromBody] AiGopYRequest request)

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 namespace TechPro.Controllers
 {
     [Authorize(Roles = "StoreAdmin,SystemAdmin")]
+    [Route("StoreAdmin/[controller]/{action=Index}/{id?}")]
     public class QuanLyController : Controller
     {
         private readonly IHttpClientFactory _clientFactory;

@@ -97,14 +97,38 @@ namespace TechPro.API.Controllers
             return Unauthorized(new LoginResponse { Success = false, Message = "Email hoặc mật khẩu không chính xác." });
         }
 
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new ChangePasswordResponse { Success = false, Message = "Dữ liệu không hợp lệ." });
+            }
+
+            var user = await _userManager.FindByEmailAsync(request.Email);
+            if (user == null)
+            {
+                return NotFound(new ChangePasswordResponse { Success = false, Message = "Không tìm thấy người dùng." });
+            }
+
+            var result = await _userManager.ChangePasswordAsync(user, request.OldPassword, request.NewPassword);
+            if (result.Succeeded)
+            {
+                return Ok(new ChangePasswordResponse { Success = true, Message = "Đổi mật khẩu thành công!" });
+            }
+
+            var err = string.Join(", ", result.Errors.Select(e => e.Description));
+            return BadRequest(new ChangePasswordResponse { Success = false, Message = err });
+        }
+
         private string PerformRedirect(string email)
         {
-            if (email.StartsWith("sysadmin")) return "/Chain";
-            if (email.StartsWith("admin")) return "/QuanLy";
-            if (email.StartsWith("tech")) return "/KyThuat";
-            if (email.StartsWith("support")) return "/TiepNhan";
-            if (email.StartsWith("kho")) return "/Kho";
-            return "/QuanLy";
+            if (email.StartsWith("sysadmin")) return "/SysAdmin";
+            if (email.StartsWith("admin")) return "/StoreAdmin";
+            if (email.StartsWith("tech")) return "/Technician";
+            if (email.StartsWith("support")) return "/Support";
+            if (email.StartsWith("kho")) return "/Support";
+            return "/StoreAdmin";
         }
     }
 }

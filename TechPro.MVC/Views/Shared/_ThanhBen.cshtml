@@ -16,20 +16,35 @@
     
     var menuItems = new List<dynamic>
     {
-        // System Admin Menu (Chain Management)
-        new { Label = "Tổng quan mạng lưới", Path = "/Chain", Icon = "globe", Roles = new[] { "SystemAdmin" }, ReactIcon = "Globe" },
-        new { Label = "Quản lý cửa hàng", Path = "/Chain?tab=stores", Icon = "shop", Roles = new[] { "SystemAdmin" }, ReactIcon = "Store" },
-        new { Label = "Quản trị nhân sự", Path = "/Chain?tab=staff", Icon = "people", Roles = new[] { "SystemAdmin" }, ReactIcon = "Users" },
-        new { Label = "Kho tổng", Path = "/Chain?tab=inventory", Icon = "box", Roles = new[] { "SystemAdmin" }, ReactIcon = "Package" },
-        
-        // Store Admin / Staff Menu
-        new { Label = "Tổng quan", Path = "/QuanLy", Icon = "speedometer2", Roles = new[] { "StoreAdmin" }, ReactIcon = "LayoutDashboard" },
-        new { Label = "Tiếp nhận máy", Path = "/TiepNhan", Icon = "clipboard-check", Roles = new[] { "Support", "StoreAdmin" }, ReactIcon = "ClipboardList" },
-        new { Label = "Trả máy", Path = "/TraMay", Icon = "arrow-counterclockwise", Roles = new[] { "Support", "StoreAdmin" }, ReactIcon = "RotateCcw" },
-        new { Label = "Kỹ thuật", Path = "/KyThuat", Icon = "wrench", Roles = new[] { "Technician", "StoreAdmin", "Support" }, ReactIcon = "Wrench" },
-        new { Label = "Kho linh kiện", Path = "/Kho", Icon = "box", Roles = new[] { "Support", "StoreAdmin" }, ReactIcon = "Package" },
-        new { Label = "Báo cáo", Path = "/QuanLy/BaoCao", Icon = "graph-up", Roles = new[] { "StoreAdmin" }, ReactIcon = "BarChart3" },
-        new { Label = "Cấu hình cửa hàng", Path = "/QuanLy/CauHinh", Icon = "gear", Roles = new[] { "StoreAdmin" }, ReactIcon = "Settings" }
+        // ─── SysAdmin Only ──────────────────────────────────────────────
+        new { Label = "Trạm Master Admin", Path = "/SysAdmin", Icon = "globe", Roles = new[] { "SystemAdmin" }, ReactIcon = "Globe" },
+        new { Label = "Tổng quan chuỗi", Path = "/SysAdmin/Chain", Icon = "globe", Roles = new[] { "SystemAdmin" }, ReactIcon = "Globe" },
+        new { Label = "Quản lý cửa hàng", Path = "/SysAdmin/Chain?tab=stores", Icon = "shop", Roles = new[] { "SystemAdmin" }, ReactIcon = "Store" },
+        new { Label = "Quản trị nhân sự", Path = "/SysAdmin/Chain?tab=staff", Icon = "people", Roles = new[] { "SystemAdmin" }, ReactIcon = "Users" },
+        new { Label = "Kho tổng (Master)", Path = "/SysAdmin/Chain?tab=inventory", Icon = "box", Roles = new[] { "SystemAdmin" }, ReactIcon = "Package" },
+
+        // ─── StoreAdmin Only ────────────────────────────────────────
+        new { Label = "Trạm Quản Lý", Path = "/StoreAdmin", Icon = "person-badge-fill", Roles = new[] { "StoreAdmin" }, ReactIcon = "Briefcase" },
+        new { Label = "Tổng quan doanh thu", Path = "/StoreAdmin/QuanLy", Icon = "speedometer2", Roles = new[] { "StoreAdmin" }, ReactIcon = "LayoutDashboard" },
+        new { Label = "Báo cáo", Path = "/StoreAdmin/QuanLy/BaoCao", Icon = "graph-up", Roles = new[] { "StoreAdmin" }, ReactIcon = "BarChart3" },
+        new { Label = "Kho & Duyệt linh kiện", Path = "/Support/Kho", Icon = "box", Roles = new[] { "StoreAdmin" }, ReactIcon = "Package" },
+        new { Label = "Cấu hình cửa hàng", Path = "/StoreAdmin/QuanLy/CauHinh", Icon = "gear", Roles = new[] { "StoreAdmin" }, ReactIcon = "Settings" },
+        new { Label = "Diều phối Kỹ Thuật", Path = "/Technician/KyThuat", Icon = "wrench", Roles = new[] { "StoreAdmin" }, ReactIcon = "Wrench" },
+        new { Label = "Xem Lễ Tân", Path = "/Support/TiepNhan", Icon = "clipboard-check", Roles = new[] { "StoreAdmin" }, ReactIcon = "ClipboardList" },
+
+        // ─── Technician Only ────────────────────────────────────────
+        new { Label = "Trạm Kỹ Thuật", Path = "/Technician", Icon = "tools", Roles = new[] { "Technician" }, ReactIcon = "PenTool" },
+        new { Label = "Giỏ máy của tôi", Path = "/Technician/KyThuat", Icon = "wrench", Roles = new[] { "Technician" }, ReactIcon = "Wrench" },
+        new { Label = "Yêu cầu Linh Kiện", Path = "/Technician/KyThuat/LinhKien", Icon = "box", Roles = new[] { "Technician" }, ReactIcon = "Package" },
+
+        // ─── Support (Lễ tân / FO) Only ─────────────────────────────
+        new { Label = "Trạm Lễ Tân", Path = "/Support", Icon = "house", Roles = new[] { "Support" }, ReactIcon = "Home" },
+        new { Label = "Tiếp nhận máy", Path = "/Support/TiepNhan", Icon = "clipboard-check", Roles = new[] { "Support" }, ReactIcon = "ClipboardList" },
+        new { Label = "Trả máy & Thu ngân", Path = "/Support/TraMay", Icon = "arrow-counterclockwise", Roles = new[] { "Support" }, ReactIcon = "RotateCcw" },
+        new { Label = "Kho linh kiện (xem)", Path = "/Support/Kho", Icon = "box", Roles = new[] { "Support" }, ReactIcon = "Package" },
+
+        // ─── Chung mọi vai trò ────────────────────────────────────────
+        new { Label = "Chat Nội Bộ", Path = "/Chat", Icon = "chat-quote", Roles = new[] { "SystemAdmin", "StoreAdmin", "Technician", "Support" }, ReactIcon = "MessageSquare" },
     };
     
     var filteredMenuItems = menuItems.Where(item => 
@@ -83,6 +98,10 @@
             var isActive = IsActive(item.Path, currentPath, currentQuery);
             var iconClass = item.Icon switch
             {
+                "person-badge-fill" => "bi-person-badge-fill",
+                "tools" => "bi-tools",
+                "chat-quote" => "bi-chat-quote-fill",
+                "house" => "bi-house-heart",
                 "globe" => "bi-globe",
                 "shop" => "bi-shop",
                 "people" => "bi-people",

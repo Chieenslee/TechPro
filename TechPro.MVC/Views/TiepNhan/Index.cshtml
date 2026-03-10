@@ -1,181 +1,279 @@
 @model IEnumerable<PhieuSuaChua>
 @{
     ViewData["Title"] = "TechPro POS - Lễ Tân";
-    // Tính toán một số thống kê tạm thời
     var waitingList = Model?.Where(t => t.TrangThai == "pending" || t.TrangThai == "waiting_parts").ToList() ?? new List<PhieuSuaChua>();
     var inProgressList = Model?.Where(t => t.TrangThai == "repairing").ToList() ?? new List<PhieuSuaChua>();
     var readyList = Model?.Where(t => t.TrangThai == "done").ToList() ?? new List<PhieuSuaChua>();
 }
 
-<div class="container-fluid py-3 px-2 px-md-4" style="background-color: #f8fafc; min-height: calc(100vh - 64px);">
+<div class="container-fluid py-3 px-2 px-md-4 font-inter" style="background-color: #f8fafc; min-height: calc(100vh - 64px);">
     <!-- POS Header & Stats -->
-    <div class="row g-3 mb-4">
+    <div class="row g-4 mb-4">
+        <!-- Trạm Điều Phối -->
         <div class="col-12 col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm rounded-4 h-100" style="background: linear-gradient(135deg, #0f172a, #334155); color: white;">
-                <div class="card-body p-4 d-flex flex-column justify-content-center">
-                    <h6 class="text-uppercase fw-bold opacity-75 mb-2 small" style="letter-spacing: 1px;"><i class="bi bi-person-badge-fill me-2"></i>Trạm Điều Phối</h6>
-                    <h3 class="fw-bolder mb-0 text-truncate">TechPro Care</h3>
-                    <div class="d-flex align-items-center mt-3">
-                        <span class="d-inline-block bg-success rounded-circle me-2" style="width: 10px; height: 10px; box-shadow: 0 0 8px #22c55e;"></span>
-                        <span class="small opacity-75 fw-medium">Ca trực sáng - Đang mở cửa</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-12 col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white hover-up transition-all">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start">
+            <div class="card border-0 shadow-sm rounded-4 h-100" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: white;">
+                <div class="card-body p-4 d-flex flex-column justify-content-between">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-white bg-opacity-10 p-2 rounded-3 me-3">
+                            <i data-lucide="store" class="text-white" style="width: 24px; height: 24px;"></i>
+                        </div>
                         <div>
-                            <h6 class="text-uppercase fw-bold text-slate-500 mb-2 small" style="letter-spacing: 0.5px;">Khách Đang Đợi</h6>
-                            <h2 class="fw-bolder text-warning mb-0 display-6">@waitingList.Count</h2>
-                        </div>
-                        <div class="p-3 bg-warning bg-opacity-10 text-warning rounded-circle">
-                            <i data-lucide="clock" class="icon" style="width: 28px; height: 28px;"></i>
+                            <h6 class="text-uppercase fw-bold opacity-75 mb-0 small" style="letter-spacing: 1px;">Trạm Điều Phối</h6>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-12 col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white hover-up transition-all">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <h6 class="text-uppercase fw-bold text-slate-500 mb-2 small" style="letter-spacing: 0.5px;">Đã Xong - Chờ Trả</h6>
-                            <h2 class="fw-bolder text-success mb-0 display-6">@readyList.Count</h2>
-                        </div>
-                        <div class="p-3 bg-success bg-opacity-10 text-success rounded-circle">
-                            <i data-lucide="check-circle" class="icon" style="width: 28px; height: 28px;"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-12 col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm rounded-4 h-100 bg-indigo-50 border-start border-4 border-indigo-600">
-                <div class="card-body p-4 d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="text-uppercase fw-bold text-indigo-600 mb-2 small" style="letter-spacing: 0.5px;">Tiền Mặt Tại Quầy</h6>
-                        <h3 class="fw-bolder text-indigo-900 mb-0">12.500.000đ</h3>
+                        <h4 class="fw-bolder mb-2 text-white">TechPro Care</h4>
+                        <div class="d-flex align-items-center">
+                            <span class="d-inline-block bg-success rounded-circle me-2 position-relative pulse-dot" style="width: 12px; height: 12px; box-shadow: 0 0 10px #22c55e;"></span>
+                            <span class="small opacity-75 fw-medium">Ca sáng - Đang mở cửa</span>
+                        </div>
                     </div>
-                    <button class="btn btn-indigo text-white rounded-circle p-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 52px; height: 52px; background-color: #4f46e5; border-color: #4f46e5;" title="Chốt ca ngay">
-                        <i data-lucide="wallet" class="icon" style="width: 24px; height: 24px;"></i>
-                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Khách Đang Đợi (Blue / Primary) -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white hover-up transition-all border-start border-4 border-primary">
+                <div class="card-body p-4 d-flex flex-column justify-content-center">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <h6 class="text-uppercase fw-bold text-slate-500 mb-0 small" style="letter-spacing: 0.5px;">Khách Đang Đợi / Chờ Đồ</h6>
+                        <div class="p-2 bg-primary bg-opacity-10 text-primary rounded-circle">
+                            <i data-lucide="users" class="icon" style="width: 20px; height: 20px;"></i>
+                        </div>
+                    </div>
+                    <h2 class="fw-bolder text-slate-800 mb-0 display-6">@waitingList.Count</h2>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Đã Xong (Green) -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white hover-up transition-all border-start border-4 border-success">
+                <div class="card-body p-4 d-flex flex-column justify-content-center">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <h6 class="text-uppercase fw-bold text-slate-500 mb-0 small" style="letter-spacing: 0.5px;">Đã Xong - Chờ Trả</h6>
+                        <div class="p-2 bg-success bg-opacity-10 text-success rounded-circle">
+                            <i data-lucide="check-circle" class="icon" style="width: 20px; height: 20px;"></i>
+                        </div>
+                    </div>
+                    <h2 class="fw-bolder text-slate-800 mb-0 display-6">@readyList.Count</h2>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tiền Mặt Tại Quầy (Yellow/Warning) -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white hover-up transition-all border-start border-4 border-warning">
+                <div class="card-body p-4 d-flex flex-column justify-content-center">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="text-uppercase fw-bold text-slate-500 mb-0 small" style="letter-spacing: 0.5px;">Tiền Mặt Tại Quầy</h6>
+                        <div class="p-2 bg-warning bg-opacity-10 text-warning rounded-circle" title="Chốt ca ngay" style="cursor: pointer;">
+                            <i data-lucide="wallet" class="icon" style="width: 20px; height: 20px;"></i>
+                        </div>
+                    </div>
+                    <h3 class="fw-bolder text-slate-800 mb-0">12.500.000đ</h3>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row g-4">
-        <!-- QUICK CHECK-IN FORM (Left Side) -->
-        <div class="col-12 col-lg-5 mb-4 mb-lg-0">
-            <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100 sticky-lg-top" style="top: 80px; z-index: 5;">
-                <div class="card-header bg-white border-bottom-0 p-4 pb-2">
-                    <h5 class="fw-bolder text-slate-800 mb-0 d-flex align-items-center">
-                        <i data-lucide="file-plus-2" class="text-primary me-2"></i> Trạm Tạo Phiếu Nhanh
-                    </h5>
-                    <p class="text-muted small mt-1 mb-0">Hỗ trợ tra cứu nhanh SĐT Khách hàng</p>
+    <!-- MAIN GRID 2 COLLUMNS -->
+    <div class="row g-4 mb-4">
+        <!-- QUICK CHECK-IN FORM -->
+        <div class="col-12">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="card-header bg-white border-bottom p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="fw-bolder text-slate-800 mb-1 d-flex align-items-center">
+                                <i data-lucide="file-plus-2" class="text-primary me-2"></i> Trạm Tạo Phiếu Nhanh
+                            </h5>
+                            <p class="text-muted small mb-0">Hỗ trợ tra cứu nhanh SĐT Khách hàng & Tạo biên nhận mới</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body p-4 pt-2">
-                    <form id="checkInForm" asp-action="TaoPhieu" asp-controller="TiepNhan" method="post">
+                <div class="card-body p-4">
+                    <form id="checkInForm" asp-action="TaoPhieu" asp-controller="TiepNhan" method="post" class="needs-validation">
                         @Html.AntiForgeryToken()
                         
-                        <!-- Thông tin khách -->
-                        <div class="mb-4">
-                            <div class="input-group input-group-lg mb-3 shadow-sm rounded-3 overflow-hidden">
-                                <span class="input-group-text bg-white border-end-0 text-primary"><i class="bi bi-telephone-fill"></i></span>
-                                <input type="tel" class="form-control border-start-0 border-end-0 ps-0 fw-bold" name="SoDienThoai" id="phoneNumber" placeholder="09..." required style="box-shadow: none;" />
-                                <button class="btn btn-primary" type="button" style="width: 60px;"><i class="bi bi-search"></i></button>
-                            </div>
-                            <div class="form-floating shadow-sm rounded-3">
-                                <input type="text" class="form-control" name="TenKhachHang" id="customerName" placeholder="Tên khách hàng" required />
-                                <label for="customerName"><i class="bi bi-person me-1 text-slate-400"></i> Họ và Tên Khách Hàng</label>
-                            </div>
-                        </div>
-
-                        <!-- Thông tin thiết bị -->
-                        <div class="bg-slate-50 p-3 p-md-4 rounded-4 mb-4 border border-slate-100">
-                            <h6 class="fw-bold text-slate-700 mb-3"><i class="bi bi-phone me-2"></i>Tình trạng lúc tiếp nhận</h6>
-                            
-                            <div class="form-floating mb-3">
-                                <input type="text" class="form-control bg-white" name="TenThietBi" id="deviceModel" placeholder="VD: iPhone 14 Pro Max" required />
-                                <label for="deviceModel">Model Thiết Bị (VD: iPhone 14 Pro Max)</label>
-                            </div>
-                            
-                            <div class="row g-3 mb-3">
-                                <div class="col-12 col-sm-6">
-                                    <div class="input-group">
-                                        <span class="input-group-text bg-white text-slate-500"><i class="bi bi-upc-scan"></i></span>
-                                        <input type="text" class="form-control bg-white" name="SerialNumber" id="serialNumber" placeholder="Nhập IMEI/Serial" />
+                        <div class="row g-4">
+                            <!-- Cột 1: Thông tin khách hàng -->
+                            <div class="col-12 col-lg-5 col-xl-4 border-end-lg border-slate-100 pe-lg-4">
+                                <h6 class="fw-bold text-slate-700 mb-3 d-flex align-items-center"><div class="icon-circle bg-primary-subtle text-primary me-2"><i class="bi bi-person-badge"></i></div>Thông Tin Khách Hàng</h6>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-slate-500 mb-1 d-flex justify-content-between">
+                                        <span>Số điện thoại <span class="text-danger">*</span></span>
+                                        <span class="text-danger" style="font-size: 0.75rem;">(Bắt buộc)</span>
+                                    </label>
+                                    <div class="input-group input-group-lg shadow-sm rounded-3 overflow-hidden custom-focus-ring border-start border-3 border-danger">
+                                        <span class="input-group-text bg-white border-end-0 text-primary border-0"><i class="bi bi-telephone-fill"></i></span>
+                                        <input type="tel" class="form-control border-start-0 border-end-0 ps-0 fw-bold custom-input border-0" name="SoDienThoai" id="phoneNumber" placeholder="Nhập để tìm kiếm hoặc tạo mới..." required />
+                                        <button class="btn btn-primary px-3 px-sm-4 text-nowrap tooltip-hover round-end" type="button" data-bs-title="Tìm kiếm SĐT"><i class="bi bi-search"></i> <span class="d-none d-sm-inline">Tìm</span></button>
                                     </div>
+                                    <div class="valid-feedback text-success small mt-1"><i class="bi bi-check-circle-fill me-1"></i>SĐT Hợp lệ</div>
                                 </div>
-                                <div class="col-12 col-sm-6">
-                                    <div class="input-group">
-                                        <span class="input-group-text bg-white text-slate-500"><i class="bi bi-key"></i></span>
-                                        <input type="text" class="form-control bg-white" name="MatKhauManHinh" id="passcode" placeholder="Mật khẩu máy" />
+                                
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-slate-500 mb-1 d-flex justify-content-between">
+                                        <span>Họ và Tên <span class="text-danger">*</span></span>
+                                    </label>
+                                    <div class="input-group shadow-sm rounded-3 custom-focus-ring">
+                                        <span class="input-group-text bg-white text-slate-400 border-end-0"><i class="bi bi-person"></i></span>
+                                        <input type="text" class="form-control border-start-0 custom-input" name="TenKhachHang" id="customerName" placeholder="Vd: Nguyễn Văn A" required />
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="form-floating mb-3 position-relative">
-                                <textarea class="form-control bg-white" name="MoTaLoi" id="problemDescription" style="height: 100px" required placeholder="Máy bị rơi vỡ..."></textarea>
-                                <label for="problemDescription">Mô tả chi tiết lỗi / Tình trạng máy</label>
-                            </div>
-                            
-                            <button type="button" class="btn btn-outline-primary w-100 fw-bold rounded-3 d-flex justify-content-center align-items-center py-2" id="btnAiQuote" onclick="analyzeQuote()">
-                                <i data-lucide="sparkles" class="me-2" style="width: 18px; height: 18px;"></i>
-                                Kích Hoạt AI Chẩn Đoán Lỗi & Báo Giá
-                            </button>
-                            
-                            <!-- AI Quote Result -->
-                            <div id="aiQuoteResult" class="mt-3 p-3 rounded-3 bg-indigo-50 border border-indigo-100 d-none shadow-sm transition-all text-center">
-                                <div class="badge bg-indigo-100 text-indigo-800 mb-2 px-3 py-1 rounded-pill">🤖 Trợ lý AI Đề Xuất</div>
-                                <p id="aiSuggestion" class="text-indigo-900 fw-medium mb-3 lh-sm"></p>
-                                <div class="d-flex justify-content-between align-items-center bg-white p-3 rounded-3 shadow-sm border border-indigo-50">
-                                    <span class="fw-bold text-slate-600">Chi phí dự kiến:</span>
-                                    <span id="aiTotal" class="fw-bolder text-danger fs-5">0đ</span>
+                            <!-- Cột 2: Thông tin thiết bị -->
+                            <div class="col-12 col-lg-7 col-xl-8 ps-lg-4">
+                                <h6 class="fw-bold text-slate-700 mb-3 d-flex align-items-center"><div class="icon-circle bg-indigo-subtle text-indigo-600 me-2"><i class="bi bi-phone"></i></div>Tình Trạng Thiết Bị</h6>
+                                
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold text-slate-500 mb-1 d-flex justify-content-between">
+                                            <span>Model Thiết Bị <span class="text-danger">*</span></span>
+                                        </label>
+                                        <input type="text" class="form-control shadow-sm custom-input border-start border-3 border-danger" name="TenThietBi" id="deviceModel" placeholder="VD: iPhone 14 Pro Max" required />
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold text-slate-500 mb-1">IMEI / Serial</label>
+                                        <div class="input-group shadow-sm rounded-3 custom-focus-ring">
+                                            <span class="input-group-text bg-white text-slate-400 border-end-0"><i class="bi bi-upc-scan"></i></span>
+                                            <input type="text" class="form-control border-start-0 custom-input" name="SerialNumber" id="serialNumber" placeholder="Quét hoặc nhập tay" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-slate-500 mb-1 d-flex justify-content-between">
+                                        <span>Mô tả chi tiết lỗi / Tình trạng máy <span class="text-danger">*</span></span>
+                                        <span class="text-danger" style="font-size: 0.75rem;">(Bắt buộc ghi rõ)</span>
+                                    </label>
+                                    <textarea class="form-control shadow-sm custom-input border-start border-3 border-danger" style="height: 48px;" name="MoTaLoi" id="problemDescription" rows="2" required placeholder="Khách báo: Máy bị rơi vỡ màn hình..."></textarea>
+                                </div>
+                                
+                                <!-- AI Flow Area -->
+                                <div class="bg-indigo-50/50 border border-indigo-100 rounded-4 p-3 mb-3 shadow-sm">
+                                    <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between mb-2 gap-2">
+                                        <div>
+                                            <h6 class="fw-bold text-indigo-900 mb-1 d-flex align-items-center">
+                                                <i data-lucide="sparkles" class="text-indigo-600 me-2" style="width: 18px; height: 18px;"></i>
+                                                Trợ lý AI Phân Tích Lỗi Tự Động
+                                            </h6>
+                                            <p class="small text-slate-500 mb-0" style="font-size: 0.8rem;">Dựa trên mô tả lỗi để chẩn đoán nguyên nhân và báo giá sửa chữa.</p>
+                                        </div>
+                                        <button type="button" class="btn fw-bold rounded-pill px-4 py-2 shadow-sm hover-lift text-white flex-shrink-0 d-inline-flex align-items-center justify-content-center" style="background-color: #4f46e5; font-size: 0.9rem;" id="btnAiQuote" onclick="analyzeQuote()">
+                                            Phân tích ngay <i class="bi bi-arrow-right-short fs-5 ms-1"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- AI Quote Result -->
+                                    <div class="w-100">
+                                        <div id="aiQuoteResult" class="mt-2 p-3 rounded-4 bg-white border border-indigo-100 d-none shadow-sm transition-all position-relative overflow-hidden w-100">
+                                            <div class="position-absolute top-0 start-0 w-100 h-100 bg-indigo-50" style="background: linear-gradient(120deg, rgba(238,242,255,0) 0%, rgba(238,242,255,0.8) 50%, rgba(238,242,255,0) 100%); background-size: 200% 100%; animation: shimmer 2.5s infinite;"></div>
+                                            <div class="d-flex align-items-start position-relative z-1">
+                                                <div class="p-2 bg-indigo-100 rounded-circle text-indigo-600 me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; flex-shrink: 0;">
+                                                    <i data-lucide="bot" style="width: 24px; height: 24px;"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <div class="d-flex align-items-center mb-1">
+                                                        <h6 class="fw-bold text-indigo-900 mb-0 me-2">AI Đề Xuất Check-list</h6>
+                                                    </div>
+                                                    <p id="aiSuggestion" class="text-slate-700 fw-medium small mb-2 lh-base"></p>
+                                                    <div class="d-flex justify-content-between align-items-center bg-indigo-50/30 p-2 px-3 rounded-3 border border-indigo-50 mt-2">
+                                                        <span class="fw-bold text-slate-600 small">Chi phí dự kiến tham khảo:</span>
+                                                        <span id="aiTotal" class="fw-bolder text-danger fs-6">0đ</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-slate-50 p-3 rounded-3 border border-slate-100 mb-4">
+                                    <h6 class="fw-bold text-slate-600 small mb-2"><i class="bi bi-info-circle me-1"></i> Thông tin bổ sung (Tùy chọn)</h6>
+                                    <div class="row g-2">
+                                        <div class="col-md-12">
+                                            <label class="form-label small fw-medium text-slate-500 mb-1" style="font-size: 0.8rem;">Mật khẩu màn hình thiết bị</label>
+                                            <div class="input-group shadow-sm rounded-3 custom-focus-ring">
+                                                <span class="input-group-text bg-white text-slate-400 border-end-0 py-1"><i class="bi bi-key"></i></span>
+                                                <input type="text" class="form-control border-start-0 custom-input bg-white py-1" name="MatKhauManHinh" id="passcode" placeholder="Để trống nếu không có mật khẩu" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-end mt-4">
+                                    <button type="submit" class="btn btn-primary rounded-pill px-5 py-2 fw-bolder shadow d-inline-flex align-items-center hover-lift text-uppercase" id="submitCheckInBtn" style="letter-spacing: 0.5px; font-size: 1.05rem;">
+                                        <i data-lucide="printer" class="me-2" style="width: 20px; height: 20px;"></i> Lưu & Tạo Phiếu
+                                    </button>
                                 </div>
                             </div>
                         </div>
-
-                        <button type="submit" class="btn btn-primary w-100 py-3 rounded-4 fw-bolder shadow d-flex justify-content-center align-items-center h5 mb-0 text-uppercase" id="submitCheckInBtn" style="letter-spacing: 1px;">
-                            <i data-lucide="printer" class="me-2" style="width: 24px; height: 24px;"></i> LƯU & TRUYỀN PHIẾU
-                        </button>
                     </form>
                 </div>
             </div>
         </div>
-
-        <!-- LIVE QUEUE (Right Side) -->
-        <div class="col-12 col-lg-7">
-            <div class="card border-0 shadow-sm rounded-4 h-100 d-flex flex-column">
-                <div class="card-header bg-white border-bottom p-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-                    <h5 class="fw-bolder text-slate-800 mb-0 d-flex align-items-center">
-                        <i data-lucide="list-todo" class="text-primary me-2"></i> Danh Sách Công Việc Hôm Nay
-                    </h5>
+    </div>
+    
+    <!-- LIVE QUEUE -->
+    <div class="row g-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm rounded-4 d-flex flex-column h-100">
+                <div class="card-header bg-white border-bottom p-4">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                        <h5 class="fw-bolder text-slate-800 mb-0 d-flex align-items-center">
+                            <i data-lucide="list-todo" class="text-primary me-2"></i> Danh Sách Công Việc Hôm Nay
+                        </h5>
+                        
+                        <form id="searchForm" class="d-flex">
+                            <div class="input-group bg-slate-50 border border-slate-200 rounded-pill overflow-hidden shadow-sm custom-focus-ring" style="width: 350px;">
+                                <span class="input-group-text bg-transparent border-0 pe-1 text-slate-400">
+                                    <i class="bi bi-search"></i>
+                                </span>
+                                <input id="searchInput" type="text" class="form-control border-0 bg-transparent shadow-none custom-input" name="searchTerm" value="@ViewBag.SearchTerm" placeholder="Tra Mã phiếu..." />
+                                <button class="btn btn-primary rounded-pill m-1 px-4 fw-medium" type="submit">Tìm</button>
+                            </div>
+                        </form>
+                    </div>
                     
-                    <form id="searchForm" class="d-flex w-100" style="max-width: 350px;">
-                        <div class="input-group bg-slate-50 border border-slate-200 rounded-pill overflow-hidden shadow-sm">
-                            <span class="input-group-text bg-transparent border-0 pe-1 text-slate-400">
-                                <i class="bi bi-search"></i>
-                            </span>
-                            <input type="text" class="form-control border-0 bg-transparent shadow-none" name="searchTerm" value="@ViewBag.SearchTerm" placeholder="Tra nhanh Tên KH, SĐT..." />
-                            <button class="btn btn-primary rounded-pill m-1 px-3 d-none d-sm-block" type="submit">Tìm</button>
+                    <!-- Filter Tags -->
+                    <div class="d-flex flex-wrap align-items-center gap-2 mt-3 pt-3 border-top border-slate-100">
+                        <span class="text-slate-500 small fw-bold me-2"><i class="bi bi-funnel me-1"></i> Lọc nhanh:</span>
+                        
+                        <button class="btn btn-sm rounded-pill fw-medium filter-btn active" style="font-size: 0.8rem; padding: 0.35rem 1rem;">
+                            Tất cả
+                        </button>
+                        <button class="btn btn-sm btn-outline-warning text-dark border-slate-200 rounded-pill fw-medium filter-btn bg-white hover-up" style="font-size: 0.8rem; padding: 0.35rem 1rem;">
+                            Chờ khám
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger text-dark border-slate-200 rounded-pill fw-medium filter-btn bg-white hover-up" style="font-size: 0.8rem; padding: 0.35rem 1rem;">
+                            Gấp
+                        </button>
+                        <button class="btn btn-sm btn-outline-success text-dark border-slate-200 rounded-pill fw-medium filter-btn bg-white hover-up" style="font-size: 0.8rem; padding: 0.35rem 1rem;">
+                            Khách VIP
+                        </button>
+                        
+                        <div class="ms-auto d-flex align-items-center bg-slate-50 border border-slate-200 rounded-pill px-3 py-1 shadow-sm tooltip-hover" title="Lọc theo ngày nhận máy">
+                            <i class="bi bi-calendar3 text-slate-400 me-2" style="font-size: 0.8rem;"></i>
+                            <input type="date" class="form-control form-control-sm border-0 bg-transparent shadow-none p-0 text-slate-600 fw-medium" style="font-size: 0.8rem; width: 110px;" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
                         </div>
-                    </form>
+                    </div>
                 </div>
                 
-                <div class="card-body p-0 flex-grow-1 overflow-auto">
+                <div class="card-body p-0 flex-grow-1 overflow-auto" style="min-height: 400px;">
                     <div class="table-responsive h-100">
-                        <table class="table table-hover align-middle mb-0 pos-table" style="min-width: 800px;">
-                            <thead class="bg-slate-50 text-uppercase text-slate-500 small fw-bold" style="letter-spacing: 0.5px;">
+                        <table class="table table-hover align-middle mb-0 pos-table">
+                            <thead class="bg-slate-50 text-uppercase small fw-bold" style="letter-spacing: 0.5px; color: #64748b;">
                                 <tr>
-                                    <th class="py-3 px-4 border-0">Mã Số</th>
-                                    <th class="py-3 px-4 border-0">Khách Hàng (SĐT)</th>
-                                    <th class="py-3 px-4 border-0">Tình Trạng Thiết Bị</th>
-                                    <th class="py-3 px-4 border-0">Tiến Độ</th>
-                                    <th class="py-3 px-4 border-0 text-end">Thao Tác</th>
+                                    <th class="py-3 px-4 border-0" style="width: 10%;">Mã Số</th>
+                                    <th class="py-3 px-4 border-0" style="width: 22%;">Khách Hàng</th>
+                                    <th class="py-3 px-4 border-0" style="width: 38%;">Chi Tiết Thiết Bị & Tình Trạng</th>
+                                    <th class="py-3 px-4 border-0 text-center" style="width: 12%;">Tiến Độ</th>
+                                    <th class="py-3 px-4 border-0 text-center" style="width: 11%;">Thao Tác</th>
+                                    <th class="py-3 px-4 border-0 text-end" style="width: 7%;">Chi Tiết</th>
                                 </tr>
                             </thead>
                             <tbody class="border-top-0">
@@ -184,57 +282,72 @@
                                     @foreach (var ticket in Model)
                                     {
                                         var isRecent = (DateTime.UtcNow - ticket.NgayNhan).TotalMinutes < 30;
-                                        <tr class="transition-colors group" style="cursor: pointer;" onclick="event.stopPropagation(); window.location.href='@Url.Action("ChiTiet", "KyThuat", new { id = ticket.Id })'">
+                                        <tr class="transition-colors group hover-bg-slate-50" style="cursor: pointer;" onclick="event.stopPropagation(); window.location.href='@Url.Action("ChiTiet", "TiepNhan", new { id = ticket.Id })'">
                                             <td class="py-3 px-4">
                                                 <div class="d-flex flex-column">
                                                     <span class="fw-bolder text-primary">@ticket.Id</span>
-                                                    <span class="text-muted small" style="font-size: 0.7rem;">@ticket.NgayNhan.ToString("HH:mm")</span>
+                                                    <span class="text-slate-400 fw-medium small d-flex align-items-center mt-1" style="font-size: 0.75rem;">
+                                                        <i class="bi bi-clock me-1"></i> @ticket.NgayNhan.ToString("HH:mm")
+                                                    </span>
                                                 </div>
-                                            </td>
-                                            <td class="py-3 px-4">
-                                                <div class="fw-bold text-slate-800 text-truncate" style="max-width: 150px;">@ticket.TenKhachHang</div>
-                                                <div class="text-slate-500 small font-monospace"><i class="bi bi-telephone-fill me-1 text-slate-300"></i>@ticket.SoDienThoai</div>
                                             </td>
                                             <td class="py-3 px-4">
                                                 <div class="d-flex align-items-center">
-                                                    <div class="bg-slate-100 p-2 rounded-3 me-3 d-none d-sm-block">
-                                                        <i data-lucide="smartphone" class="text-slate-500" style="width: 24px; height: 24px;"></i>
+                                                    <div class="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 40px; height: 40px;">
+                                                        <span class="fw-bold">@((string.IsNullOrEmpty(ticket.TenKhachHang) ? "?" : ticket.TenKhachHang.Substring(0,1).ToUpper()))</span>
                                                     </div>
                                                     <div>
-                                                        <span class="text-slate-700 fw-bold d-block text-truncate" style="max-width: 200px;">@ticket.TenThietBi</span>
-                                                        <span class="text-slate-500 small d-inline-block text-truncate" style="max-width: 200px;" title="@ticket.MoTaLoi">@ticket.MoTaLoi</span>
+                                                        <div class="fw-bold text-slate-800 text-truncate" style="max-width: 180px;">@ticket.TenKhachHang</div>
+                                                        <div class="text-slate-500 small font-monospace mt-1"><i class="bi bi-telephone-fill me-1 text-slate-400"></i>@ticket.SoDienThoai</div>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td class="py-3 px-4">
+                                                <div class="d-flex align-items-start">
+                                                    <div class="bg-white border border-slate-200 p-2 rounded-3 me-3 flex-shrink-0 mt-1 shadow-sm">
+                                                        <i data-lucide="smartphone" class="text-slate-500" style="width: 20px; height: 20px;"></i>
+                                                    </div>
+                                                    <div>
+                                                        <span class="text-slate-700 fw-bold d-block text-truncate" style="max-width: 300px;">@ticket.TenThietBi</span>
+                                                        <span class="text-slate-500 small d-inline-block text-truncate mt-1" style="max-width: 300px;" title="@ticket.MoTaLoi">@ticket.MoTaLoi</span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="py-3 px-4 text-center">
                                                 @{
-                                                    var badgeBaseClass = "badge px-3 py-2 rounded-pill fw-bold d-inline-flex align-items-center justify-content-center text-nowrap";
-                                                    var badgeStyle = "width: 160px; height: 36px; font-size: 0.85rem;";
+                                                    var badgeBaseClass = "badge rounded-pill border-0 d-inline-flex align-items-center justify-content-center text-nowrap";
+                                                    var badgeStyle = "height: 32px; padding: 0 1.25rem; font-size: 0.85rem; font-weight: 700; letter-spacing: 0.3px;";
                                                     
                                                     var statusBadge = ticket.TrangThai switch
                                                     {
-                                                        "pending" => $"<span class='{badgeBaseClass} bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25' style='{badgeStyle}'><i class='bi bi-hourglass-split me-2'></i>Chờ Khám</span>",
-                                                        "repairing" => $"<span class='{badgeBaseClass} bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25' style='{badgeStyle}'><i class='bi bi-tools me-2'></i>Đang Mổ Máy</span>",
-                                                        "waiting_parts" => $"<span class='{badgeBaseClass} bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25' style='{badgeStyle}'><i class='bi bi-box me-2'></i>Chờ Đồ</span>",
-                                                        "done" => $"<span class='{badgeBaseClass} bg-success text-white shadow-sm border border-success' style='{badgeStyle}'><i class='bi bi-check-circle-fill me-2'></i>Sẵn Sàng Trả K/H</span>",
-                                                        "delivered" => $"<span class='{badgeBaseClass} bg-slate-100 text-slate-500 border border-slate-200' style='{badgeStyle}'>Đã Hoàn Tất</span>",
-                                                        _ => $"<span class='{badgeBaseClass} bg-secondary text-white' style='{badgeStyle}'>{ticket.TrangThai}</span>"
+                                                        "pending" => $"<span class='{badgeBaseClass}' style='{badgeStyle} background-color: #fef08a; color: #a16207;'>Chờ Khám</span>",
+                                                        "repairing" => $"<span class='{badgeBaseClass}' style='{badgeStyle} background-color: #dbeafe; color: #1e40af;'>Đang Xử Lý</span>",
+                                                        "waiting_parts" => $"<span class='{badgeBaseClass}' style='{badgeStyle} background-color: #fee2e2; color: #b91c1c;'>Chờ Đồ / Lỗi</span>",
+                                                        "done" => $"<span class='{badgeBaseClass}' style='{badgeStyle} background-color: #dcfce7; color: #166534;'>Hoàn Tất</span>",
+                                                        "delivered" => $"<span class='{badgeBaseClass}' style='{badgeStyle} background-color: #f1f5f9; color: #475569;'>Đã Trả Khách</span>",
+                                                        _ => $"<span class='{badgeBaseClass}' style='{badgeStyle} background-color: #f1f5f9; color: #475569;'>{ticket.TrangThai}</span>"
                                                     };
                                                 }
                                                 @Html.Raw(statusBadge)
                                             </td>
-                                            <td class="py-3 px-4 text-end" onclick="event.stopPropagation();">
-                                                <div class="d-flex gap-2 justify-content-end align-items-center">
+                                            <td class="py-3 px-4 text-center" onclick="event.stopPropagation();">
+                                                <div class="d-flex justify-content-center align-items-center">
                                                     @if (ticket.TrangThai == "done")
                                                     {
-                                                        <button class="btn btn-sm btn-success fw-bold d-inline-flex align-items-center justify-content-center text-nowrap px-3 shadow-sm" style="height: 36px;" onclick="alert('Đang mở màn chốt bill & thu tiền!')"><i class="bi bi-cash-stack me-2"></i> Trả Máy</button>
+                                                        <button class="btn btn-sm btn-success fw-bold d-inline-flex align-items-center justify-content-center text-nowrap px-4 py-1 shadow-sm rounded-pill border-0 hover-lift" style="height: 32px; font-size: 0.85rem; background-color: #10b981;" onclick="alert('Đang mở màn chốt bill & thu tiền!')">Trả Máy</button>
                                                     }
                                                     else if (ticket.TrangThai == "pending" && isRecent)
                                                     {
-                                                        <button class="btn btn-sm btn-outline-danger d-inline-flex align-items-center justify-content-center text-nowrap px-3" style="height: 36px;" onclick="cancelTicket('@ticket.Id')" title="Hủy phiếu gấp (Chỉ Lễ Tân)"><i class="bi bi-x-circle me-2"></i> Hủy</button>
+                                                        <button class="btn btn-sm btn-outline-danger fw-bold d-inline-flex align-items-center justify-content-center text-nowrap px-3 py-1 rounded-pill hover-lift" style="height: 32px; font-size: 0.85rem;" onclick="cancelTicket('@ticket.Id')" title="Hủy phiếu gấp (Chỉ Lễ Tân)">Hủy</button>
                                                     }
-                                                    <a href="@Url.Action("ChiTiet", "KyThuat", new { id = ticket.Id })" class="btn btn-sm btn-light border bg-white d-inline-flex align-items-center justify-content-center" style="height: 36px; width: 36px;" title="Chi tiết"><i class="bi bi-chevron-right text-slate-500"></i></a>
+                                                    else
+                                                    {
+                                                        <span class="text-slate-300">-</span>
+                                                    }
                                                 </div>
+                                            </td>
+                                            <td class="py-3 px-4 text-end" onclick="event.stopPropagation();">
+                                                <a href="@Url.Action("ChiTiet", "TiepNhan", new { id = ticket.Id })" class="btn btn-sm btn-outline-secondary fw-bold d-inline-flex align-items-center justify-content-center text-nowrap px-3 py-1 rounded-pill hover-lift bg-white" style="height: 32px; font-size: 0.85rem;" title="Xem chi tiết">Xem</a>
                                             </td>
                                         </tr>
                                     }
@@ -242,11 +355,13 @@
                                 else
                                 {
                                     <tr>
-                                        <td colspan="5" class="text-center py-5">
-                                            <div class="text-slate-400 py-4">
-                                                <i data-lucide="inbox" class="mb-3 d-inline-block opacity-50" style="width: 64px; height: 64px;"></i>
-                                                <h5 class="fw-bold text-slate-500 mb-1">Khay chứa trống</h5>
-                                                <p class="mb-0">Chưa có phiếu máy nào được nhận trong hôm nay.</p>
+                                        <td colspan="6" class="text-center py-5">
+                                            <div class="text-slate-400 py-5">
+                                                <div class="bg-slate-100 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                                                    <i data-lucide="inbox" class="opacity-50" style="width: 40px; height: 40px;"></i>
+                                                </div>
+                                                <h5 class="fw-bold text-slate-600 mb-1">Khay chứa trống</h5>
+                                                <p class="mb-0 text-slate-500">Chưa có phiếu máy nào được nhận trong hôm nay.</p>
                                             </div>
                                         </td>
                                     </tr>
@@ -262,8 +377,14 @@
 
 @section Styles {
     <style>
-        .hover-up { transition: transform 0.2s, box-shadow 0.2s; }
-        .hover-up:hover { transform: translateY(-3px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.08)!important; }
+        /* Modern Font Family */
+        @@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        
+        .font-inter {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        /* Core Colors */
         .text-slate-300 { color: #cbd5e1; }
         .text-slate-400 { color: #94a3b8; }
         .text-slate-500 { color: #64748b; }
@@ -272,27 +393,102 @@
         .text-slate-800 { color: #1e293b; }
         .bg-slate-50 { background-color: #f8fafc; }
         .bg-slate-100 { background-color: #f1f5f9; }
-        .border-slate-100 { border-color: #f1f5f9; }
-        .border-slate-200 { border-color: #e2e8f0; }
+        .border-slate-100 { border-color: #f1f5f9 !important; }
+        .border-slate-200 { border-color: #e2e8f0 !important; }
         
         .bg-indigo-50 { background-color: #eef2ff; }
         .bg-indigo-100 { background-color: #e0e7ff; }
+        .bg-indigo-200 { background-color: #c7d2fe; }
         .text-indigo-600 { color: #4f46e5; }
         .text-indigo-800 { color: #3730a3; }
         .text-indigo-900 { color: #312e81; }
-        .border-indigo-50 { border-color: #eef2ff; }
-        .border-indigo-100 { border-color: #e0e7ff; }
-        .border-indigo-600 { border-color: #4f46e5; }
+        .border-indigo-50 { border-color: #eef2ff !important; }
+        .border-indigo-100 { border-color: #e0e7ff !important; }
+        .border-indigo-600 { border-color: #4f46e5 !important; }
         
+        .bg-primary-subtle { background-color: #eff6ff; }
+        .bg-indigo-subtle { background-color: #eef2ff; }
+
+        .btn-outline-indigo {
+            color: #4f46e5;
+            border-color: #4f46e5;
+        }
+        .btn-outline-indigo:hover {
+            color: white;
+            background-color: #4f46e5;
+        }
+
+        /* Utils & Animations */
         .transition-all { transition: all 0.3s ease; }
-        
-        .pos-table th { font-weight: 700; white-space: nowrap; }
+        .hover-up { transition: transform 0.2s, box-shadow 0.2s; }
+        .hover-up:hover { transform: translateY(-3px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.08)!important; }
+        .hover-lift { transition: transform 0.2s; }
+        .hover-lift:hover { transform: translateY(-2px); }
+
+        .icon-circle {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @@keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+        .pulse-dot { animation: pulse 2s infinite; }
+
+        @@keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Inputs & Focus Rings */
+        .custom-input {
+            transition: all 0.2s ease-in-out;
+        }
+        .custom-focus-ring:focus-within {
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15) !important;
+            border-color: #86b7fe;
+        }
+        .input-group:focus-within .input-group-text {
+            border-color: #86b7fe;
+            color: #0d6efd !important;
+        }
+        .input-group:focus-within .form-control {
+            border-color: #86b7fe;
+        }
+        .is-valid-container {
+            border-color: #198754 !important;
+            box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.1) !important;
+        }
+        .is-invalid-container {
+            border-color: #dc3545 !important;
+            box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.1) !important;
+        }
+
+        /* Border adjustments for responsive grid */
+        @@media (min-width: 992px) {
+            .border-end-lg { border-right: 1px solid #f1f5f9; }
+        }
+
+        /* Table Optimization */
+        .pos-table th { font-weight: 700; white-space: nowrap; color: #64748b; }
         .pos-table td { vertical-align: middle; }
-        .pos-table tbody tr:hover { background-color: rgba(241, 245, 249, 0.7) !important; }
+        .pos-table tbody tr { transition: background-color 0.2s; }
+        .hover-bg-slate-50:hover { background-color: #f8fafc !important; }
         
-        /* Custom scrollbar cho Live Queue */
+        /* Filter buttons */
+        .filter-btn { transition: all 0.2s; color: #64748b; }
+        .filter-btn.active { background-color: #1e293b; color: white; border-color: #1e293b; }
+        .filter-btn:not(.active):hover { background-color: #f1f5f9; color: #1e293b; }
+        
+        /* Custom scrollbar */
         .table-responsive::-webkit-scrollbar { width: 8px; height: 8px; }
-        .table-responsive::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        .table-responsive::-webkit-scrollbar-track { background: #f8fafc; border-radius: 4px; }
         .table-responsive::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .table-responsive::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
@@ -300,6 +496,18 @@
 
 @section Scripts {
     <script>
+        // Form Validation UI UX Highlight
+        const checkInForm = document.getElementById('checkInForm');
+        // Removed validation UI for simplicity
+
+        // Tooltips Initialization
+        if (typeof bootstrap !== 'undefined') {
+            const tooltipTriggerList = document.querySelectorAll('.tooltip-hover')
+            if (tooltipTriggerList.length) {
+                const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+            }
+        }
+
         // AI Quote (Cải tiến giao diện)
         async function analyzeQuote() {
             const btn = document.getElementById('btnAiQuote');
@@ -308,16 +516,18 @@
             const resultBox = document.getElementById('aiQuoteResult');
 
             if (!desc || !model) {
-                toastr.warning('Để AI chẩn đoán, xin điền Tên Model và Mô tả lỗi.', 'Thiếu dữ liệu');
+                toastr.warning('Để AI chẩn đoán, xin điền Tên Model và Mô tả lỗi bắt buộc.', 'Thiếu dữ liệu');
+                document.getElementById('problemDescription').focus();
                 return;
             }
 
+            // UI Loading state
             btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>AI Đang quét database...';
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>AI Đang quét...';
             resultBox.classList.add('d-none');
 
             try {
-                const response = await fetch('/TiepNhan/AnalyzeQuote', {
+                const response = await fetch('@Url.Action("AnalyzeQuote", "TiepNhan")', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -330,19 +540,33 @@
                 if (data && data.success === false) {
                      toastr.error(data.message, 'Lỗi AI');
                 } else {
-                    document.getElementById('aiSuggestion').textContent = data.giaiPhap || 'Yêu cầu mở máy kiểm tra thực tế phần cứng.';
+                    let phaseOutput = data.giaiPhap || 'Yêu cầu mở máy kiểm tra thực tế phần cứng.';
+                    let checkListHtml = `<ul class="mb-0 ps-3">`;
+                    if(phaseOutput.includes(',') || phaseOutput.includes('\n')) {
+                        let lines = phaseOutput.split(/,|\n/).filter(x => x.trim().length > 0);
+                        lines.forEach(l => checkListHtml += `<li><i class="bi bi-check2 text-indigo-500 me-2"></i> ${l.trim()}</li>`);
+                    } else {
+                        checkListHtml += `<li><i class="bi bi-check2 text-indigo-500 me-2"></i> ${phaseOutput}</li>`;
+                        checkListHtml += `<li><i class="bi bi-check2 text-indigo-500 me-2"></i> Vệ sinh tra keo tản nhiệt tổng thể</li>`;
+                    }
+                    checkListHtml += `</ul>`;
+                    
+                    document.getElementById('aiSuggestion').innerHTML = checkListHtml;
                     document.getElementById('aiTotal').textContent = data.tongTienTamTinh ? data.tongTienTamTinh.toLocaleString('vi-VN') + 'đ' : 'Báo giá sau KT';
                     
                     // Add animation effect
                     resultBox.classList.remove('d-none');
                     resultBox.style.opacity = 0;
-                    setTimeout(() => { resultBox.style.opacity = 1; }, 50);
+                    setTimeout(() => { 
+                        resultBox.style.transition = 'opacity 0.6s ease';
+                        resultBox.style.opacity = 1; 
+                    }, 50);
                 }
             } catch (e) {
-                toastr.error('Lỗi kết nối Máy chủ AI.', 'Mất kết nối');
+                toastr.error('Lỗi kết nối Máy chủ AI. Xin thử lại sau.', 'Mất kết nối');
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = '<i data-lucide="sparkles" class="me-2" style="width: 18px; height: 18px;"></i> Cập Nhật Lại Báo Giá AI';
+                btn.innerHTML = 'Phân tích lại <i class="bi bi-arrow-right-short fs-5 ms-1"></i>';
                 if (typeof lucide !== 'undefined') lucide.createIcons();
             }
         }
@@ -351,12 +575,22 @@
         document.getElementById('checkInForm')?.addEventListener('submit', function(e) {
             e.preventDefault();
             const form = this;
+            
+            if (!form.checkValidity()) {
+                e.stopPropagation();
+                // Find first invalid and focus
+                const firstInvalid = form.querySelector(':invalid');
+                if(firstInvalid) firstInvalid.focus();
+                toastr.error('Vui lòng điền đầy đủ các thông tin (*)', 'Thiếu thông tin');
+                return;
+            }
+
             const formData = new FormData(form);
             const submitBtn = document.getElementById('submitCheckInBtn');
             const originalBtnHtml = submitBtn.innerHTML;
             
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" style="width: 24px; height: 24px;"></span> ĐANG IN PHIẾU...';
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" style="width: 20px; height: 20px;"></span> ĐANG IN PHIẾU...';
             
             fetch(form.action, {
                 method: 'POST',
@@ -371,17 +605,61 @@
                     toastr.success('Hồ sơ số ' + (data.id || '') + ' đã đẩy xuống Phòng Kỹ Thuật!', 'Tạo Phiếu Thành Công');
                     setTimeout(() => location.reload(), 1500);
                 } else {
-                    toastr.error(data.message || 'Có lỗi trong quá trình lưu dữ liệu', 'Lỗi Hệ Thống');
+                    toastr.error(data.message || 'Có lỗi trong quá trình lưu', 'Lỗi Hệ Thống');
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = originalBtnHtml;
                 }
+            })
+            .catch(err => {
+                toastr.error('Lỗi khi lưu phiếu', 'Lỗi Mạng');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnHtml;
             });
         });
 
         function cancelTicket(id) {
-            if(confirm('Chú ý: Hành động này sẽ Hủy bỏ hoàn toàn biên nhận sửa chữa.\n\nChỉ áp dụng cho trường hợp Khách đổi ý (trong vòng 30p sau khi lên đơn).\n\nXác nhận Hủy?')) {
-                toastr.info('Đang gửi Request hủy đơn ' + id + ' tới Server...');
+            if(confirm('Hành động này sẽ Hủy bỏ biên nhận.\n\nXác nhận Hủy đơn ' + id + '?')) {
+                toastr.info('Đang gửi Yêu cầu Hủy đơn ' + id + ' tới Server...');
+                
+                // Gọi API backend để cập nhật trạng thái thành "cancelled"
+                fetch('@Url.Action("HuyPhieu", "TiepNhan")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    },
+                    body: `id=${encodeURIComponent(id)}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if(data.success) {
+                        toastr.success('Hủy vé thành công!', 'Đã Hủy');
+                        setTimeout(() => location.reload(), 1500); // Reload lưới
+                    } else {
+                        toastr.error('Lỗi khi hủy biên nhận từ Backend.', 'Lỗi Thao Tác');
+                    }
+                })
+                .catch(err => {
+                    toastr.error('Lỗi mạng khi hủy', 'Hệ thống');
+                });
             }
+        }
+
+        // --- Marquee / Scrolling Placeholder Effect ---
+        const searchInputBox = document.getElementById('searchInput'); // Fixed variable name conflict
+        if (searchInputBox) {
+            // Chuỗi dài hơn để tạo cảm giác chạy từ phải qua trái liên tục
+            const originalText = "Tra cứu Mã phiếu, Tên Khách hàng, Số điện thoại... 🔍          ";
+            let i = 0;
+            setInterval(() => {
+                if (document.activeElement !== searchInputBox && !searchInputBox.value) {
+                    searchInputBox.setAttribute('placeholder', originalText.substring(i) + originalText.substring(0, i));
+                    i = (i + 1) % originalText.length;
+                } else if (document.activeElement === searchInputBox) {
+                     // Khi người dùng bấm vào thì dừng chạy để đỡ rối mắt
+                    searchInputBox.setAttribute('placeholder', "Nhập từ khóa...");
+                }
+            }, 180); // Tốc độ chạy vừa phải
         }
     </script>
 }

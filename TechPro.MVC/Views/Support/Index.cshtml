@@ -1,0 +1,91 @@
+@{
+    ViewData["Title"] = "TechPro POS - Support Workspace";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid py-5 px-3 px-md-5 font-inter bg-slate-50" style="background-color: #f8fafc; min-height: calc(100vh - 64px);">
+    <div class="d-flex flex-column align-items-center justify-content-center h-100" style="min-height: 60vh;">
+        <div class="text-center mb-5">
+            <div class="bg-indigo-50 text-indigo-600 rounded-circle d-inline-flex align-items-center justify-content-center mb-4 shadow-sm" style="width: 100px; height: 100px;">
+                <i class="bi bi-headset" style="font-size: 3rem;"></i>
+            </div>
+            <h2 class="fw-bolder text-slate-800 mb-2">Xin chào Bộ phận Tiếp nhận & Hỗ trợ!</h2>
+            <p class="text-slate-500 fs-5 mx-auto" style="max-width: 600px;">
+                Chào mừng bạn đến với khu vực làm việc (Workspace) dành riêng cho khối dịch vụ khách hàng (Front-Office). Hãy chọn một nghiệp vụ bên dưới để bắt đầu ca làm việc của bạn:
+            </p>
+        </div>
+
+        <div class="row g-4 w-100" style="max-width: 900px;">
+            <!-- Tiếp nhận / Nhận máy -->
+            <div class="col-md-4">
+                <a href="/Support/TiepNhan" class="card border-0 shadow-sm rounded-4 h-100 text-decoration-none hover-lift bg-white text-slate-800">
+                    <div class="card-body p-4 text-center">
+                        <div class="bg-primary-subtle text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                            <i class="bi bi-clipboard-check" style="font-size: 1.5rem;"></i>
+                        </div>
+                        <h5 class="fw-bold mb-2">Tiếp nhận máy</h5>
+                        <p class="text-slate-500 small mb-0">Tạo biên nhận sửa chữa nhanh, nhập thông tin lỗi, quét IMEI và lấy chuẩn đoán từ AI Report.</p>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Trả máy & Thu tiền -->
+            <div class="col-md-4">
+                <a href="/Support/TraMay" class="card border-0 shadow-sm rounded-4 h-100 text-decoration-none hover-lift bg-white text-slate-800">
+                    <div class="card-body p-4 text-center">
+                        <div class="bg-success-subtle text-success rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                            <i class="bi bi-arrow-counterclockwise" style="font-size: 1.5rem;"></i>
+                        </div>
+                        <h5 class="fw-bold mb-2">Trả máy & Thu ngân</h5>
+                        <p class="text-slate-500 small mb-0">Tra cứu các máy đã sửa xong, bàn giao thiết bị, in hóa đơn và thực hiện các nghiệp vụ thanh toán thu ngân.</p>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Kho & Phụ kiện -->
+            <div class="col-md-4">
+                <a href="/Support/Kho" class="card border-0 shadow-sm rounded-4 h-100 text-decoration-none hover-lift bg-white text-slate-800">
+                    <div class="card-body p-4 text-center">
+                        <div class="bg-warning-subtle text-warning-emphasis rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                            <i class="bi bi-box-seam" style="font-size: 1.5rem;"></i>
+                        </div>
+                        <h5 class="fw-bold mb-2">Yêu cầu & Tồn kho</h5>
+                        <p class="text-slate-500 small mb-0">Theo dõi trạng thái xuất vật tư của thợ, phê duyệt yêu cầu linh kiện kho và xem số lượng tồn hiện hành.</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+        
+        <div class="mt-5 text-center px-4 py-3 bg-white shadow-sm border border-slate-200 rounded-pill">
+            <span class="text-slate-500 small fw-medium">
+                <i class="bi bi-info-circle-fill text-indigo-500 me-2"></i><strong>Mẹo nhanh:</strong> Bạn có thể sử dụng thanh Menu (Sidebar) bên trái để điều hướng tiện lợi bất cứ lúc nào bạn nhé.
+            </span>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        @@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        .font-inter { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        .bg-slate-50 { background-color: #f8fafc; }
+        .text-slate-500 { color: #64748b; }
+        .text-slate-800 { color: #1e293b; }
+        .bg-indigo-50 { background-color: #eef2ff; }
+        .text-indigo-600 { color: #4f46e5; }
+        .text-indigo-500 { color: #6366f1; }
+        
+        .hover-lift {
+            transition: all 0.3s ease;
+            display: block;
+        }
+        .hover-lift:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+        }
+        .hover-lift:hover .rounded-circle {
+            transform: scale(1.1);
+            transition: transform 0.3s ease;
+        }
+    </style>
+}

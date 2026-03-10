@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 namespace TechPro.Controllers
 {
     [Authorize(Roles = "Support,StoreAdmin,SystemAdmin")]
+    [Route("Support/[controller]/{action=Index}/{id?}")]
     public class TiepNhanController : Controller
     {
         private readonly IHttpClientFactory _clientFactory;
@@ -49,6 +50,21 @@ namespace TechPro.Controllers
             }
 
             return View(new List<PhieuSuaChua>());
+        }
+
+        // GET: TiepNhan/ChiTiet/5
+        public async Task<IActionResult> ChiTiet(string id)
+        {
+            var client = CreateClient();
+            var response = await client.GetAsync($"api/Technician/tickets/{id}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var ticket = await response.Content.ReadFromJsonAsync<PhieuSuaChua>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                return View(ticket);
+            }
+
+            return NotFound();
         }
 
         // POST: TiepNhan/TaoPhieu
@@ -102,6 +118,15 @@ namespace TechPro.Controllers
             }
 
             return Json(new { success = false, message = "Không thể kết nối dịch vụ chuẩn đoán AI." });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> HuyPhieu(string id)
+        {
+            var client = CreateClient();
+            var response = await client.PostAsync($"api/TiepNhan/{id}/Huy", null);
+            
+            return Json(new { success = response.IsSuccessStatusCode });
         }
     }
 }

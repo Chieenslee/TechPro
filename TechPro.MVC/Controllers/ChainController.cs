@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 namespace TechPro.Controllers
 {
     [Authorize(Roles = "SystemAdmin")]
+    [Route("SysAdmin/[controller]/{action=Index}/{id?}")]
     public class ChainController : Controller
     {
         private readonly IHttpClientFactory _clientFactory;

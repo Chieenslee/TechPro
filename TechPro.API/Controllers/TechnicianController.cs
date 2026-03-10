@@ -22,14 +22,14 @@ namespace TechPro.API.Controllers
         }
 
         [HttpGet("tickets")]
-        public async Task<IActionResult> GetTickets(string? status = null, string? assigneeId = null, string? tenantId = null)
+        public async Task<IActionResult> GetTickets(string? status = null, string? assigneeId = null, string? tenantId = null, string? searchTerm = null)
         {
             var query = _context.PhieuSuaChuas
                 .Include(p => p.KyThuatVien)
                 .Include(p => p.CuaHang)
                 .AsQueryable();
 
-            if (!string.IsNullOrEmpty(status))
+            if (!string.IsNullOrEmpty(status) && status != "all")
             {
                 query = query.Where(p => p.TrangThai == status);
             }
@@ -42,6 +42,12 @@ namespace TechPro.API.Controllers
             if (!string.IsNullOrEmpty(tenantId))
             {
                 query = query.Where(p => p.TenantId == tenantId);
+            }
+
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                var term = searchTerm.Trim().ToLower();
+                query = query.Where(p => p.Id.ToLower().Contains(term) || p.SoDienThoai.Contains(term) || p.TenKhachHang.ToLower().Contains(term));
             }
 
             var tickets = await query.OrderByDescending(p => p.NgayNhan).ToListAsync();

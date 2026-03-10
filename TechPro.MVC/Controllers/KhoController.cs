@@ -4,7 +4,9 @@ using TechPro.Models.DTOs;
 
 namespace TechPro.Controllers
 {
-    [Authorize]
+    // Support can only VIEW inventory. StoreAdmin+ can manage (approve/reject).
+    [Authorize(Roles = "Support,StoreAdmin,SystemAdmin")]
+    [Route("Support/[controller]/{action=Index}/{id?}")]
     public class KhoController : Controller
     {
         private readonly IHttpClientFactory _httpClientFactory;

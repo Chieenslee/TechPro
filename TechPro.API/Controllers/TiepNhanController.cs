@@ -16,7 +16,11 @@ namespace TechPro.API.Controllers
             _context = context;
         }
 
-        // GET: api/TiepNhan
+        // ════════════════════════════════════════════════════════════════
+        // LIST & SEARCH (Dashboard - lễ tân / kỹ thuật dùng)
+        // ════════════════════════════════════════════════════════════════
+
+        // GET: api/TiepNhan?searchTerm=...&status=...
         [HttpGet]
         public async Task<ActionResult<IEnumerable<PhieuSuaChua>>> GetPhieuSuaChuas(string? searchTerm, string? status)
         {
@@ -30,27 +34,51 @@ namespace TechPro.API.Controllers
             if (!string.IsNullOrEmpty(searchTerm))
             {
                 var lowerTerm = searchTerm.Trim().ToLower();
-                query = query.Where(p => p.TenKhachHang.ToLower().Contains(lowerTerm) ||
-                                         p.SoDienThoai.Contains(searchTerm.Trim()) ||
-                                         p.Id.Contains(searchTerm.Trim()));
+                query = query.Where(p =>
+                    p.TenKhachHang.ToLower().Contains(lowerTerm) ||
+                    p.SoDienThoai.Contains(searchTerm.Trim()) ||
+                    p.Id.Contains(searchTerm.Trim()));
             }
 
             return await query.OrderByDescending(p => p.NgayNhan).ToListAsync();
         }
 
-        // GET: api/TiepNhan/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<PhieuSuaChua>> GetPhieuSuaChua(string id)
+        // GET: api/TiepNhan/search?query=...  (Tra cứu công khai từ trang chủ)
+        [HttpGet("search")]
+        public async Task<IActionResult> Search(string query)
         {
-            var phieuSuaChua = await _context.PhieuSuaChuas.FindAsync(id);
+            if (string.IsNullOrWhiteSpace(query))
+                return BadRequest("Vui lòng nhập thông tin tra cứu.");
 
-            if (phieuSuaChua == null)
-            {
-                return NotFound();
-            }
+            var phieu = await _context.PhieuSuaChuas
+                .Include(p => p.KyThuatVien)
+                .Include(p => p.YeuCauLinhKiens).ThenInclude(y => y.LinhKien)
+                .FirstOrDefaultAsync(p =>
+                    p.Id == query.Trim() ||
+                    p.SoDienThoai == query.Trim());
 
-            return phieuSuaChua;
+            if (phieu == null) return NotFound();
+            return Ok(phieu);
         }
+
+        // GET: api/TiepNhan/{id}  (Chi tiết đầy đủ - public + nội bộ)
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetPhieuSuaChua(string id)
+        {
+            var phieu = await _context.PhieuSuaChuas
+                .Include(p => p.KyThuatVien)
+                .Include(p => p.CuaHang)
+                .Include(p => p.YeuCauLinhKiens).ThenInclude(y => y.LinhKien)
+                .Include(p => p.TraXacs)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (phieu == null) return NotFound();
+            return Ok(phieu);
+        }
+
+        // ════════════════════════════════════════════════════════════════
+        // CREATE
+        // ════════════════════════════════════════════════════════════════
 
         // POST: api/TiepNhan/TaoPhieu
         [HttpPost("TaoPhieu")]
@@ -61,12 +89,9 @@ namespace TechPro.API.Controllers
                 var now = DateTime.UtcNow.AddHours(7);
                 phieuSuaChua.Id = "PSC" + now.ToString("yyMMddHHmmss");
             }
-            
+
             phieuSuaChua.NgayNhan = DateTime.UtcNow;
             phieuSuaChua.TrangThai = PhieuSuaChua.Statuses.Pending;
-
-            // If Accessories is array in MVC but string here, client handles joining
-            // Already handled by model binding if implemented correctly on client
 
             _context.PhieuSuaChuas.Add(phieuSuaChua);
             try
@@ -75,23 +100,53 @@ namespace TechPro.API.Controllers
             }
             catch (DbUpdateException)
             {
-                if (PhieuSuaChuaExists(phieuSuaChua.Id))
-                {
+                if (_context.PhieuSuaChuas.Any(p => p.Id == phieuSuaChua.Id))
                     return Conflict();
-                }
-                else
-                {
-                    throw;
-                }
+                throw;
             }
 
-            return CreatedAtAction("GetPhieuSuaChua", new { id = phieuSuaChua.Id }, phieuSuaChua);
+            return CreatedAtAction(nameof(GetPhieuSuaChua), new { id = phieuSuaChua.Id }, phieuSuaChua);
         }
 
-        private bool PhieuSuaChuaExists(string id)
+        // ════════════════════════════════════════════════════════════════
+        // ACTIONS
+        // ════════════════════════════════════════════════════════════════
+
+        // POST: api/TiepNhan/{id}/Huy  (Lễ tân hủy phiếu)
+        [HttpPost("{id}/Huy")]
+        public async Task<IActionResult> HuyPhieu(string id)
         {
-            return _context.PhieuSuaChuas.Any(e => e.Id == id);
+            var phieu = await _context.PhieuSuaChuas.FindAsync(id);
+            if (phieu == null) return NotFound(new { message = "Không tìm thấy phiếu." });
+
+            if (phieu.TrangThai == PhieuSuaChua.Statuses.Done || phieu.TrangThai == PhieuSuaChua.Statuses.Delivered)
+                return BadRequest(new { message = "Không thể hủy phiếu đã hoàn thành." });
+
+            phieu.TrangThai = "cancelled";
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Đã hủy phiếu thành công." });
         }
+
+        // POST: api/TiepNhan/{id}/XacNhanBaoGia  (Khách hàng xác nhận báo giá, trạng thái → repairing)
+        [HttpPost("{id}/XacNhanBaoGia")]
+        public async Task<IActionResult> XacNhanBaoGia(string id)
+        {
+            var phieu = await _context.PhieuSuaChuas.FindAsync(id);
+            if (phieu == null) return NotFound(new { message = "Không tìm thấy phiếu." });
+
+            if (phieu.TrangThai != PhieuSuaChua.Statuses.WaitingParts)
+                return BadRequest(new { message = "Phiếu không ở trạng thái chờ xác nhận." });
+
+            phieu.TrangThai = PhieuSuaChua.Statuses.Repairing;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Đã xác nhận báo giá. Kỹ thuật sẽ tiến hành sửa ngay." });
+        }
+
+        // ════════════════════════════════════════════════════════════════
+        // AI QUOTE ANALYSIS
+        // ════════════════════════════════════════════════════════════════
 
         public class AnalyzeRequest
         {
@@ -99,11 +154,32 @@ namespace TechPro.API.Controllers
             public string TenThietBi { get; set; } = string.Empty;
         }
 
+        // POST: api/TiepNhan/AnalyzeQuote
         [HttpPost("AnalyzeQuote")]
         public async Task<IActionResult> AnalyzeQuote([FromBody] AnalyzeRequest request, [FromServices] TechPro.API.Services.SmartDiagnosisService aiService)
         {
             var result = await aiService.AnalyzeQuoteAsync(request.MoTaLoi, request.TenThietBi);
             return Ok(result);
         }
+
+        // ════════════════════════════════════════════════════════════════
+        // WARRANTY / DEVICE LOOKUP  (từ trang chủ - tra cứu bảo hành)
+        // (Đã gộp từ DevicesController - thiết bị bán ra)
+        // ════════════════════════════════════════════════════════════════
+
+        // GET: api/TiepNhan/device-warranty?serial=...
+        [HttpGet("device-warranty")]
+        public async Task<IActionResult> DeviceWarranty(string serial)
+        {
+            if (string.IsNullOrWhiteSpace(serial))
+                return BadRequest("Vui lòng nhập số Serial.");
+
+            var thietBi = await _context.ThietBiBans
+                .FirstOrDefaultAsync(t => t.SerialNumber == serial.Trim());
+
+            if (thietBi == null) return NotFound();
+            return Ok(thietBi);
+        }
     }
 }
+

@@ -1,0 +1,70 @@
+@{
+    ViewData["Title"] = "TechPro POS - Technician Workspace";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid py-5 px-3 px-md-5 font-inter bg-slate-50" style="background-color: #f8fafc; min-height: calc(100vh - 64px);">
+    <div class="d-flex flex-column align-items-center justify-content-center h-100" style="min-height: 60vh;">
+        <div class="text-center mb-5">
+            <div class="bg-indigo-50 text-indigo-600 rounded-circle d-inline-flex align-items-center justify-content-center mb-4 shadow-sm" style="width: 100px; height: 100px;">
+                <i class="bi bi-tools" style="font-size: 3rem;"></i>
+            </div>
+            <h2 class="fw-bolder text-slate-800 mb-2">Trạm làm việc Kỹ Thuật (Technician)</h2>
+            <p class="text-slate-500 fs-5 mx-auto" style="max-width: 600px;">
+                Chào mừng bạn đến với khu vực chuyên môn dành cho Thợ Kỹ Thuật (Back-Office). Hãy chọn một nghiệp vụ bên dưới để bắt đầu nhận ca sửa máy:
+            </p>
+        </div>
+
+        <div class="row g-4 w-100 justify-content-center" style="max-width: 900px;">
+            <!-- Sửa chữa bảo hành -->
+            <div class="col-md-5">
+                <a href="/Technician/KyThuat" class="card border-0 shadow-sm rounded-4 h-100 text-decoration-none hover-lift bg-white text-slate-800">
+                    <div class="card-body p-4 text-center">
+                        <div class="bg-primary-subtle text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                            <i class="bi bi-wrench-adjustable" style="font-size: 1.5rem;"></i>
+                        </div>
+                        <h5 class="fw-bold mb-2">Giỏ máy chờ khám</h5>
+                        <p class="text-slate-500 small mb-0">Tiếp nhận máy từ khu vực lễ tân, thực hiện bung máy chẩn đoán lỗi, ghi log trạng thái và xuất linh kiện.</p>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Chat -->
+            <div class="col-md-5">
+                <a href="/Chat" class="card border-0 shadow-sm rounded-4 h-100 text-decoration-none hover-lift bg-white text-slate-800">
+                    <div class="card-body p-4 text-center">
+                        <div class="bg-success-subtle text-success rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                            <i class="bi bi-chat-dots" style="font-size: 1.5rem;"></i>
+                        </div>
+                        <h5 class="fw-bold mb-2">Liên lạc Nội bộ</h5>
+                        <p class="text-slate-500 small mb-0">Trao đổi trực tiếp với Lễ tân FO, xin ý kiến duyệt giá Linh kiện hoặc trao đổi nghiệp vụ cùng đồng nghiệp.</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        @@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        .font-inter { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        .bg-slate-50 { background-color: #f8fafc; }
+        .text-slate-500 { color: #64748b; }
+        .text-slate-800 { color: #1e293b; }
+        
+        .hover-lift {
+            transition: all 0.3s ease;
+            display: block;
+        }
+        .hover-lift:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+        }
+        .hover-lift:hover .rounded-circle {
+            transform: scale(1.1);
+            transition: transform 0.3s ease;
+        }
+    </style>
+}

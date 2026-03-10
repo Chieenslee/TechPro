@@ -8,6 +8,7 @@ using System.Linq;
 namespace TechPro.Controllers
 {
     [Authorize(Roles = "Support,StoreAdmin,SystemAdmin")]
+    [Route("Support/[controller]/{action=Index}/{id?}")]
     public class TraMayController : Controller
     {
         private readonly IHttpClientFactory _clientFactory;

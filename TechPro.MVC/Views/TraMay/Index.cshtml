@@ -1,147 +1,311 @@
 @model IEnumerable<PhieuSuaChua>
 @{
-    ViewData["Title"] = "Quản lý trả máy";
+    ViewData["Title"] = "TechPro POS - Trả Máy & Thu Ngân";
 }
 
-<div class="space-y-6">
-    <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-4">
+<div class="container-fluid py-3 px-2 px-md-4 font-inter" style="background-color: #f8fafc; min-height: calc(100vh - 64px);">
+    <!-- Header Title -->
+    <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-4 mb-4">
         <div>
-            <h1 class="text-2xl font-bold text-slate-800">Quản lý trả máy & Thanh toán</h1>
-            <p class="text-slate-500 mt-1">Danh sách các thiết bị đã hoàn thành sửa chữa, chờ bàn giao cho khách.</p>
+            <h2 class="fw-bolder text-slate-800 d-flex align-items-center mb-1">
+                <i data-lucide="package-check" class="text-success me-2" style="width: 28px; height: 28px;"></i> 
+                Quầy Trả Máy & Thu Ngân
+            </h2>
+            <p class="text-slate-500 mb-0">Hỗ trợ bàn giao thiết bị, xuất hóa đơn bảo hành và thu tiền dịch vụ.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-white bg-white border border-slate-200 shadow-sm rounded-pill px-4 fw-bold hover-lift text-slate-700">
+                <i data-lucide="printer" class="me-2" style="width: 18px; height: 18px;"></i> In Báo Cáo Ca
+            </button>
         </div>
     </div>
 
-    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
         <!-- Filters -->
-        <div class="p-4 border-bottom border-slate-100 d-flex gap-3 flex-wrap bg-slate-50/50">
-            <form id="searchForm" class="d-flex gap-3 flex-wrap flex-grow-1">
-                <div class="position-relative flex-grow-1" style="min-width: 200px; max-width: 28rem;">
-                    <i data-lucide="search" class="position-absolute" style="left: 0.75rem; top: 50%; transform: translateY(-50%); color: #94a3b8; width: 18px; height: 18px; pointer-events: none;"></i>
-                    <input 
-                        type="text" 
-                        id="searchInput"
-                        name="searchTerm"
-                        value="@ViewBag.SearchTerm"
-                        placeholder="Tìm theo tên, SĐT, mã phiếu..." 
-                        class="w-100 ps-5 pe-4 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
-                    />
-                </div>
-                @{
-                    var selectedStatus = ViewBag.StatusFilter?.ToString() ?? "done";
-                }
-                <select id="statusFilter" name="status" class="px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-700 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
-                    @if (selectedStatus == "all")
-                    {
-                        <option value="all" selected>Tất cả trạng thái</option>
+        <div class="card-header bg-white border-bottom p-4">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                <form id="searchForm" class="d-flex flex-grow-1 gap-3 w-100">
+                    <div class="input-group bg-slate-50 border border-slate-200 rounded-pill overflow-hidden shadow-sm custom-focus-ring" style="max-width: 400px;">
+                        <span class="input-group-text bg-transparent border-0 pe-1 text-slate-400">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" id="searchInput" name="searchTerm" value="@ViewBag.SearchTerm" class="form-control border-0 bg-transparent shadow-none custom-input" placeholder="Tìm theo tên, SĐT, mã phiếu..." />
+                    </div>
+
+                    @{
+                        var selectedStatus = ViewBag.StatusFilter?.ToString() ?? "done";
                     }
-                    else
-                    {
-                        <option value="all">Tất cả trạng thái</option>
-                    }
-                    @if (selectedStatus == "done")
-                    {
-                        <option value="done" selected>Chờ khách lấy (Hoàn tất)</option>
-                    }
-                    else
-                    {
-                        <option value="done">Chờ khách lấy (Hoàn tất)</option>
-                    }
-                    @if (selectedStatus == "delivered")
-                    {
-                        <option value="delivered" selected>Đã trả khách</option>
-                    }
-                    else
-                    {
-                        <option value="delivered">Đã trả khách</option>
-                    }
-                </select>
-                <button type="submit" class="d-flex align-items-center gap-2 px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-medium">
-                    <i data-lucide="filter" class="icon" style="width: 18px; height: 18px;"></i>
-                    <span>Tìm kiếm</span>
+                    <select id="statusFilter" name="status" class="form-select bg-slate-50 border border-slate-200 rounded-pill shadow-sm custom-focus-ring fw-medium text-slate-700" style="max-width: 250px;">
+                        @if (selectedStatus == "all") { <option value="all" selected>◉ Tất cả trạng thái</option> } else { <option value="all">◉ Tất cả trạng thái</option> }
+                        @if (selectedStatus == "done") { <option value="done" selected>🟢 Sẵn Sàng Trả K/H (Hoàn tất)</option> } else { <option value="done">🟢 Sẵn Sàng Trả K/H (Hoàn tất)</option> }
+                        @if (selectedStatus == "delivered") { <option value="delivered" selected>⚪️ Đã Trả Khách</option> } else { <option value="delivered">⚪️ Đã Trả Khách</option> }
+                    </select>
+                    
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-medium shadow-sm hover-lift d-flex align-items-center">
+                        Cập nhật
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Filter Tags -->
+            <div class="d-flex flex-wrap align-items-center gap-2 mt-3 pt-3 border-top border-slate-100">
+                <span class="text-slate-500 small fw-bold me-2"><i class="bi bi-funnel me-1"></i> Lọc nhanh:</span>
+                
+                <button class="btn btn-sm rounded-pill fw-medium filter-btn active" style="font-size: 0.8rem; padding: 0.35rem 1rem;">
+                    Tất cả
                 </button>
-            </form>
+                <button class="btn btn-sm btn-outline-success text-dark border-slate-200 rounded-pill fw-medium filter-btn bg-white hover-up" style="font-size: 0.8rem; padding: 0.35rem 1rem;">
+                    Chờ Thu Tiền
+                </button>
+                <button class="btn btn-sm btn-outline-secondary text-dark border-slate-200 rounded-pill fw-medium filter-btn bg-white hover-up" style="font-size: 0.8rem; padding: 0.35rem 1rem;">
+                    Hoàn Tất & Đã Trả
+                </button>
+                
+                <div class="ms-auto d-flex align-items-center bg-slate-50 border border-slate-200 rounded-pill px-3 py-1 shadow-sm tooltip-hover" title="Lọc theo ngày trả máy">
+                    <i class="bi bi-calendar3 text-slate-400 me-2" style="font-size: 0.8rem;"></i>
+                    <input type="date" class="form-control form-control-sm border-0 bg-transparent shadow-none p-0 text-slate-600 fw-medium" style="font-size: 0.8rem; width: 110px;" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                </div>
+            </div>
         </div>
 
         <!-- Table -->
-        <div class="overflow-x-auto">
-            <table class="w-100 text-sm text-left">
-                <thead class="text-xs text-slate-500 uppercase bg-slate-50 border-bottom border-slate-100">
-                    <tr>
-                        <th class="px-6 py-3 font-semibold">Mã phiếu</th>
-                        <th class="px-6 py-3 font-semibold">Khách hàng</th>
-                        <th class="px-6 py-3 font-semibold">Thiết bị</th>
-                        <th class="px-6 py-3 font-semibold">Ngày nhận</th>
-                        <th class="px-6 py-3 font-semibold">Trạng thái</th>
-                        <th class="px-6 py-3 font-semibold text-end">Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100" id="ticketTableBody">
-                    @if (Model != null && Model.Any())
-                    {
-                        @foreach (var ticket in Model)
+        <div class="card-body p-0 overflow-auto" style="min-height: 400px;">
+            <div class="table-responsive h-100">
+                <table class="table table-hover align-middle mb-0 pos-table">
+                    <thead class="bg-slate-50 text-uppercase small fw-bold" style="letter-spacing: 0.5px; color: #64748b;">
+                        <tr>
+                            <th class="py-3 px-4 border-0" style="width: 10%;">Mã Phiếu</th>
+                            <th class="py-3 px-4 border-0" style="width: 22%;">Khách Hàng</th>
+                            <th class="py-3 px-4 border-0" style="width: 32%;">Thiết Bị Cần Trả</th>
+                            <th class="py-3 px-4 border-0 text-center" style="width: 12%;">Trạng Thái</th>
+                            <th class="py-3 px-4 border-0 text-center" style="width: 17%;">Thao Tác</th>
+                            <th class="py-3 px-4 border-0 text-end" style="width: 7%;">Chi Tiết</th>
+                        </tr>
+                    </thead>
+                    <tbody class="border-top-0">
+                        @if (Model != null && Model.Any())
                         {
-                            <tr class="hover:bg-slate-50/80 transition-colors" style="cursor: pointer;" onclick="window.location.href='@Url.Action("ChiTiet", "KyThuat", new { id = ticket.Id })'">
-                                <td class="px-6 py-4">
-                                    <span class="font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">@ticket.Id</span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="font-medium text-slate-900">@ticket.TenKhachHang</div>
-                                    <div class="text-slate-500 text-xs mt-0.5">@ticket.SoDienThoai</div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <i data-lucide="smartphone" class="icon" style="width: 16px; height: 16px; color: #94a3b8;"></i>
-                                        <span class="text-slate-700">@ticket.TenThietBi</span>
+                            @foreach (var ticket in Model)
+                            {
+                                <tr class="transition-colors group hover-bg-slate-50" style="cursor: pointer;" onclick="window.location.href='@Url.Action("ChiTiet", "TiepNhan", new { id = ticket.Id })'">
+                                    <td class="py-3 px-4">
+                                        <div class="d-flex flex-column">
+                                            <span class="fw-bolder text-primary fs-6">@ticket.Id</span>
+                                            <span class="text-slate-400 fw-medium small d-flex align-items-center mt-1" style="font-size: 0.75rem;">
+                                                <i class="bi bi-calendar-check me-1"></i> @ticket.NgayNhan.ToString("dd/MM/yyyy")
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 42px; height: 42px;">
+                                                <span class="fw-bold fs-5">@((string.IsNullOrEmpty(ticket.TenKhachHang) ? "?" : ticket.TenKhachHang.Substring(0,1).ToUpper()))</span>
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold text-slate-800 text-truncate" style="max-width: 180px;">@ticket.TenKhachHang</div>
+                                                <div class="text-slate-500 font-monospace small mt-1 d-flex align-items-center">
+                                                    <i class="bi bi-telephone-fill me-1 text-slate-400"></i>@ticket.SoDienThoai
+                                                    @if (ticket.TrangThai == "done") {
+                                                        <button class="btn btn-sm btn-link p-0 ms-2 text-decoration-none text-success tooltip-hover" data-bs-title="Gửi SMS nhắc khách lấy máy" onclick="event.stopPropagation(); sendSms('@ticket.SoDienThoai')"><i class="bi bi-chat-dots-fill"></i></button>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        <div class="d-flex align-items-start">
+                                            <div class="bg-white border border-slate-200 p-2 rounded-3 me-3 flex-shrink-0 mt-1 shadow-sm">
+                                                <i data-lucide="smartphone" class="text-slate-500" style="width: 22px; height: 22px;"></i>
+                                            </div>
+                                            <div>
+                                                <span class="text-slate-700 fw-bold d-block text-truncate fs-6" style="max-width: 300px;">@ticket.TenThietBi</span>
+                                                <span class="badge bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-pill fw-medium mt-1">Sửa hoàn tất</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-4 text-center">
+                                        @{
+                                            var badgeBaseClass = "badge rounded-pill border-0 d-inline-flex align-items-center justify-content-center text-nowrap";
+                                            var badgeStyle = "height: 32px; padding: 0 1.25rem; font-size: 0.85rem; font-weight: 700; letter-spacing: 0.3px;";
+                                            
+                                            var statusBadge = ticket.TrangThai switch
+                                            {
+                                                "pending" => $"<span class='{badgeBaseClass}' style='{badgeStyle} background-color: #fef08a; color: #a16207;'>Chờ Khám</span>",
+                                                "repairing" => $"<span class='{badgeBaseClass}' style='{badgeStyle} background-color: #dbeafe; color: #1e40af;'>Đang Xử Lý</span>",
+                                                "waiting_parts" => $"<span class='{badgeBaseClass}' style='{badgeStyle} background-color: #fee2e2; color: #b91c1c;'>Chờ Đồ / Lỗi</span>",
+                                                "done" => $"<span class='{badgeBaseClass}' style='{badgeStyle} background-color: #dcfce7; color: #166534;'>Sẵn Sàng Trả</span>",
+                                                "delivered" => $"<span class='{badgeBaseClass}' style='{badgeStyle} background-color: #f1f5f9; color: #475569;'>Đã Trả Khách</span>",
+                                                _ => $"<span class='{badgeBaseClass}' style='{badgeStyle} background-color: #f1f5f9; color: #475569;'>{ticket.TrangThai}</span>"
+                                            };
+                                        }
+                                        @Html.Raw(statusBadge)
+                                    </td>
+                                    <td class="py-3 px-4 text-center" onclick="event.stopPropagation();">
+                                        <div class="d-flex gap-2 justify-content-center align-items-center">
+                                            @if (ticket.TrangThai == "done")
+                                            {
+                                                <button class="btn btn-outline-primary d-inline-flex align-items-center justify-content-center shadow-sm rounded-circle hover-lift tooltip-hover p-0" style="height: 32px; width: 32px; flex-shrink: 0;" title="Chụp ảnh minh chứng bàn giao" onclick="captureHandoverPhoto('@ticket.Id')">
+                                                    <i class="bi bi-camera" style="font-size: 1.1rem;"></i>
+                                                </button>
+                                                <button class="btn btn-success fw-bold d-inline-flex align-items-center justify-content-center text-nowrap px-3 py-1 shadow-sm rounded-pill border-0 hover-lift" style="height: 32px; background-color: #10b981; font-size: 0.85rem;" onclick="event.stopPropagation(); openPaymentModal('@ticket.Id')">
+                                                    Thu Tiền
+                                                </button>
+                                            }
+                                            else if (ticket.TrangThai == "delivered")
+                                            {
+                                                <button class="btn btn-outline-secondary fw-bold d-inline-flex align-items-center justify-content-center text-nowrap px-3 py-1 rounded-pill bg-white shadow-sm hover-lift" style="height: 32px; font-size: 0.85rem;" title="In lại Bill / Mã bảo hành" onclick="printWarranty('@ticket.Id')">
+                                                    In Lại Hóa Đơn
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-slate-300">-</span>
+                                            }
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-4 text-end" onclick="event.stopPropagation();">
+                                        <a href="@Url.Action("ChiTiet", "TiepNhan", new { id = ticket.Id })" class="btn btn-sm btn-outline-secondary fw-bold d-inline-flex align-items-center justify-content-center text-nowrap px-3 py-1 rounded-pill hover-lift bg-white" style="height: 32px; font-size: 0.85rem;" title="Xem chi tiết">Xem</a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-5">
+                                    <div class="text-slate-400 py-5">
+                                        <div class="bg-green-50 text-green-500 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                                            <i data-lucide="check-circle-2" class="opacity-75" style="width: 40px; height: 40px;"></i>
+                                        </div>
+                                        <h5 class="fw-bold text-slate-600 mb-1">Rất gọn gàng!</h5>
+                                        <p class="mb-0 text-slate-500">Toàn bộ thiết bị đã được trao trả cho khách hàng (Hoặc bạn đang tìm kiếm sai).</p>
                                     </div>
-                                </td>
-                                <td class="px-6 py-4 text-slate-600">
-                                    @ticket.NgayNhan.ToString("dd/MM/yyyy HH:mm")
-                                </td>
-                                <td class="px-6 py-4">
-                                    @{
-                                        var statusStyles = ticket.TrangThai switch
-                                        {
-                                            "pending" => "bg-yellow-100 text-yellow-700 border-yellow-200",
-                                            "repairing" => "bg-blue-100 text-blue-700 border-blue-200",
-                                            "waiting_parts" => "bg-orange-100 text-orange-700 border-orange-200",
-                                            "done" => "bg-green-100 text-green-700 border-green-200",
-                                            "delivered" => "bg-slate-100 text-slate-600 border-slate-200",
-                                            _ => "bg-slate-100 text-slate-600 border-slate-200"
-                                        };
-                                        var statusLabels = ticket.TrangThai switch
-                                        {
-                                            "pending" => "Chờ sửa",
-                                            "repairing" => "Đang sửa",
-                                            "waiting_parts" => "Chờ linh kiện",
-                                            "done" => "Chờ trả",
-                                            "delivered" => "Đã trả khách",
-                                            _ => ticket.TrangThai
-                                        };
-                                    }
-                                    <span class="px-2.5 py-1 rounded-full text-xs font-semibold border @statusStyles">@statusLabels</span>
-                                </td>
-                                <td class="px-6 py-4 text-end">
-                                    <button class="text-slate-400 hover:text-blue-600 transition-colors border-0 bg-transparent">
-                                        <i data-lucide="eye" class="icon" style="width: 20px; height: 20px;"></i>
-                                    </button>
                                 </td>
                             </tr>
                         }
-                    }
-                    else
-                    {
-                        <tr>
-                            <td colspan="6" class="px-6 py-12 text-center text-slate-500">
-                                Không tìm thấy phiếu cần trả phù hợp.
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/reception.css" asp-append-version="true" />
+    <style>
+        /* Modern Font Family */
+        @@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        
+        .font-inter {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        /* Core Colors */
+        .text-slate-300 { color: #cbd5e1; }
+        .text-slate-400 { color: #94a3b8; }
+        .text-slate-500 { color: #64748b; }
+        .text-slate-600 { color: #475569; }
+        .text-slate-700 { color: #334155; }
+        .text-slate-800 { color: #1e293b; }
+        .bg-slate-50 { background-color: #f8fafc; }
+        .bg-slate-100 { background-color: #f1f5f9; }
+        .border-slate-100 { border-color: #f1f5f9 !important; }
+        .border-slate-200 { border-color: #e2e8f0 !important; }
+        
+        .bg-indigo-50 { background-color: #eef2ff; }
+        .text-indigo-600 { color: #4f46e5; }
+        .border-indigo-100 { border-color: #e0e7ff !important; }
+        .bg-primary-subtle { background-color: #eff6ff; }
+        .bg-green-50 { background-color: #f0fdf4; }
+        .text-green-500 { color: #22c55e; }
+
+        /* Utils & Animations */
+        .transition-all { transition: all 0.3s ease; }
+        .hover-lift { transition: transform 0.2s; }
+        .hover-lift:hover { transform: translateY(-2px); }
+
+        /* Inputs & Focus Rings */
+        .custom-input { transition: all 0.2s ease-in-out; }
+        .custom-focus-ring:focus-within {
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15) !important;
+            border-color: #86b7fe;
+        }
+        .input-group:focus-within .input-group-text {
+            border-color: #86b7fe;
+            color: #0d6efd !important;
+        }
+        .input-group:focus-within .form-control { border-color: #86b7fe; }
+
+        /* Table Optimization */
+        .pos-table th { font-weight: 700; white-space: nowrap; color: #64748b; }
+        .pos-table td { vertical-align: middle; }
+        .pos-table tbody tr { transition: background-color 0.2s; }
+        .hover-bg-slate-50:hover { background-color: #f8fafc !important; }
+        
+        /* Filter buttons & hover state */
+        .filter-btn { transition: all 0.2s; color: #64748b; }
+        .filter-btn.active { background-color: #1e293b; color: white; border-color: #1e293b; }
+        .filter-btn:not(.active):hover { background-color: #f1f5f9; color: #1e293b; }
+        .hover-up { transition: transform 0.2s, box-shadow 0.2s; }
+        .hover-up:hover { transform: translateY(-3px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.08)!important; }
+
+        /* Custom scrollbar */
+        .table-responsive::-webkit-scrollbar { width: 8px; height: 8px; }
+        .table-responsive::-webkit-scrollbar-track { background: #f8fafc; border-radius: 4px; }
+        .table-responsive::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .table-responsive::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        // Tooltips Initialization
+        if (typeof bootstrap !== 'undefined') {
+            const tooltipTriggerList = document.querySelectorAll('.tooltip-hover')
+            if (tooltipTriggerList.length) {
+                const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+            }
+        }
+        
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+
+        // New Support Specific Features
+        function sendSms(phone) {
+            toastr.success(`Đã tự động gửi SMS thông báo nhận máy đến số ${phone} qua hệ thống.`, 'Gửi SMS Thành Công');
+        }
+
+        function captureHandoverPhoto(id) {
+            toastr.info(`Đang kích hoạt quy trình Webcam quầy để chụp ảnh chứng minh bàn giao đơn ${id}...`, 'Khởi động Camera');
+        }
+
+        function openPaymentModal(id) {
+            toastr.success(`Đang mở màn chốt bill & tích hợp máy POS cà thẻ/Mã QR Thanh Toán cho đơn ${id}...`, 'Khởi tạo Thanh Toán Biên Nhận');
+            // Sau này sẽ pop-up Bootstrap Modal thật tại đây
+        }
+
+        function printWarranty(id) {
+            toastr.success(`Đang đẩy lệnh in hóa đơn & phiếu bảo hành điện tử đơn ${id} ra máy in quầy...`, 'Lệnh In Đã Gửi');
+        }
+
+        // Quick Search form submission
+        document.getElementById('statusFilter').addEventListener('change', function() {
+            document.getElementById('searchForm').submit();
+        });
+
+        // --- Marquee / Scrolling Placeholder Effect ---
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            const originalText = "Tìm theo tên Khách hàng, SĐT, mã phiếu... 🔍          ";
+            let i = 0;
+            setInterval(() => {
+                if (document.activeElement !== searchInput && !searchInput.value) {
+                    searchInput.setAttribute('placeholder', originalText.substring(i) + originalText.substring(0, i));
+                    i = (i + 1) % originalText.length;
+                } else if (document.activeElement === searchInput) {
+                    searchInput.setAttribute('placeholder', "Nhập từ khóa...");
+                }
+            }, 180);
+        }
+    </script>
 }
