@@ -36,25 +36,26 @@
                             _ => Model.TrangThai
                         };
                         var headerStatusBadge = Model.TrangThai switch {
-                            "pending" => "bg-warning text-dark",
-                            "repairing" => "bg-primary",
-                            "waiting_parts" => "bg-danger",
-                            "done" => "bg-success",
-                            "delivered" => "bg-secondary",
-                            _ => "bg-secondary"
+                            "pending" => "background-color: #ffc107; color: #1e293b;",
+                            "repairing" => "background-color: #3b82f6; color: white;",
+                            "waiting_parts" => "background-color: #ef4444; color: white;",
+                            "done" => "background-color: #10b981; color: white;",
+                            "delivered" => "background-color: #64748b; color: white;",
+                            _ => "background-color: #64748b; color: white;"
                         };
                     }
-                    <span class="badge @headerStatusBadge">@headerStatusLabels</span>
+                    <span class="badge rounded-pill border-0 d-inline-flex align-items-center justify-content-center text-nowrap" style="@headerStatusBadge min-height: 38px; padding: 0 1.25rem; font-size: 0.95rem; font-weight: 600; letter-spacing: 0.2px;">@headerStatusLabels</span>
+                    
                     @if (Model.CoBaoHanh == true)
                     {
-                        <span class="badge bg-success">
-                            <i class="bi bi-check-circle me-1"></i>Bảo hành
+                        <span class="badge rounded-pill border-0 d-inline-flex align-items-center justify-content-center text-nowrap" style="background-color: #10b981; color: white; min-height: 38px; padding: 0 1.25rem; font-size: 0.95rem; font-weight: 500; letter-spacing: 0.2px;">
+                            <i class="bi bi-shield-check me-2" style="font-size: 1.15rem; color: rgba(255,255,255,0.85);"></i> Bảo hành
                         </span>
                     }
                     else
                     {
-                        <span class="badge bg-secondary">
-                            <i class="bi bi-currency-dollar me-1"></i>Dịch vụ
+                        <span class="badge rounded-pill border-0 d-inline-flex align-items-center justify-content-center text-nowrap" style="background-color: #64748b; color: white; min-height: 38px; padding: 0 1.25rem; font-size: 0.95rem; font-weight: 500; letter-spacing: 0.3px;">
+                            <i class="bi bi-currency-dollar me-2" style="font-size: 1.15rem; color: rgba(255,255,255,0.85); font-weight: bold;"></i> Dịch vụ
                         </span>
                     }
                 </div>
@@ -188,44 +189,46 @@
         <!-- RIGHT COLUMN -->
         <div class="col-lg-8">
             <div class="card">
-                <div class="card-header bg-light p-0">
-                    <ul class="nav nav-tabs nav-tabs-custom border-0" role="tablist">
+                <div class="card-header bg-white p-0 border-bottom">
+                    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+                    <ul class="nav nav-tabs border-0 flex-nowrap" role="tablist" style="min-width:max-content;">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="diagnosis-tab" data-bs-toggle="tab" data-bs-target="#diagnosis" type="button" role="tab">
-                                <i class="bi bi-file-text me-2"></i>Chẩn đoán & Sửa chữa
+                            <button class="nav-link active px-3 py-2" id="diagnosis-tab" data-bs-toggle="tab" data-bs-target="#diagnosis" type="button" role="tab">
+                                <i class="bi bi-file-text me-1"></i><span class="d-none d-md-inline">Chẩn đoán</span><span class="d-md-none">Chẩn đoán</span>
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="ai-tab" data-bs-toggle="tab" data-bs-target="#ai-suggestion" type="button" role="tab" onclick="loadAiSuggestion()">
-                                <i class="bi bi-stars me-2"></i>AI Gợi Ý
+                            <button class="nav-link px-3 py-2" id="ai-tab" data-bs-toggle="tab" data-bs-target="#ai-suggestion" type="button" role="tab" onclick="loadAiSuggestion()">
+                                <i class="bi bi-stars me-1"></i>AI Gợi Ý
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="checklist-tab" data-bs-toggle="tab" data-bs-target="#checklist" type="button" role="tab" onclick="loadChecklist()">
-                                <i class="bi bi-check2-square me-2"></i>Checklist KT
+                            <button class="nav-link px-3 py-2" id="checklist-tab" data-bs-toggle="tab" data-bs-target="#checklist" type="button" role="tab" onclick="loadChecklist()">
+                                <i class="bi bi-check2-square me-1"></i>Checklist
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="camera-tab" data-bs-toggle="tab" data-bs-target="#camera" type="button" role="tab" onclick="initCamera()">
-                                <i class="bi bi-camera me-2"></i>Camera
+                            <button class="nav-link px-3 py-2" id="camera-tab" data-bs-toggle="tab" data-bs-target="#camera" type="button" role="tab" onclick="initCamera()">
+                                <i class="bi bi-camera me-1"></i>Camera
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#ticket-history" type="button" role="tab" onclick="loadTicketHistory()">
-                                <i class="bi bi-clock-history me-2"></i>Lịch sử
+                            <button class="nav-link px-3 py-2" id="history-tab" data-bs-toggle="tab" data-bs-target="#ticket-history" type="button" role="tab" onclick="loadTicketHistory()">
+                                <i class="bi bi-clock-history me-1"></i>Lịch sử
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="parts-tab" data-bs-toggle="tab" data-bs-target="#parts" type="button" role="tab">
-                                <i class="bi bi-wrench me-2"></i>Linh kiện (@(Model.YeuCauLinhKiens?.Count ?? 0))
+                            <button class="nav-link px-3 py-2" id="parts-tab" data-bs-toggle="tab" data-bs-target="#parts" type="button" role="tab">
+                                <i class="bi bi-box-seam me-1"></i>Linh kiện <span class="badge bg-secondary ms-1">@(Model.YeuCauLinhKiens?.Count ?? 0)</span>
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chat" type="button" role="tab">
-                                <i class="bi bi-chat-dots me-2"></i>Trao đổi nội bộ
+                            <button class="nav-link px-3 py-2" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chat" type="button" role="tab">
+                                <i class="bi bi-chat-dots me-1"></i>Trao đổi
                             </button>
                         </li>
                     </ul>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="tab-content" id="ticketTabsContent">
@@ -925,7 +928,8 @@
             empty?.classList.add('d-none');
 
             try {
-                const res  = await fetch(`/api/Technician/history?phone=${encodeURIComponent(ticketPhone)}&excludeId=${encodeURIComponent(ticketId)}`);
+                const res  = await fetch(`/KyThuat/GetHistory?phone=${encodeURIComponent(ticketPhone)}&excludeId=${encodeURIComponent(ticketId)}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const raw  = await res.json();
                 const tickets = Array.isArray(raw) ? raw : (raw.data || []);
 

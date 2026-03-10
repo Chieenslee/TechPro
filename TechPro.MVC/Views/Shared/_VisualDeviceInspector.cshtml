@@ -22,18 +22,40 @@
         }
     </div>
     
+    @if (!readOnly)
+    {
+        <div class="mb-3 d-flex flex-wrap gap-2 justify-content-center">
+            <button type="button" class="btn btn-sm btn-light border rounded-pill fw-medium" onclick="setDeviceImage('/images/demo_devices/phone_front.jpg')">
+                <i class="bi bi-phone me-1 text-primary"></i>Demo Mặt trước
+            </button>
+            <button type="button" class="btn btn-sm btn-light border rounded-pill fw-medium" onclick="setDeviceImage('/images/demo_devices/phone_back.jpg')">
+                <i class="bi bi-phone-flip me-1 text-primary"></i>Demo Mặt sau
+            </button>
+            <label class="btn btn-sm btn-outline-secondary border rounded-pill fw-medium mb-0 text-nowrap cursor-pointer">
+                <i class="bi bi-upload me-1"></i>Tải ảnh lên
+                <input type="file" class="d-none" accept="image/*" onchange="uploadDeviceImage(event)">
+            </label>
+            <button type="button" class="btn btn-sm btn-outline-danger border rounded-pill fw-medium d-none" id="btnRemoveDeviceImg" onclick="removeDeviceImage()" title="Xóa ảnh">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+    }
+    
     <!-- Phone Frame Container -->
     <div 
-        class="device-frame mx-auto @(readOnly ? "" : "cursor-pointer")" 
+        class="device-frame mx-auto mb-3 @(readOnly ? "" : "cursor-pointer")" 
         id="deviceFrame"
-        style="width: 160px; height: 288px; border: 4px solid #1e293b; border-radius: 2rem; background: white; position: relative; @(readOnly ? "cursor: default;" : "cursor: crosshair;")"
+        style="width: 160px; height: 288px; border: 4px solid #1e293b; border-radius: 2rem; background: #f8fafc; position: relative; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); @(readOnly ? "cursor: default;" : "cursor: crosshair;")"
         @if (!readOnly) { <text>onclick="handleDeviceClick(event)"</text> }
     >
+        <!-- Background Image -->
+        <img id="deviceBgImage" src="" style="width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; z-index: 1; display: none; pointer-events: none;" />
+        
         <!-- Screen Bezel Simulation -->
-        <div class="device-screen" style="position: absolute; inset: 2px; border-radius: 1.8rem; background: #f8fafc; border: 1px solid #e2e8f0;"></div>
+        <div id="deviceBezel" style="position: absolute; inset: 2px; border-radius: 1.8rem; background: transparent; border: 1px solid #e2e8f0; pointer-events: none; z-index: 2;"></div>
         
         <!-- Notch/Camera Area Simulation -->
-        <div class="device-notch" style="position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 48px; height: 16px; background: #1e293b; border-radius: 0 0 12px 12px; z-index: 10;"></div>
+        <div id="deviceNotch" style="position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 48px; height: 16px; background: #1e293b; border-radius: 0 0 12px 12px; z-index: 3; pointer-events: none;"></div>
         
         <!-- Marks Container -->
         <div id="scratchMarksContainer" style="position: absolute; inset: 0; pointer-events: none;">
@@ -61,16 +83,24 @@
 {
     <script>
         // Use global scratchMarks from ticket-detail.js if available, otherwise create local
-        if (typeof scratchMarks === 'undefined') {
+        if (typeof window.scratchMarks === 'undefined') {
             window.scratchMarks = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(marks));
         }
         
         function handleDeviceClick(event) {
             const frame = document.getElementById('deviceFrame');
+            // If the user clicked on an internal element like the image or bezel, we still want the relative coordinates
+            const target = event.target;
+            // Get bounding rect of the frame itself
             const rect = frame.getBoundingClientRect();
+            // Calculate coordinates relative to the frame
             const x = ((event.clientX - rect.left) / rect.width) * 100;
             const y = ((event.clientY - rect.top) / rect.height) * 100;
-            addMark(x, y);
+
+            // Only add mark if in bounds (sometimes clicking borders can cause weird values)
+            if (x >= 0 && x <= 100 && y >= 0 && y <= 100) {
+                addMark(x, y);
+            }
         }
         
         function addMark(x, y) {
@@ -90,13 +120,19 @@
             container.innerHTML = '';
             marks.forEach(mark => {
                 const dot = document.createElement('div');
-                dot.className = 'scratch-mark';
-                dot.style.cssText = `position: absolute; left: ${mark.x}%; top: ${mark.y}%; width: 16px; height: 16px; background: rgba(239, 68, 68, 0.8); border-radius: 50%; border: 2px solid white; transform: translate(-50%, -50%); box-shadow: 0 2px 4px rgba(0,0,0,0.2);`;
+                dot.className = 'scratch-mark cursor-pointer';
+                dot.style.cssText = `position: absolute; left: ${mark.x}%; top: ${mark.y}%; width: 16px; height: 16px; background: rgba(239, 68, 68, 0.85); border-radius: 50%; border: 2px solid white; transform: translate(-50%, -50%); box-shadow: 0 2px 5px rgba(0,0,0,0.3); z-index: 20;`;
                 container.appendChild(dot);
             });
             
             if (placeholder) {
-                placeholder.style.display = marks.length > 0 ? 'none' : 'flex';
+                // hide placeholder if there is an image, or if there are marks
+                const bgImage = document.getElementById('deviceBgImage');
+                if ((bgImage && bgImage.style.display !== 'none') || marks.length > 0) {
+                    placeholder.style.display = 'none';
+                } else {
+                    placeholder.style.display = 'flex';
+                }
             }
             
             if (count) {
@@ -115,6 +151,56 @@
             renderMarks();
         }
         
+        function setDeviceImage(url) {
+            const bgImage = document.getElementById('deviceBgImage');
+            const placeholder = document.querySelector('.device-placeholder');
+            const removeBtn = document.getElementById('btnRemoveDeviceImg');
+            
+            if (bgImage) {
+                bgImage.src = url;
+                bgImage.style.display = 'block';
+            }
+            if (placeholder) {
+                placeholder.style.display = 'none';
+            }
+            if (removeBtn) {
+                removeBtn.classList.remove('d-none');
+            }
+            // Add a slight outline and make the notch less visible when image is active
+            document.getElementById('deviceFrame').style.borderColor = '#cbd5e1';
+            document.getElementById('deviceBezel').style.display = 'none';
+            document.getElementById('deviceNotch').style.display = 'none';
+        }
+
+        function removeDeviceImage() {
+            const bgImage = document.getElementById('deviceBgImage');
+            const removeBtn = document.getElementById('btnRemoveDeviceImg');
+            
+            if (bgImage) {
+                bgImage.src = '';
+                bgImage.style.display = 'none';
+            }
+            if (removeBtn) {
+                removeBtn.classList.add('d-none');
+            }
+            
+            document.getElementById('deviceFrame').style.borderColor = '#1e293b';
+            document.getElementById('deviceBezel').style.display = 'block';
+            document.getElementById('deviceNotch').style.display = 'block';
+            renderMarks(); // to show the placeholder again if needed
+        }
+
+        function uploadDeviceImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    setDeviceImage(e.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
         // Expose saveScratchMarks if not already defined
         if (typeof saveScratchMarks === 'undefined') {
             window.saveScratchMarks = function() {
@@ -153,7 +239,7 @@
             const originalFetch = fetchScratchMarks;
             fetchScratchMarks = function() {
                 originalFetch();
-                setTimeout(renderMarks, 100);
+                setTimeout(renderMarks, 200);
             };
         }
     </script>

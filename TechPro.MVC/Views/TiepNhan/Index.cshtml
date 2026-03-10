@@ -208,29 +208,32 @@
                                             </td>
                                             <td class="py-3 px-4">
                                                 @{
+                                                    var badgeBaseClass = "badge px-3 py-2 rounded-pill fw-bold d-inline-flex align-items-center justify-content-center text-nowrap";
+                                                    var badgeStyle = "width: 160px; height: 36px; font-size: 0.85rem;";
+                                                    
                                                     var statusBadge = ticket.TrangThai switch
                                                     {
-                                                        "pending" => "<span class='badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-3 py-2 rounded-pill fw-bold w-100 text-center d-inline-block'><i class='bi bi-hourglass-split me-1'></i>Chờ Khám</span>",
-                                                        "repairing" => "<span class='badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 rounded-pill fw-bold w-100 text-center d-inline-block'><i class='bi bi-tools me-1'></i>Đang Mổ Máy</span>",
-                                                        "waiting_parts" => "<span class='badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-2 rounded-pill fw-bold w-100 text-center d-inline-block'><i class='bi bi-box me-1'></i>Chờ Đồ</span>",
-                                                        "done" => "<span class='badge bg-success px-3 py-2 rounded-pill shadow-sm fw-bold w-100 text-center d-inline-block'><i class='bi bi-check-circle-fill me-1'></i>Sẵn Sàng Trả K/H</span>",
-                                                        "delivered" => "<span class='badge bg-slate-100 text-slate-500 border px-3 py-2 rounded-pill fw-bold w-100 text-center d-inline-block'>Đã Hoàn Tất</span>",
-                                                        _ => $"<span class='badge bg-secondary'>{ticket.TrangThai}</span>"
+                                                        "pending" => $"<span class='{badgeBaseClass} bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25' style='{badgeStyle}'><i class='bi bi-hourglass-split me-2'></i>Chờ Khám</span>",
+                                                        "repairing" => $"<span class='{badgeBaseClass} bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25' style='{badgeStyle}'><i class='bi bi-tools me-2'></i>Đang Mổ Máy</span>",
+                                                        "waiting_parts" => $"<span class='{badgeBaseClass} bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25' style='{badgeStyle}'><i class='bi bi-box me-2'></i>Chờ Đồ</span>",
+                                                        "done" => $"<span class='{badgeBaseClass} bg-success text-white shadow-sm border border-success' style='{badgeStyle}'><i class='bi bi-check-circle-fill me-2'></i>Sẵn Sàng Trả K/H</span>",
+                                                        "delivered" => $"<span class='{badgeBaseClass} bg-slate-100 text-slate-500 border border-slate-200' style='{badgeStyle}'>Đã Hoàn Tất</span>",
+                                                        _ => $"<span class='{badgeBaseClass} bg-secondary text-white' style='{badgeStyle}'>{ticket.TrangThai}</span>"
                                                     };
                                                 }
                                                 @Html.Raw(statusBadge)
                                             </td>
                                             <td class="py-3 px-4 text-end" onclick="event.stopPropagation();">
-                                                <div class="d-flex gap-2 justify-content-end">
+                                                <div class="d-flex gap-2 justify-content-end align-items-center">
                                                     @if (ticket.TrangThai == "done")
                                                     {
-                                                        <button class="btn btn-sm btn-success fw-bold d-flex align-items-center" onclick="alert('Đang mở màn chốt bill & thu tiền!')"><i class="bi bi-cash-stack me-1"></i> Trả Máy</button>
+                                                        <button class="btn btn-sm btn-success fw-bold d-inline-flex align-items-center justify-content-center text-nowrap px-3 shadow-sm" style="height: 36px;" onclick="alert('Đang mở màn chốt bill & thu tiền!')"><i class="bi bi-cash-stack me-2"></i> Trả Máy</button>
                                                     }
                                                     else if (ticket.TrangThai == "pending" && isRecent)
                                                     {
-                                                        <button class="btn btn-sm btn-outline-danger d-flex align-items-center" onclick="cancelTicket('@ticket.Id')" title="Hủy phiếu gấp (Chỉ Lễ Tân)"><i class="bi bi-x-circle me-1"></i> Hủy</button>
+                                                        <button class="btn btn-sm btn-outline-danger d-inline-flex align-items-center justify-content-center text-nowrap px-3" style="height: 36px;" onclick="cancelTicket('@ticket.Id')" title="Hủy phiếu gấp (Chỉ Lễ Tân)"><i class="bi bi-x-circle me-2"></i> Hủy</button>
                                                     }
-                                                    <a href="@Url.Action("ChiTiet", "KyThuat", new { id = ticket.Id })" class="btn btn-sm btn-light border bg-white" title="Chi tiết"><i class="bi bi-chevron-right text-slate-500"></i></a>
+                                                    <a href="@Url.Action("ChiTiet", "KyThuat", new { id = ticket.Id })" class="btn btn-sm btn-light border bg-white d-inline-flex align-items-center justify-content-center" style="height: 36px; width: 36px;" title="Chi tiết"><i class="bi bi-chevron-right text-slate-500"></i></a>
                                                 </div>
                                             </td>
                                         </tr>

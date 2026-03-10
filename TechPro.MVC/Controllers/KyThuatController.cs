@@ -173,6 +173,19 @@ namespace TechPro.Controllers
             var response = await client.PostAsJsonAsync($"api/Technician/tickets/{id}/scratch-marks", marks);
             return Json(new { success = response.IsSuccessStatusCode });
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetHistory(string phone, string excludeId)
+        {
+            var client = _httpClientFactory.CreateClient("TechProAPI");
+            var response = await client.GetAsync($"api/Technician/history?phone={Uri.EscapeDataString(phone ?? "")}&excludeId={Uri.EscapeDataString(excludeId ?? "")}");
+            if (response.IsSuccessStatusCode)
+            {
+                var data = await response.Content.ReadAsStringAsync();
+                return Content(data, "application/json");
+            }
+            return Json(new List<object>());
+        }
         [HttpPost]
         public async Task<IActionResult> AiGopY([FromBody] AiGopYRequest request)
         {

@@ -24,11 +24,9 @@
                 : "Quản lý tiến độ sửa chữa toàn cửa hàng.")
         </p>
     </div>
-    <div class="d-flex gap-2">
-        <button class="btn btn-sm btn-outline-primary" onclick="requestNotificationPermission()" id="btnEnableNotif" style="display:none;">
-            <i class="bi bi-bell me-1"></i>Bật thông báo máy tính
-        </button>
-    </div>
+    <button class="btn btn-sm btn-outline-secondary" onclick="requestNotificationPermission()" id="btnEnableNotif" style="display:none;">
+        <i class="bi bi-bell me-1"></i>Bật thông báo
+    </button>
 </div>
 
 <!-- ═══ PERSONAL DASHBOARD ══════════════════════════════════════════════════ -->
@@ -123,7 +121,7 @@
                                     <div class="card-body p-3">
                                         <!-- Tags & Menu -->
                                         <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-1 fw-semibold small ticket-badge">@ticket.Id</span>
+                                            <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-2 fw-semibold small ticket-badge d-inline-flex align-items-center justify-content-center text-nowrap flex-shrink-0" style="min-width: 90px; height: 26px;">@ticket.Id</span>
                                             <button class="btn btn-sm text-muted p-0 border-0 btn-menu"
                                                     type="button"
                                                     onclick="event.stopPropagation(); openQuickNote('@ticket.Id', this)"
@@ -161,8 +159,8 @@
                                         </div>
 
                                         <!-- Footer Info -->
-                                        <div class="d-flex justify-content-between align-items-center mt-auto pt-2 border-top border-light">
-                                            <div class="d-flex align-items-center text-muted small fw-medium">
+                                        <div class="d-flex justify-content-between align-items-center mt-auto pt-2 border-top border-light gap-2">
+                                            <div class="d-flex align-items-center text-muted small fw-medium text-nowrap flex-shrink-0">
                                                 <i class="bi bi-calendar4 me-1"></i> @ticket.NgayNhan.ToString("dd/MMM")
                                             </div>
                                             @if (userRole != "Technician" && ticket.KyThuatVien != null)
@@ -178,9 +176,9 @@
                                         
                                         @if (userRole == "Technician" && ticket.TrangThai == "pending" && string.IsNullOrEmpty(ticket.KyThuatVienId))
                                         {
-                                            <button class="btn btn-sm btn-primary mt-3 w-100 rounded-pill shadow-sm fw-bold action-btn" 
+                                            <button class="btn btn-sm btn-primary mt-3 w-100 rounded-pill shadow-sm fw-bold action-btn d-flex align-items-center justify-content-center text-nowrap" style="height: 38px;"
                                                     onclick="event.stopPropagation(); ganChoToi('@ticket.Id')">
-                                                Bắt đầu sửa <i class="bi bi-arrow-right ms-1"></i>
+                                                Bắt đầu sửa <i class="bi bi-arrow-right ms-2"></i>
                                             </button>
                                         }
                                     </div>
@@ -245,8 +243,14 @@
     .ticket-card {
         transition: all 0.2s cubic-bezier(0.165, 0.84, 0.44, 1);
         border: 1px solid rgba(0,0,0,0.05) !important;
+        min-height: 160px;
     }
-    
+
+    .ticket-card .card-body {
+        display: flex;
+        flex-direction: column;
+    }
+
     .ticket-hover:hover {
         transform: translateY(-4px);
         box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important;

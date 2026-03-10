@@ -286,7 +286,7 @@ function initLiveTimers() {
         const footer = card.querySelector('.border-top');
         if (!footer) return;
         const timerSpan = document.createElement('span');
-        timerSpan.className = 'live-timer normal ms-auto';
+        timerSpan.className = 'live-timer normal ms-auto text-nowrap flex-shrink-0';
         timerSpan.dataset.receivedAt = card.dataset.receivedAt;
         footer.appendChild(timerSpan);
     });
@@ -311,7 +311,7 @@ function tickTimers() {
             : `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 
         // Color urgency
-        el.className = 'live-timer ms-auto ' + (
+        el.className = 'live-timer ms-auto text-nowrap flex-shrink-0 ' + (
             elapsed > 14400 ? 'urgent' :
             elapsed > 3600  ? 'warning' : 'normal'
         );
@@ -452,16 +452,16 @@ function injectNewCardIntoKanban(ticketId, deviceName, description) {
     card.innerHTML = `
         <div class="card-body p-3">
             <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-1 fw-semibold small">${ticketId}</span>
+                <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-2 fw-semibold small ticket-badge d-inline-flex align-items-center justify-content-center text-nowrap flex-shrink-0" style="min-width: 90px; height: 26px;">${ticketId}</span>
                 <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-2 py-1 rounded-pill" style="font-size:0.7rem;">MỚI</span>
             </div>
             <h6 class="card-title fw-bold text-dark mb-1 fs-6">${escapeHtml(deviceName || 'Thiết bị')}</h6>
             <p class="card-text small text-muted mb-3 description-clamp">${escapeHtml(description || '')}</p>
-            <div class="d-flex justify-content-between align-items-center mt-auto pt-2 border-top border-light">
-                <div class="d-flex align-items-center text-muted small fw-medium">
+            <div class="d-flex justify-content-between align-items-center mt-auto pt-2 border-top border-light gap-2">
+                <div class="d-flex align-items-center text-muted small fw-medium text-nowrap flex-shrink-0">
                     <i class="bi bi-calendar4 me-1"></i> Vừa tiếp nhận
                 </div>
-                <span class="live-timer normal" data-received-at="${new Date().toISOString()}">00:00</span>
+                <span class="live-timer normal text-nowrap flex-shrink-0" data-received-at="${new Date().toISOString()}">00:00</span>
             </div>
         </div>`;
 
