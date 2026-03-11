@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -90,13 +91,16 @@ namespace TechPro.API.Controllers
                         Role = role,
                         TenantId = user.TenantId
                     },
-                    RedirectUrl = PerformRedirect(request.Email)
+                    RedirectUrl = PerformRedirect(role)
                 });
             }
 
             return Unauthorized(new LoginResponse { Success = false, Message = "Email hoặc mật khẩu không chính xác." });
         }
 
+        // Chỉ người đã đăng nhập mới được đổi mật khẩu
+        // Và chỉ đổi được mật khẩu của chính mình
+        [Authorize]
         [HttpPost("change-password")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
         {
@@ -111,6 +115,21 @@ namespace TechPro.API.Controllers
                 return NotFound(new ChangePasswordResponse { Success = false, Message = "Không tìm thấy người dùng." });
             }
 
+            // Kiểm tra người gọi chính là chủ tài khoản
+            // Ưu tiên: X-Caller-Email header (MVC server-to-server)
+            // Fallback: User.Claims (gọi trực tiếp với JWT)
+            var callerEmail = Request.Headers["X-Caller-Email"].FirstOrDefault()
+                              ?? User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+            var callerRole  = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+
+            if (!string.IsNullOrEmpty(callerEmail)
+                && callerEmail != "unknown"
+                && callerEmail != user.Email
+                && callerRole != "SystemAdmin")
+            {
+                return Forbid();  // 403 — không phải chính chủ
+            }
+
             var result = await _userManager.ChangePasswordAsync(user, request.OldPassword, request.NewPassword);
             if (result.Succeeded)
             {
@@ -121,14 +140,14 @@ namespace TechPro.API.Controllers
             return BadRequest(new ChangePasswordResponse { Success = false, Message = err });
         }
 
-        private string PerformRedirect(string email)
+        // Redirect dựa trên role từ Identity DB — không tin tưởng email prefix
+        private string PerformRedirect(string role) => role switch
         {
-            if (email.StartsWith("sysadmin")) return "/SysAdmin";
-            if (email.StartsWith("admin")) return "/StoreAdmin";
-            if (email.StartsWith("tech")) return "/Technician";
-            if (email.StartsWith("support")) return "/Support";
-            if (email.StartsWith("kho")) return "/Support";
-            return "/StoreAdmin";
-        }
+            "SystemAdmin" => "/SysAdmin",
+            "StoreAdmin"  => "/StoreAdmin",
+            "Technician"  => "/Technician",
+            "Support"     => "/Support",
+            _             => "/"
+        };
     }
 }

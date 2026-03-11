@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace TechPro.Controllers
 {
+    // Support = tất cả nghiệp vụ lễ tân (tiếp nhận, hủy, xem)
+    // StoreAdmin/SysAdmin = chỉ XEM để giám sát, không tạo/hủy phiếu
     [Authorize(Roles = "Support,StoreAdmin,SystemAdmin")]
     [Route("Support/[controller]/{action=Index}/{id?}")]
     public class TiepNhanController : Controller
@@ -68,6 +70,8 @@ namespace TechPro.Controllers
         }
 
         // POST: TiepNhan/TaoPhieu
+        // Chỉ Support mới được tạo phiếu mới
+        [Authorize(Roles = "Support")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> TaoPhieu(PhieuSuaChua phieuSuaChua)
@@ -120,6 +124,8 @@ namespace TechPro.Controllers
             return Json(new { success = false, message = "Không thể kết nối dịch vụ chuẩn đoán AI." });
         }
 
+        // Chỉ Support mới được hủy phiếu trực tiếp
+        [Authorize(Roles = "Support")]
         [HttpPost]
         public async Task<IActionResult> HuyPhieu(string id)
         {

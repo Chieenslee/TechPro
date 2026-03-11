@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TechPro.API.Data;
 using TechPro.API.Models;
@@ -6,6 +7,7 @@ namespace TechPro.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]  // Mặc định yêu cầu auth, trừ endpoint override AlløwAnonymous
     public class BookingsController : ControllerBase
     {
         private readonly TechProDbContext _context;
@@ -15,6 +17,8 @@ namespace TechPro.API.Controllers
             _context = context;
         }
 
+        // Khách hàng đặt lịch không cần đăng nhập — public endpoint
+        [AllowAnonymous]
         [HttpPost]
         public async Task<IActionResult> CreateBooking([FromBody] LichHen model)
         {
@@ -34,6 +38,8 @@ namespace TechPro.API.Controllers
             return CreatedAtAction(nameof(GetBooking), new { id = model.Id }, model);
         }
 
+        // Chỉ nhân viên mới xem được chi tiết lịch hẹn
+        [Authorize(Roles = "Support,StoreAdmin,SystemAdmin")]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetBooking(int id)
         {

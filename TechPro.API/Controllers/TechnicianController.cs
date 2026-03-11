@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -5,23 +6,38 @@ using TechPro.API.Data;
 using TechPro.API.Hubs;
 using TechPro.API.Models;
 using TechPro.API.Models.DTOs;
+using TechPro.API.Services;
 
 namespace TechPro.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]  // Yêu cầu đăng nhập cho TẤT CẢ endpoint trong controller này
     public class TechnicianController : ControllerBase
     {
         private readonly TechProDbContext _context;
         private readonly IHubContext<TicketHub> _hubContext;
+        private readonly AuditLogService _audit;
 
-        public TechnicianController(TechProDbContext context, IHubContext<TicketHub> hubContext)
+        public TechnicianController(TechProDbContext context, IHubContext<TicketHub> hubContext, AuditLogService audit)
         {
             _context = context;
             _hubContext = hubContext;
+            _audit = audit;
         }
 
+        private string CallerEmail() => Request.Headers["X-Caller-Email"].FirstOrDefault()
+                                       ?? User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
+                                       ?? "unknown";
+        private string CallerRole()  => Request.Headers["X-Caller-Role"].FirstOrDefault()
+                                       ?? User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value
+                                       ?? "unknown";
+        private string CallerIp()    => HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+        // GET api/Technician/tickets — Technician chỉ thấy phiếu của mình (filter assigneeId)
+        // StoreAdmin/SysAdmin thấy tất cả để giám sát
         [HttpGet("tickets")]
+        [Authorize(Roles = "Technician,StoreAdmin,SystemAdmin")]
         public async Task<IActionResult> GetTickets(string? status = null, string? assigneeId = null, string? tenantId = null, string? searchTerm = null)
         {
             var query = _context.PhieuSuaChuas
@@ -55,6 +71,7 @@ namespace TechPro.API.Controllers
         }
 
         [HttpGet("tickets/{id}")]
+        [Authorize(Roles = "Technician,StoreAdmin,SystemAdmin")]
         public async Task<IActionResult> GetTicket(string id)
         {
             var ticket = await _context.PhieuSuaChuas
@@ -68,7 +85,9 @@ namespace TechPro.API.Controllers
             return Ok(ticket);
         }
 
+        // Chỉ Technician mới được cập nhật trạng thái phiếu của mình
         [HttpPut("tickets/{id}/status")]
+        [Authorize(Roles = "Technician")]
         public async Task<IActionResult> UpdateStatus(string id, [FromBody] string status)
         {
             var ticket = await _context.PhieuSuaChuas.FindAsync(id);
@@ -78,23 +97,33 @@ namespace TechPro.API.Controllers
             await _context.SaveChangesAsync();
             await _hubContext.Clients.All.SendAsync("TicketStatusChanged", id, status);
 
+            await _audit.LogAsync(CallerEmail(), CallerRole(), "CapNhatTrangThaiPhieu", id, "PhieuSuaChua",
+                ghiChu: $"Trạng thái mới: {status}", ipAddress: CallerIp());
+
             return Ok(new { message = "Updated status" });
         }
 
+        // Chỉ StoreAdmin/SysAdmin mới được gán kỹ thuật viên
         [HttpPut("tickets/{id}/assign")]
+        [Authorize(Roles = "StoreAdmin,SystemAdmin")]
         public async Task<IActionResult> AssignTicket(string id, [FromBody] string? technicianId)
         {
             var ticket = await _context.PhieuSuaChuas.FindAsync(id);
             if (ticket == null) return NotFound();
 
             ticket.KyThuatVienId = technicianId;
-            ticket.TrangThai = "fixing"; // Auto change status? or keep existing. "repairing"
+            ticket.TrangThai = "fixing";
             await _context.SaveChangesAsync();
-            
+
+            await _audit.LogAsync(CallerEmail(), CallerRole(), "GanKyThuatVien", id, "PhieuSuaChua",
+                ghiChu: $"Gán KTV: {technicianId}", ipAddress: CallerIp());
+
             return Ok(new { message = "Assigned technician" });
         }
 
+        // Chỉ Technician mới được tạo yêu cầu linh kiện
         [HttpPost("tickets/{id}/parts")]
+        [Authorize(Roles = "Technician")]
         public async Task<IActionResult> RequestPart(string id, [FromBody] YeuCauLinhKien request)
         {
             request.PhieuSuaChuaId = id;
@@ -109,6 +138,7 @@ namespace TechPro.API.Controllers
         }
 
         [HttpPut("tickets/{id}/test-result")]
+        [Authorize(Roles = "Technician")]
         public async Task<IActionResult> UpdateTestResult(string id, [FromBody] string result)
         {
             var ticket = await _context.PhieuSuaChuas.FindAsync(id);
@@ -120,6 +150,7 @@ namespace TechPro.API.Controllers
         }
 
         [HttpGet("tickets/{id}/notes")]
+        [Authorize(Roles = "Technician,StoreAdmin,SystemAdmin")]
         public async Task<IActionResult> GetNotes(string id)
         {
             var notes = await _context.TicketNotes
@@ -130,6 +161,7 @@ namespace TechPro.API.Controllers
         }
 
         [HttpPost("tickets/{id}/notes")]
+        [Authorize(Roles = "Technician")]
         public async Task<IActionResult> AddNote(string id, [FromBody] TicketNote note)
         {
             note.PhieuSuaChuaId = id;
@@ -141,6 +173,7 @@ namespace TechPro.API.Controllers
         }
 
         [HttpGet("tickets/{id}/scratch-marks")]
+        [Authorize(Roles = "Technician,StoreAdmin,SystemAdmin")]
         public async Task<IActionResult> GetScratchMarks(string id)
         {
             var marks = await _context.ScratchMarks.Where(s => s.PhieuSuaChuaId == id).ToListAsync();
@@ -148,6 +181,7 @@ namespace TechPro.API.Controllers
         }
 
         [HttpPost("tickets/{id}/scratch-marks")]
+        [Authorize(Roles = "Technician")]
         public async Task<IActionResult> SaveScratchMarks(string id, [FromBody] List<ScratchMark> marks)
         {
             var existing = await _context.ScratchMarks.Where(s => s.PhieuSuaChuaId == id).ToListAsync();
@@ -159,7 +193,9 @@ namespace TechPro.API.Controllers
             
             return Ok(marks);
         }
+        // Lịch sử sửa chữa của khách — Support và Technician dùng
         [HttpGet("history")]
+        [Authorize(Roles = "Technician,Support,StoreAdmin,SystemAdmin")]
         public async Task<IActionResult> GetHistory(string? phone, string? excludeId)
         {
             if (string.IsNullOrWhiteSpace(phone))

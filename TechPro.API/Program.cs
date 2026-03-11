@@ -27,6 +27,7 @@ builder.Services.AddControllers()
     });
 builder.Services.AddSignalR();
 builder.Services.AddScoped<TechPro.API.Services.SmartDiagnosisService>();
+builder.Services.AddScoped<TechPro.API.Services.AuditLogService>();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 

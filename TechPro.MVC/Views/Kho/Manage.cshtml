@@ -1,0 +1,276 @@
+@using TechPro.Models
+@{
+    ViewData["Title"] = "Quản Lý Kho";
+    var activeTab        = ViewBag.ActiveTab as string ?? "requests";
+    var inventory        = ViewBag.Inventory as IEnumerable<KhoLinhKien> ?? Enumerable.Empty<KhoLinhKien>();
+    var partRequests     = ViewBag.PartRequests as IEnumerable<YeuCauLinhKien> ?? Enumerable.Empty<YeuCauLinhKien>();
+    var wasteReturns     = ViewBag.WasteReturns as IEnumerable<TraXac> ?? Enumerable.Empty<TraXac>();
+    var pendingReqCount  = ViewBag.PendingRequestsCount as int? ?? 0;
+    var pendingWaste     = ViewBag.PendingWasteCount as int? ?? 0;
+}
+
+<div class="mb-4 d-flex align-items-center gap-3">
+    <div class="rounded-3 p-2" style="background:#fdf4ff;">
+        <i class="bi bi-boxes fs-5" style="color:#a855f7;"></i>
+    </div>
+    <div>
+        <h4 class="fw-bold mb-0">Quản Lý Kho Linh Kiện</h4>
+        <p class="text-muted small mb-0">Duyệt yêu cầu, nhập/xuất kho, theo dõi tồn kho và cảnh báo hàng thấp</p>
+    </div>
+    <!-- Low stock alert button -->
+    <button class="btn btn-sm btn-outline-warning ms-auto rounded-pill px-3" onclick="checkLowStock()">
+        <i class="bi bi-exclamation-triangle me-1"></i>Kiểm tra hàng thấp
+    </button>
+</div>
+
+<!-- Tabs -->
+<ul class="nav nav-tabs border-0 mb-4 gap-1">
+    <li class="nav-item">
+        <a class="nav-link px-4 rounded-pill @(activeTab == "inventory" ? "active bg-primary text-white" : "text-muted")"
+           href="/Kho/Manage?tab=inventory">
+            <i class="bi bi-box-seam me-2"></i>Tồn kho
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link px-4 rounded-pill position-relative @(activeTab == "requests" ? "active bg-primary text-white" : "text-muted")"
+           href="/Kho/Manage?tab=requests">
+            <i class="bi bi-clock-history me-2"></i>Yêu cầu xuất kho
+            @if (pendingReqCount > 0)
+            {
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.6rem;">@pendingReqCount</span>
+            }
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link px-4 rounded-pill position-relative @(activeTab == "waste" ? "active bg-primary text-white" : "text-muted")"
+           href="/Kho/Manage?tab=waste">
+            <i class="bi bi-recycle me-2"></i>Trả xác linh kiện
+            @if (pendingWaste > 0)
+            {
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark" style="font-size:0.6rem;">@pendingWaste</span>
+            }
+        </a>
+    </li>
+</ul>
+
+@Html.AntiForgeryToken()
+
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+
+    @* ── TAB: TỒN KHO ── *@
+    @if (activeTab == "inventory")
+    {
+        <div class="card-header bg-white border-bottom d-flex align-items-center gap-2 py-3">
+            <i class="bi bi-boxes" style="color:#a855f7;"></i>
+            <span class="fw-bold">Danh sách tồn kho</span>
+            <!-- Search -->
+            <form method="get" action="/Kho/Manage" class="ms-auto d-flex gap-2">
+                <input type="hidden" name="tab" value="inventory" />
+                <input type="text" class="form-control form-control-sm rounded-pill border-slate-200 shadow-none" name="searchTerm"
+                       value="@ViewBag.SearchTerm" placeholder="Tìm linh kiện..." style="max-width:220px;">
+                <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3">Tìm</button>
+            </form>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead style="background:#f8fafc;">
+                    <tr class="text-muted small text-uppercase" style="font-size:0.72rem; letter-spacing:0.05em;">
+                        <th class="py-3 px-4 border-0">Tên linh kiện</th>
+                        <th class="py-3 px-4 border-0">Danh mục</th>
+                        <th class="py-3 px-4 border-0 text-end">Đơn giá</th>
+                        <th class="py-3 px-4 border-0 text-center">Tồn kho</th>
+                        <th class="py-3 px-4 border-0 text-center">Trạng thái</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in inventory)
+                    {
+                        <tr>
+                            <td class="px-4 py-3 fw-semibold">@item.TenLinhKien</td>
+                            <td class="px-4 py-3 text-muted">@(item.DanhMuc ?? "—")</td>
+                            <td class="px-4 py-3 text-end font-monospace text-success fw-medium">@item.GiaBan.ToString("N0")đ</td>
+                            <td class="px-4 py-3 text-center fw-bold @(item.SoLuongTon < 5 ? "text-danger" : "")">@item.SoLuongTon</td>
+                            <td class="px-4 py-3 text-center">
+                                @if (item.SoLuongTon == 0) { <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3"><i class="bi bi-x-circle me-1"></i>Hết hàng</span> }
+                                else if (item.SoLuongTon < 5) { <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-3"><i class="bi bi-exclamation-triangle me-1"></i>Sắp hết</span> }
+                                else { <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3"><i class="bi bi-check-circle me-1"></i>Sẵn sàng</span> }
+                            </td>
+                        </tr>
+                    }
+                    @if (!inventory.Any())
+                    {
+                        <tr><td colspan="5" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-1 opacity-50 d-block mb-2"></i>Kho trống hoặc không tìm thấy.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @* ── TAB: YÊU CẦU XUẤT KHO ── *@
+    @if (activeTab == "requests")
+    {
+        <div class="card-header bg-white border-bottom d-flex align-items-center gap-2 py-3">
+            <i class="bi bi-clock-history text-primary"></i>
+            <span class="fw-bold">Yêu cầu xuất kho từ Kỹ Thuật Viên</span>
+            @if (pendingReqCount > 0)
+            {
+                <span class="badge bg-warning text-dark rounded-pill ms-1">@pendingReqCount chờ duyệt</span>
+            }
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead style="background:#f8fafc;">
+                    <tr class="text-muted small text-uppercase" style="font-size:0.72rem; letter-spacing:0.05em;">
+                        <th class="py-3 px-4 border-0">Mã Phiếu</th>
+                        <th class="py-3 px-4 border-0">Linh Kiện</th>
+                        <th class="py-3 px-4 border-0 text-center">SL</th>
+                        <th class="py-3 px-4 border-0">Ngày YC</th>
+                        <th class="py-3 px-4 border-0 text-center">Trạng thái</th>
+                        <th class="py-3 px-4 border-0 text-center">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var req in partRequests.OrderByDescending(r => r.NgayYeuCau))
+                    {
+                        <tr>
+                            <td class="px-4 py-3">
+                                <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill">@req.PhieuSuaChuaId</span>
+                            </td>
+                            <td class="px-4 py-3 fw-medium">@(req.LinhKien?.TenLinhKien ?? req.LinhKienId)</td>
+                            <td class="px-4 py-3 text-center fw-bold">@req.SoLuong</td>
+                            <td class="px-4 py-3 text-muted small">@req.NgayYeuCau.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="px-4 py-3 text-center">
+                                @{
+                                    var (cls, ic, lbl) = req.TrangThai switch
+                                    {
+                                        "approved" => ("bg-success bg-opacity-10 text-success", "bi-check-circle-fill", "Đã duyệt"),
+                                        "rejected" => ("bg-danger bg-opacity-10 text-danger",   "bi-x-circle-fill",     "Từ chối"),
+                                        _ =>          ("bg-warning bg-opacity-10 text-warning", "bi-hourglass-split",   "Chờ duyệt")
+                                    };
+                                }
+                                <span class="badge @cls rounded-pill px-3"><i class="bi @ic me-1"></i>@lbl</span>
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                @if (req.TrangThai == "pending")
+                                {
+                                    <div class="d-flex gap-2 justify-content-center">
+                                        <button class="btn btn-sm btn-success rounded-pill px-3" onclick="duyetYeuCau('@req.Id')">
+                                            <i class="bi bi-check-lg me-1"></i>Duyệt
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="tuChoiYeuCau('@req.Id')">
+                                            <i class="bi bi-x-lg me-1"></i>Từ chối
+                                        </button>
+                                    </div>
+                                }
+                                else { <span class="text-muted small">—</span> }
+                            </td>
+                        </tr>
+                    }
+                    @if (!partRequests.Any())
+                    {
+                        <tr><td colspan="6" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-1 opacity-50 d-block mb-2"></i>Không có yêu cầu nào.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @* ── TAB: TRẢ XÁC LINH KIỆN ── *@
+    @if (activeTab == "waste")
+    {
+        <div class="card-header bg-white border-bottom d-flex align-items-center gap-2 py-3">
+            <i class="bi bi-recycle text-warning"></i>
+            <span class="fw-bold">Trả xác linh kiện hỏng</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead style="background:#f8fafc;">
+                    <tr class="text-muted small text-uppercase" style="font-size:0.72rem; letter-spacing:0.05em;">
+                        <th class="py-3 px-4 border-0">Mã Phiếu</th>
+                        <th class="py-3 px-4 border-0">Kỹ Thuật Viên</th>
+                        <th class="py-3 px-4 border-0">Linh Kiện Hỏng</th>
+                        <th class="py-3 px-4 border-0">Ngày Trả</th>
+                        <th class="py-3 px-4 border-0 text-end">Hành Động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var waste in wasteReturns)
+                    {
+                        <tr>
+                            <td class="px-4 py-3"><span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill">@waste.PhieuSuaChuaId</span></td>
+                            <td class="px-4 py-3">@waste.TenKyThuatVien</td>
+                            <td class="px-4 py-3 fw-medium">@waste.TenLinhKien</td>
+                            <td class="px-4 py-3 text-muted small">@waste.NgayTra.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="px-4 py-3 text-end">
+                                @if (waste.TrangThai == "pending")
+                                {
+                                    <button class="btn btn-sm btn-primary rounded-pill px-3" onclick="xacNhanTraXac('@waste.Id')">
+                                        <i class="bi bi-recycle me-1"></i>Xác nhận đã nhận
+                                    </button>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3"><i class="bi bi-check-circle me-1"></i>Đã nhập kho xác</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    @if (!wasteReturns.Any())
+                    {
+                        <tr><td colspan="5" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-1 opacity-50 d-block mb-2"></i>Chưa có linh kiện hỏng nào cần trả về.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@section Scripts {
+<script>
+    const __RequestVerificationToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+    const headers = { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': __RequestVerificationToken };
+
+    async function duyetYeuCau(id) {
+        if (!confirm('Duyệt yêu cầu này và xuất kho?')) return;
+        const res = await fetch('/Kho/DuyetYeuCau', {
+            method: 'POST', headers,
+            body: `id=${encodeURIComponent(id)}&__RequestVerificationToken=${encodeURIComponent(__RequestVerificationToken)}`
+        });
+        const data = await res.json();
+        if (data.success) { toastr.success(data.message); setTimeout(() => location.reload(), 800); }
+        else toastr.error(data.message);
+    }
+
+    async function tuChoiYeuCau(id) {
+        if (!confirm('Từ chối yêu cầu linh kiện này?')) return;
+        const res = await fetch('/Kho/TuChoiYeuCau', {
+            method: 'POST', headers,
+            body: `id=${encodeURIComponent(id)}&__RequestVerificationToken=${encodeURIComponent(__RequestVerificationToken)}`
+        });
+        const data = await res.json();
+        if (data.success) { toastr.warning(data.message); setTimeout(() => location.reload(), 800); }
+        else toastr.error(data.message);
+    }
+
+    async function xacNhanTraXac(id) {
+        const res = await fetch('/Kho/XacNhanTraXac', {
+            method: 'POST', headers,
+            body: `id=${encodeURIComponent(id)}&__RequestVerificationToken=${encodeURIComponent(__RequestVerificationToken)}`
+        });
+        const data = await res.json();
+        if (data.success) { toastr.success(data.message); setTimeout(() => location.reload(), 800); }
+        else toastr.error(data.message);
+    }
+
+    async function checkLowStock() {
+        const res = await fetch('/Kho/GetLowStockItems?threshold=5');
+        const data = await res.json();
+        if (data.success && data.data.length > 0) {
+            const items = data.data.map(i => `• ${i.tenLinhKien}: còn ${i.soLuongTon} cái`).join('\n');
+            alert('⚠️ Hàng tồn kho thấp:\n\n' + items);
+        } else {
+            toastr.success('Tất cả linh kiện còn đủ hàng!');
+        }
+    }
+</script>
+}

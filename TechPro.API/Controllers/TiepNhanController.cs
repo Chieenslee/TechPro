@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TechPro.API.Data;
@@ -7,6 +8,7 @@ namespace TechPro.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]  // Mọi endpoint yêu cầu đăng nhập
     public class TiepNhanController : ControllerBase
     {
         private readonly TechProDbContext _context;

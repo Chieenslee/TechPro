@@ -6,6 +6,8 @@ using System.Security.Claims;
 
 namespace TechPro.Controllers
 {
+    // Technician = thất cả nghiệp vụ kỹ thuật (xem, cập nhật trạng thái, ghi chú)
+    // StoreAdmin/SysAdmin = chỉ XEM + phân công (không điều khiển trạng thái phiếu)
     [Authorize(Roles = "Technician,StoreAdmin,SystemAdmin")]
     [Route("Technician/[controller]/{action=Index}/{id?}")]
     public class KyThuatController : Controller
@@ -69,41 +71,19 @@ namespace TechPro.Controllers
             return NotFound();
         }
 
+        // Chỉ Technician mới được cập nhật trạng thái phiếu (phần việc của họ)
+        [Authorize(Roles = "Technician")]
         [HttpPost]
         public async Task<IActionResult> CapNhatTrangThai(string id, string trangThai)
         {
             var client = _httpClientFactory.CreateClient("TechProAPI");
             var response = await client.PutAsJsonAsync($"api/Technician/tickets/{id}/status", trangThai);
-            
             return Json(new { success = response.IsSuccessStatusCode });
         }
 
-        [HttpPost]
-        public async Task<IActionResult> GanChoToi(string id)
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // API needs generic user ID or passed explicitly
-            // Actually API `AssignTicket` takes `technicianId`.
-            // User ID in MVC Cookie is `Permissions` schema or just ID?
-            // AuthController sets: new Claim(ClaimTypes.Name, result.User.Email)
-            // It didn't set NameIdentifier (ID). AuthController Login:
-            /*
-            new Claim(ClaimTypes.Name, result.User.Email),
-            new Claim(ClaimTypes.Email, result.User.Email),
-            */
-            // I should have set NameIdentifier to `result.User.Id`.
-            // I'll assume I can fix AuthController later or now.
-            // For now, let's assume NameIdentifier is available or use Email if ID not set.
-            // Wait, standard Identity uses ID as NameIdentifier.
-            
-            // I'll Fix AccountController login to set NameIdentifier.
-            
-            var client = _httpClientFactory.CreateClient("TechProAPI");
-            // If we don't have ID, we can't assign.
-            // Let's assume passed userId is valid.
-            
-            var response = await client.PutAsJsonAsync($"api/Technician/tickets/{id}/assign", userId);
-            return Json(new { success = response.IsSuccessStatusCode });
-        }
+        // GanChoToi đã bị xóa — Technician không tự nhận phiếu bất kỳ.
+        // Chỉ StoreAdmin/SysAdmin mới được gán phiếu qua GanKyThuatVien.
+        // Technician chỉ nhìn thấy và xử lý phiếu đã được gán cho mình.
 
         // Only StoreAdmin/SysAdmin can assign tickets to specific technicians
         [HttpPost]
@@ -199,28 +179,31 @@ namespace TechPro.Controllers
 
         // Technician tracks their OWN part requests status
         [HttpGet]
+        [Authorize(Roles = "Technician")]
         public async Task<IActionResult> LinhKien()
         {
             var client = _httpClientFactory.CreateClient("TechProAPI");
-            var userId = User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier);
-            var response = await client.GetAsync($"api/Inventory/dashboard");
+
+            // Forward email của Technician đang đăng nhập — API dùng để filter đúng dữ liệu
+            var email = User.FindFirstValue(System.Security.Claims.ClaimTypes.Email) ?? "";
+            client.DefaultRequestHeaders.Remove("X-Caller-Email");
+            client.DefaultRequestHeaders.Remove("X-Caller-Role");
+            client.DefaultRequestHeaders.Add("X-Caller-Email", email);
+            client.DefaultRequestHeaders.Add("X-Caller-Role",  "Technician");
+
+            var response = await client.GetAsync("api/Inventory/my-requests");
 
             if (response.IsSuccessStatusCode)
             {
-                var dto = await response.Content.ReadFromJsonAsync<TechPro.Models.DTOs.InventoryDashboardDto>();
-                if (dto != null)
-                {
-                    // For Technician: only show THEIR OWN part requests
-                    ViewBag.MyPartRequests = dto.PartRequests;
-                    ViewBag.IsReadOnly = true;
-                }
+                var myRequests = await response.Content.ReadFromJsonAsync<List<TechPro.Models.YeuCauLinhKien>>();
+                ViewBag.MyPartRequests = myRequests ?? new List<TechPro.Models.YeuCauLinhKien>();
             }
             else
             {
-                ViewBag.MyPartRequests = new List<object>();
+                ViewBag.MyPartRequests = new List<TechPro.Models.YeuCauLinhKien>();
             }
 
-            return View();
+            return View("LinhKien");
         }
         [HttpPost]
         public async Task<IActionResult> AiGopY([FromBody] AiGopYRequest request)

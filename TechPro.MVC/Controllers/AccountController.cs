@@ -137,6 +137,9 @@ namespace TechPro.Controllers
             };
 
             var client = _httpClientFactory.CreateClient("TechProAPI");
+            // Forward email đã xác thực từ MVC — API dùng để kiểm tra chính chủ tài khoản
+            client.DefaultRequestHeaders.Remove("X-Caller-Email");
+            client.DefaultRequestHeaders.Add("X-Caller-Email", email);
             var json = JsonSerializer.Serialize(payload);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 

@@ -27,6 +27,7 @@ namespace TechPro.API.Data
         public DbSet<PhieuDieuChuyen> PhieuDieuChuyens { get; set; }
         public DbSet<ChiTietDieuChuyen> ChiTietDieuChuyens { get; set; }
         public DbSet<LichSuHuyPhieu> LichSuHuyPhieus { get; set; }
+        public DbSet<AuditLog> AuditLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

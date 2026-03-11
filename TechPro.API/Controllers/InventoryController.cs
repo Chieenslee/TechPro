@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -5,20 +6,55 @@ using TechPro.API.Data;
 using TechPro.API.Hubs;
 using TechPro.API.Models;
 using TechPro.API.Models.DTOs;
+using TechPro.API.Services;
 
 namespace TechPro.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]  // Tất cả endpoint yêu cầu đăng nhập
     public class InventoryController : ControllerBase
     {
         private readonly TechProDbContext _context;
         private readonly IHubContext<TicketHub> _hubContext;
+        private readonly AuditLogService _audit;
 
-        public InventoryController(TechProDbContext context, IHubContext<TicketHub> hubContext)
+        public InventoryController(TechProDbContext context, IHubContext<TicketHub> hubContext, AuditLogService audit)
         {
             _context = context;
             _hubContext = hubContext;
+            _audit = audit;
+        }
+
+        // Helper: lấy caller info MVC truyền qua header (server-to-server)
+        private string CallerEmail() => Request.Headers["X-Caller-Email"].FirstOrDefault() ?? "unknown";
+        private string CallerRole()  => Request.Headers["X-Caller-Role"].FirstOrDefault() ?? "unknown";
+        private string CallerIp()    => HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+        // GET: api/Inventory/my-requests
+        // MVC (server-to-server) forward X-Caller-Email qua header — được kiểm soát tại MVC layer
+        // Technician chỉ xem yêu cầu của chính họ (email do MVC gửi, đã vậrified beff MVC [Authorize])
+        [HttpGet("my-requests")]
+        public async Task<IActionResult> GetMyRequests()
+        {
+            // Ưu tiên lấy từ X-Caller-Email header (MVC server-to-server call)
+            // Fallback: lấy từ User.Claims (nếu gọi trực tiếp với JWT trong tương lai)
+            var myEmail = Request.Headers["X-Caller-Email"].FirstOrDefault()
+                          ?? User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+
+            if (string.IsNullOrEmpty(myEmail) || myEmail == "unknown")
+                return Unauthorized("Không xác định được danh tính.");
+
+            var requests = await _context.YeuCauLinhKiens
+                .Include(y => y.PhieuSuaChua)
+                .Include(y => y.LinhKien)
+                .Where(y => y.PhieuSuaChua != null &&
+                            y.PhieuSuaChua.KyThuatVien != null &&
+                            y.PhieuSuaChua.KyThuatVien.Email == myEmail)
+                .OrderByDescending(y => y.NgayYeuCau)
+                .ToListAsync();
+
+            return Ok(requests);
         }
 
         [HttpGet("dashboard")]
@@ -41,6 +77,7 @@ namespace TechPro.API.Controllers
                 .OrderByDescending(y => y.NgayYeuCau)
                 .ToListAsync();
 
+
             // Waste Returns
             var wasteReturns = await _context.TraXacs
                 .Include(t => t.PhieuSuaChua)
@@ -60,6 +97,7 @@ namespace TechPro.API.Controllers
         }
 
         [HttpPost("approve/{id}")]
+        [Authorize(Roles = "StoreAdmin,SystemAdmin")]
         public async Task<IActionResult> ApproveRequest(string id)
         {
             var yeuCau = await _context.YeuCauLinhKiens
@@ -83,10 +121,22 @@ namespace TechPro.API.Controllers
             await _context.SaveChangesAsync();
             await _hubContext.Clients.All.SendAsync("PartRequestApproved", id);
 
+            // Audit log
+            await _audit.LogAsync(
+                thucHienBoi: CallerEmail(),
+                role: CallerRole(),
+                hanhDong: "DuyetYeuCauKho",
+                doiTuongId: id,
+                loaiDoiTuong: "YeuCauLinhKien",
+                ghiChu: $"Duyệt yêu cầu {yeuCau.SoLuong}x {linhKien.TenLinhKien}",
+                ipAddress: CallerIp()
+            );
+
             return Ok(new { message = "Đã duyệt và xuất kho thành công!" });
         }
 
         [HttpPost("reject/{id}")]
+        [Authorize(Roles = "StoreAdmin,SystemAdmin")]
         public async Task<IActionResult> RejectRequest(string id)
         {
             var yeuCau = await _context.YeuCauLinhKiens.FindAsync(id);
@@ -95,10 +145,21 @@ namespace TechPro.API.Controllers
             yeuCau.TrangThai = "rejected";
             await _context.SaveChangesAsync();
 
+            // Audit log
+            await _audit.LogAsync(
+                thucHienBoi: CallerEmail(),
+                role: CallerRole(),
+                hanhDong: "TuChoiYeuCauKho",
+                doiTuongId: id,
+                loaiDoiTuong: "YeuCauLinhKien",
+                ipAddress: CallerIp()
+            );
+
             return Ok(new { message = "Đã từ chối yêu cầu." });
         }
 
         [HttpPost("confirm-waste/{id}")]
+        [Authorize(Roles = "StoreAdmin,SystemAdmin")]
         public async Task<IActionResult> ConfirmWaste(string id)
         {
             var traXac = await _context.TraXacs.FindAsync(id);
@@ -107,10 +168,21 @@ namespace TechPro.API.Controllers
             traXac.TrangThai = "returned";
             await _context.SaveChangesAsync();
 
+            // Audit log
+            await _audit.LogAsync(
+                thucHienBoi: CallerEmail(),
+                role: CallerRole(),
+                hanhDong: "XacNhanTraXac",
+                doiTuongId: id,
+                loaiDoiTuong: "TraXac",
+                ipAddress: CallerIp()
+            );
+
             return Ok(new { message = "Đã xác nhận nhận xác linh kiện." });
         }
 
         [HttpGet("low-stock")]
+        [Authorize(Roles = "StoreAdmin,SystemAdmin")]
         public async Task<IActionResult> GetLowStockItems(int threshold = 5, string? tenantId = null)
         {
             // Note: tenantId logic should typically come from User claims in API

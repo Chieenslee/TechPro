@@ -1,0 +1,82 @@
+@using TechPro.Models
+@{
+    ViewData["Title"] = "Xem Kho Linh Kiện";
+    var inventory = ViewBag.Inventory as IEnumerable<KhoLinhKien> ?? Enumerable.Empty<KhoLinhKien>();
+}
+
+<div class="mb-4 d-flex align-items-center gap-3">
+    <div class="rounded-3 p-2" style="background:#f0fdf4;">
+        <i class="bi bi-box-seam-fill text-success fs-5"></i>
+    </div>
+    <div>
+        <h4 class="fw-bold mb-0">Kho Linh Kiện</h4>
+        <p class="text-muted small mb-0">Xem tồn kho để báo giá cho khách hàng</p>
+    </div>
+</div>
+
+<!-- Search -->
+<form method="get" action="/Kho/View" class="mb-4">
+    <div class="input-group border border-slate-200 rounded-pill overflow-hidden shadow-sm bg-white" style="max-width: 400px;">
+        <span class="input-group-text bg-transparent border-0 text-slate-400 ps-3"><i class="bi bi-search"></i></span>
+        <input type="text" class="form-control border-0 shadow-none bg-transparent" name="searchTerm"
+               value="@ViewBag.SearchTerm" placeholder="Tìm tên linh kiện, mã...">
+        <button type="submit" class="btn btn-success px-4 m-1 rounded-pill fw-medium">Tìm</button>
+    </div>
+</form>
+
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+    <div class="card-header bg-white border-bottom d-flex align-items-center gap-2 py-3">
+        <i class="bi bi-boxes text-success"></i>
+        <span class="fw-bold">Danh sách tồn kho — <span class="text-muted fw-normal">chỉ đọc</span></span>
+        <span class="badge bg-success bg-opacity-10 text-success ms-auto rounded-pill px-3">@inventory.Count() mặt hàng</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead style="background:#f8fafc;">
+                <tr class="text-muted small text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.05em;">
+                    <th class="py-3 px-4 border-0">Tên linh kiện</th>
+                    <th class="py-3 px-4 border-0">Danh mục</th>
+                    <th class="py-3 px-4 border-0">Tương thích</th>
+                    <th class="py-3 px-4 border-0 text-end">Đơn giá</th>
+                    <th class="py-3 px-4 border-0 text-center">Tồn kho</th>
+                    <th class="py-3 px-4 border-0 text-center">Trạng thái</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in inventory)
+                {
+                    <tr>
+                        <td class="px-4 py-3 fw-semibold">@item.TenLinhKien</td>
+                        <td class="px-4 py-3 text-muted">@(item.DanhMuc ?? "—")</td>
+                        <td class="px-4 py-3 text-muted small">@(item.DanhSachModelTuongThich ?? "—")</td>
+                        <td class="px-4 py-3 text-end font-monospace fw-medium text-success">@item.GiaBan.ToString("N0")đ</td>
+                        <td class="px-4 py-3 text-center fw-bold fs-6">@item.SoLuongTon</td>
+                        <td class="px-4 py-3 text-center">
+                            @if (item.SoLuongTon == 0)
+                            {
+                                <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3"><i class="bi bi-x-circle me-1"></i>Hết hàng</span>
+                            }
+                            else if (item.SoLuongTon < 5)
+                            {
+                                <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-3"><i class="bi bi-exclamation-triangle me-1"></i>Sắp hết</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3"><i class="bi bi-check-circle me-1"></i>Sẵn sàng</span>
+                            }
+                        </td>
+                    </tr>
+                }
+                @if (!inventory.Any())
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox fs-1 opacity-50 d-block mb-2"></i>
+                            Không tìm thấy linh kiện nào.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

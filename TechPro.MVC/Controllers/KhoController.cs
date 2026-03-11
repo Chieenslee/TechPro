@@ -4,9 +4,13 @@ using TechPro.Models.DTOs;
 
 namespace TechPro.Controllers
 {
-    // Support can only VIEW inventory. StoreAdmin+ can manage (approve/reject).
-    [Authorize(Roles = "Support,StoreAdmin,SystemAdmin")]
-    [Route("Support/[controller]/{action=Index}/{id?}")]
+    /// <summary>
+    /// Module Kho Linh Kiện — domain riêng biệt, không thuộc Support hay StoreAdmin.
+    ///   GET /Kho/View    → Support (read-only, xem tồn kho để báo giá)
+    ///   GET /Kho/Request → Technician (theo dõi yêu cầu linh kiện của mình)
+    ///   GET /Kho/Manage  → StoreAdmin (duyệt, từ chối, cảnh báo tồn kho)
+    /// </summary>
+    [Route("Kho")]
     public class KhoController : Controller
     {
         private readonly IHttpClientFactory _httpClientFactory;
@@ -16,15 +20,52 @@ namespace TechPro.Controllers
             _httpClientFactory = httpClientFactory;
         }
 
-        [Authorize(Roles = "Support,StoreAdmin,SystemAdmin")]
-        public async Task<IActionResult> Index(string? tab = "inventory", string? searchTerm = null)
+        private HttpClient Client()
         {
-            ViewBag.ActiveTab = tab ?? "inventory";
-            ViewBag.SearchTerm = searchTerm;
-
             var client = _httpClientFactory.CreateClient("TechProAPI");
-            var response = await client.GetAsync($"api/Inventory/dashboard?searchTerm={Uri.EscapeDataString(searchTerm ?? "")}");
+            // Forward caller identity — API dùng để ghi Audit Log
+            var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? "unknown";
+            var role  = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value  ?? "unknown";
+            client.DefaultRequestHeaders.Remove("X-Caller-Email");
+            client.DefaultRequestHeaders.Remove("X-Caller-Role");
+            client.DefaultRequestHeaders.Add("X-Caller-Email", email);
+            client.DefaultRequestHeaders.Add("X-Caller-Role",  role);
+            return client;
+        }
 
+        // ════════════════════════════════════════════════════════════
+        // VIEW — Support: xem tồn kho để báo giá (read-only)
+        // ════════════════════════════════════════════════════════════
+        [HttpGet("View")]
+        [Authorize(Roles = "Support")]   // Lễ tân xem tồn kho để báo giá — chỉ đọc
+        [ActionName("View")]
+        public async Task<IActionResult> KhoView(string? searchTerm = null)
+        {
+            ViewBag.SearchTerm = searchTerm;
+            var response = await Client().GetAsync($"api/Inventory/dashboard?searchTerm={Uri.EscapeDataString(searchTerm ?? "")}");
+            if (response.IsSuccessStatusCode)
+            {
+                var dto = await response.Content.ReadFromJsonAsync<InventoryDashboardDto>();
+                if (dto != null) ViewBag.Inventory = dto.Inventory;
+            }
+            ViewBag.Inventory ??= new List<object>();
+            return View("View");
+        }
+
+        // ⚠️  /Kho/Request KHÔNG TỒN TẠI — Technician không được vào domain /Kho/*.
+        // Technician xem yêu cầu của mình tại: /Technician/KyThuat/LinhKien (domain riêng)
+
+        // ════════════════════════════════════════════════════════════
+        // MANAGE — StoreAdmin: duyệt/từ chối/nhập-xuất/cảnh báo
+        // ════════════════════════════════════════════════════════════
+        [HttpGet("Manage")]
+        [Authorize(Roles = "StoreAdmin,SystemAdmin")]
+        [ActionName("Manage")]
+        public async Task<IActionResult> KhoManage(string? tab = "requests", string? searchTerm = null)
+        {
+            ViewBag.ActiveTab = tab;
+            ViewBag.SearchTerm = searchTerm;
+            var response = await Client().GetAsync($"api/Inventory/dashboard?searchTerm={Uri.EscapeDataString(searchTerm ?? "")}");
             if (response.IsSuccessStatusCode)
             {
                 var dto = await response.Content.ReadFromJsonAsync<InventoryDashboardDto>();
@@ -37,85 +78,62 @@ namespace TechPro.Controllers
                     ViewBag.PendingWasteCount = dto.PendingWasteCount;
                 }
             }
-            else
-            {
-                // Handle error or empty
-                ViewBag.Inventory = new List<object>();
-                ViewBag.PartRequests = new List<object>();
-                ViewBag.WasteReturns = new List<object>();
-            }
-
-            return View();
+            ViewBag.Inventory ??= new List<object>();
+            ViewBag.PartRequests ??= new List<object>();
+            ViewBag.WasteReturns ??= new List<object>();
+            return View("Manage");
         }
 
-        [HttpPost]
+        // ════════════════════════════════════════════════════════════
+        // API ACTIONS — StoreAdmin only
+        // ════════════════════════════════════════════════════════════
+
+        [HttpPost("DuyetYeuCau")]
         [Authorize(Roles = "StoreAdmin,SystemAdmin")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DuyetYeuCau(string id)
         {
-            var client = _httpClientFactory.CreateClient("TechProAPI");
-            var response = await client.PostAsync($"api/Inventory/approve/{id}", null);
-
-            if (response.IsSuccessStatusCode)
+            var response = await Client().PostAsync($"api/Inventory/approve/{id}", null);
+            return Json(new
             {
-                return Json(new { success = true, message = "Đã duyệt và xuất kho thành công!" });
-            }
-            
-            var error = await response.Content.ReadFromJsonAsync<dynamic>(); // Or generic error object
-            // Just return fail
-            return Json(new { success = false, message = "Lỗi khi duyệt yêu cầu." });
+                success = response.IsSuccessStatusCode,
+                message = response.IsSuccessStatusCode ? "Đã duyệt và xuất kho thành công!" : "Lỗi khi duyệt yêu cầu."
+            });
         }
 
-        [HttpPost]
+        [HttpPost("TuChoiYeuCau")]
         [Authorize(Roles = "StoreAdmin,SystemAdmin")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> TuChoiYeuCau(string id)
         {
-            var client = _httpClientFactory.CreateClient("TechProAPI");
-            var response = await client.PostAsync($"api/Inventory/reject/{id}", null);
-
-            if (response.IsSuccessStatusCode)
+            var response = await Client().PostAsync($"api/Inventory/reject/{id}", null);
+            return Json(new
             {
-                return Json(new { success = true, message = "Đã từ chối yêu cầu." });
-            }
-             return Json(new { success = false, message = "Lỗi khi từ chối." });
+                success = response.IsSuccessStatusCode,
+                message = response.IsSuccessStatusCode ? "Đã từ chối yêu cầu." : "Lỗi khi từ chối."
+            });
         }
 
-        [HttpPost]
+        [HttpPost("XacNhanTraXac")]
         [Authorize(Roles = "StoreAdmin,SystemAdmin")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> XacNhanTraXac(string id)
         {
-            var client = _httpClientFactory.CreateClient("TechProAPI");
-            var response = await client.PostAsync($"api/Inventory/confirm-waste/{id}", null);
-
-           if (response.IsSuccessStatusCode)
+            var response = await Client().PostAsync($"api/Inventory/confirm-waste/{id}", null);
+            return Json(new
             {
-                return Json(new { success = true, message = "Đã xác nhận nhận xác linh kiện." });
-            }
-            return Json(new { success = false, message = "Lỗi khi xác nhận." });
+                success = response.IsSuccessStatusCode,
+                message = response.IsSuccessStatusCode ? "Đã xác nhận nhận xác linh kiện." : "Lỗi khi xác nhận."
+            });
         }
 
-        [HttpGet]
+        [HttpGet("GetLowStockItems")]
         [Authorize(Roles = "StoreAdmin,SystemAdmin")]
         public async Task<IActionResult> GetLowStockItems(int threshold = 5)
         {
-            var client = _httpClientFactory.CreateClient("TechProAPI");
-            // Pass tenantId via header or let API infer from (Not implemented in Auth yet, need to forward token)
-            // But we use Cookie Auth in MVC, API doesn't know User unless we pass a token.
-            // Since we implemented "Login" in MVC by verifying against API, the cookie is LOCAL.
-            // The API calls from MVC are SERVER-TO-SERVER (HttpClient).
-            // Currently API endpoints are OPEN (Secure? No).
-            // This is a common refactor gap.
-            // For now, allow API to be open or trust localhost.
-            // Long term: Use Client Credentials or Forward User Context.
-            
-            var response = await client.GetAsync($"api/Inventory/low-stock?threshold={threshold}");
-             if (response.IsSuccessStatusCode)
-            {
-                var data = await response.Content.ReadFromJsonAsync<dynamic>(); // { success: true, data: [...] }
-                return Json(data);
-            }
+            var response = await Client().GetAsync($"api/Inventory/low-stock?threshold={threshold}");
+            if (response.IsSuccessStatusCode)
+                return Content(await response.Content.ReadAsStringAsync(), "application/json");
             return Json(new { success = false });
         }
     }
