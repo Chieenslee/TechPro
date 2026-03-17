@@ -96,8 +96,6 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
-
 app.UseCors("MvcOnly"); // Chỉ MVC origin mới được gọi API
 
 app.UseAuthentication();
