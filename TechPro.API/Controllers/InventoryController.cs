@@ -45,12 +45,26 @@ namespace TechPro.API.Controllers
             if (string.IsNullOrEmpty(myEmail) || myEmail == "unknown")
                 return Unauthorized("Không xác định được danh tính.");
 
+            // Resolve email -> userId một lần, tránh join phức tạp trên navigation KyThuatVien
+            var user = await _context.Users.AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Email == myEmail);
+            if (user == null)
+                return Ok(Array.Empty<YeuCauLinhKien>());
+
+            var myUserId = user.Id;
+
+            var userName = user.UserName ?? myEmail;
+
             var requests = await _context.YeuCauLinhKiens
                 .Include(y => y.PhieuSuaChua)
                 .Include(y => y.LinhKien)
                 .Where(y => y.PhieuSuaChua != null &&
-                            y.PhieuSuaChua.KyThuatVien != null &&
-                            y.PhieuSuaChua.KyThuatVien.Email == myEmail)
+                            (
+                                // Phiếu hiện tại đã gán KyThuatVienId trùng user
+                                y.PhieuSuaChua.KyThuatVienId == myUserId
+                                // Hoặc yêu cầu cũ được tạo theo tên kỹ thuật viên
+                                || y.TenKyThuatVien == userName
+                            ))
                 .OrderByDescending(y => y.NgayYeuCau)
                 .ToListAsync();
 
@@ -60,7 +74,7 @@ namespace TechPro.API.Controllers
         [HttpGet("dashboard")]
         public async Task<IActionResult> GetDashboard(string? searchTerm = null)
         {
-            // Inventory
+            // Inventory (bảng "KhoLinhKiens" trong DB)
             var inventoryQuery = _context.KhoLinhKiens.AsQueryable();
             if (!string.IsNullOrEmpty(searchTerm))
             {
@@ -114,7 +128,7 @@ namespace TechPro.API.Controllers
             // Dùng raw SQL UPDATE atomic để tránh race condition tồn kho âm:
             // Nếu 2 request duyệt cùng lúc, chỉ 1 cái UPDATE thành công (WHERE SoLuongTon >= SoLuong)
             var rowsAffected = await _context.Database.ExecuteSqlRawAsync(
-                "UPDATE KhoLinhKiens SET SoLuongTon = SoLuongTon - {0} WHERE Id = {1} AND SoLuongTon >= {0}",
+                "UPDATE \"KhoLinhKiens\" SET \"SoLuongTon\" = \"SoLuongTon\" - {0} WHERE \"Id\" = {1} AND \"SoLuongTon\" >= {0}",
                 yeuCau.SoLuong, linhKien.Id);
 
             if (rowsAffected == 0)
@@ -200,6 +214,45 @@ namespace TechPro.API.Controllers
                 .ToListAsync();
 
             return Ok(new { success = true, data = lowStockItems });
+        }
+
+            // PUT: api/Inventory/price/{id}
+        // SysAdmin dùng để đồng bộ giá chuẩn toàn hệ thống
+        [HttpPut("price/{id}")]
+        [Authorize(Roles = "SystemAdmin")]
+        public async Task<IActionResult> UpdatePrice(string id, [FromBody] dynamic payload)
+        {
+            if (string.IsNullOrWhiteSpace(id)) return BadRequest(new { message = "Thiếu partId." });
+
+            decimal giaBan;
+            try
+            {
+                giaBan = (decimal)payload.giaBan;
+            }
+            catch
+            {
+                return BadRequest(new { message = "Thiếu hoặc sai kiểu giaBan." });
+            }
+
+            if (giaBan < 0) return BadRequest(new { message = "Giá không hợp lệ." });
+
+            var part = await _context.KhoLinhKiens.FirstOrDefaultAsync(k => k.Id == id);
+            if (part == null) return NotFound(new { message = "Không tìm thấy linh kiện." });
+
+            part.GiaBan = giaBan;
+            await _context.SaveChangesAsync();
+
+            await _audit.LogAsync(
+                thucHienBoi: CallerEmail(),
+                role: CallerRole(),
+                hanhDong: "CapNhatGiaChuan",
+                doiTuongId: id,
+                loaiDoiTuong: "KhoLinhKien",
+                ghiChu: $"Giá mới: {giaBan:N0}",
+                ipAddress: CallerIp()
+            );
+
+            return Ok(new { message = "Đã cập nhật giá." });
         }
     }
 }

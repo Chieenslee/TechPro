@@ -56,15 +56,62 @@ namespace TechPro.API.Controllers
             if (string.IsNullOrWhiteSpace(query))
                 return BadRequest("Vui lòng nhập thông tin tra cứu.");
 
-            var phieu = await _context.PhieuSuaChuas
+            var raw = query.Trim();
+            var normalizedQuery = new string(raw.Where(char.IsLetterOrDigit).ToArray()).ToLowerInvariant();
+
+            // Lấy dữ liệu ra bộ nhớ rồi mới chuẩn hóa / so khớp cho linh hoạt,
+            // tránh phụ thuộc vào hạn chế translate của provider.
+            var tickets = await _context.PhieuSuaChuas
                 .Include(p => p.KyThuatVien)
                 .Include(p => p.YeuCauLinhKiens).ThenInclude(y => y.LinhKien)
-                .FirstOrDefaultAsync(p =>
-                    p.Id == query.Trim() ||
-                    p.SoDienThoai == query.Trim());
+                .AsNoTracking()
+                .ToListAsync();
+
+            string Normalize(string? s)
+            {
+                if (string.IsNullOrWhiteSpace(s)) return string.Empty;
+                var filtered = new string(s.Where(char.IsLetterOrDigit).ToArray());
+                return filtered.ToLowerInvariant();
+            }
+
+            var phieu = tickets.FirstOrDefault(p =>
+                // Khớp chính xác theo Id hoặc số điện thoại
+                string.Equals(p.Id, raw, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(p.SoDienThoai, raw, StringComparison.OrdinalIgnoreCase) ||
+                // Cho phép gõ khác định dạng (RX-2026-X001 vs RX 2026 X001, chữ thường/hoa…)
+                Normalize(p.Id) == normalizedQuery ||
+                // Cho phép nhập một phần SĐT (3–4 số cuối)
+                (!string.IsNullOrEmpty(p.SoDienThoai) &&
+                 p.SoDienThoai.EndsWith(raw, StringComparison.Ordinal)));
 
             if (phieu == null) return NotFound();
             return Ok(phieu);
+        }
+
+        // GET: api/TiepNhan/debug-first
+        // Debug endpoint: xem nhanh 20 Id đầu tiên mà API đang nhìn thấy trong DB hiện tại
+        [HttpGet("debug-first")]
+        [AllowAnonymous]
+        public async Task<IActionResult> DebugFirst()
+        {
+            var first = await _context.PhieuSuaChuas
+                .AsNoTracking()
+                .OrderBy(p => p.Id)
+                .Take(20)
+                .Select(p => new
+                {
+                    p.Id,
+                    p.TenKhachHang,
+                    p.SoDienThoai,
+                    p.TenThietBi
+                })
+                .ToListAsync();
+
+            return Ok(new
+            {
+                count = first.Count,
+                items = first
+            });
         }
 
         // GET: api/TiepNhan/{id}  (Chi tiết đầy đủ - public + nội bộ)

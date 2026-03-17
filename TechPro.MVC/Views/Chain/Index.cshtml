@@ -46,6 +46,16 @@
 
 @if (Model.ActiveTab == "overview")
 {
+    var thisMonthStoreRevenues = ViewBag.ThisMonthStoreRevenues as IEnumerable<TechPro.Models.DTOs.StoreRevenueDto> ?? new List<TechPro.Models.DTOs.StoreRevenueDto>();
+    var topStores = Model.Stores
+        .Select(s => new
+        {
+            Store = s,
+            Revenue = thisMonthStoreRevenues.FirstOrDefault(r => r.TenantId == s.Id)?.Revenue ?? 0m
+        })
+        .OrderByDescending(x => x.Revenue)
+        .Take(5)
+        .ToList();
     <!-- Overview Stats -->
     <div class="row g-4 mb-4">
         <div class="col-md-4">
@@ -95,11 +105,49 @@
         </div>
     </div>
 
-    <div class="card border-0 shadow-sm mb-4">
-        <div class="card-body">
-            <h5 class="fw-semibold mb-4">Doanh thu theo cửa hàng (Tháng này)</h5>
-            <div style="position: relative; height: 350px;">
-                <canvas id="storeRevenueChart"></canvas>
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="fw-semibold mb-0">Doanh thu theo cửa hàng (Tháng này)</h5>
+                        <a class="btn btn-sm btn-outline-primary" href="/SysAdmin/Chain?tab=stores">
+                            <i class="bi bi-arrow-right-short"></i> Xem cửa hàng
+                        </a>
+                    </div>
+                    <div style="position: relative; height: 350px;">
+                        <canvas id="storeRevenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="fw-semibold mb-3">Top cửa hàng</h5>
+                    @if (topStores.Any())
+                    {
+                        <div class="list-group list-group-flush">
+                            @foreach (var x in topStores)
+                            {
+                                <div class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-primary bg-opacity-10 text-primary">@x.Store.Id</span>
+                                        <div class="fw-semibold">@x.Store.TenCuaHang</div>
+                                    </div>
+                                    <div class="fw-bold text-success">@x.Revenue.ToString("N0") ₫</div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-muted small">Chưa có dữ liệu doanh thu.</div>
+                    }
+                    <div class="mt-3 small text-muted">
+                        Mẹo: Doanh thu được tính theo phiếu <span class="fw-semibold">Done/Delivered</span>.
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -109,7 +157,7 @@
         <div class="card-body">
             <h5 class="fw-semibold mb-4">Cảnh báo hệ thống</h5>
             <div id="systemAlerts">
-                <!-- Alerts will be loaded here -->
+                <div class="text-muted small">Đang tải cảnh báo...</div>
             </div>
         </div>
     </div>
@@ -676,5 +724,45 @@ else if (Model.ActiveTab == "inventory")
                 $(this).toggle(text.includes(search));
             });
         });
+
+        // Overview alerts (low stock)
+        @if (Model.ActiveTab == "overview")
+        {
+            <text>
+            document.addEventListener('DOMContentLoaded', function() {
+                try {
+                    const payload = @Html.Raw(ViewBag.LowStockJson ?? "{\"success\":false,\"data\":[]}");
+                    const items = payload?.data || payload?.Data || [];
+                    const host = document.getElementById('systemAlerts');
+                    if (!host) return;
+
+                    if (!items.length) {
+                        host.innerHTML = `<div class="alert alert-success bg-success-subtle border-0 py-2 px-3 small mb-0">
+                            <strong>Ổn định.</strong> Không có linh kiện dưới ngưỡng cảnh báo.
+                        </div>`;
+                        return;
+                    }
+
+                    const top = items.slice(0, 6);
+                    host.innerHTML = `
+                        <div class="alert alert-warning bg-warning-subtle border-0 py-2 px-3 small mb-2">
+                            <strong>Tồn kho thấp.</strong> Có <b>${items.length}</b> linh kiện ≤ ngưỡng. Dưới đây là một số mục.
+                        </div>
+                        <ul class="list-group list-group-flush small">
+                            ${top.map(x => `
+                                <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                                    <span class="text-truncate me-3"><span class="fw-semibold">${x.id}</span> — ${x.tenLinhKien || x.TenLinhKien || 'N/A'}</span>
+                                    <span class="badge bg-danger bg-opacity-10 text-danger">Còn ${x.soLuongTon ?? x.SoLuongTon ?? 0}</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    `;
+                } catch(e) {
+                    const host = document.getElementById('systemAlerts');
+                    if (host) host.innerHTML = `<div class="text-muted small">Không tải được cảnh báo.</div>`;
+                }
+            });
+            </text>
+        }
     </script>
 }

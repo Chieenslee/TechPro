@@ -46,7 +46,6 @@ namespace TechPro.API.Data
             };
 
             // Mỗi store tạo 4 nhân viên cơ bản
-            int userCounter = 1;
             foreach (var store in existingStores)
             {
                 string suffix = store.Replace("STORE-00", "");

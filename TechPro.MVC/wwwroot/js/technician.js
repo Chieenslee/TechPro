@@ -322,7 +322,9 @@ function tickTimers() {
 // 4. REAL-TIME SignalR PUSH NOTIFICATIONS (upgraded — no full page reload)
 // ══════════════════════════════════════════════════════════════════════════════
 function initSignalR() {
-    if (typeof signalR === 'undefined') return;
+    // Realtime SignalR cho TicketHub đang chạy ở API domain khác,
+    // tạm thời tắt để tránh lỗi kết nối trên trình duyệt.
+    return;
 
     signalRConnection = new signalR.HubConnectionBuilder()
         .withUrl('/ticketHub')

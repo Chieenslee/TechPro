@@ -47,8 +47,8 @@ function luuKetQuaKiemTra() {
         url: '/KyThuat/LuuKetQuaKiemTra',
         type: 'POST',
         data: {
-            ticketId: ticketId,
-            notes: notes
+            id: ticketId,
+            ketQua: notes
         },
         headers: {
             'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
@@ -74,28 +74,8 @@ document.addEventListener('DOMContentLoaded', function() {
         lucide.createIcons();
     }
 
-    // Khởi tạo SignalR cho chat & scratch
-    if (typeof signalR !== 'undefined') {
-        const connection = new signalR.HubConnectionBuilder()
-            .withUrl("/ticketHub")
-            .build();
-
-        connection.on("ChatMessage", function (tId, userName, message, time) {
-            if (tId === ticketId) {
-                fetchNotes();
-            }
-        });
-
-        connection.on("ScratchUpdated", function (tId) {
-            if (tId === ticketId) {
-                fetchScratchMarks();
-            }
-        });
-
-        connection.start().catch(function (err) {
-            console.error("SignalR connection error: ", err);
-        });
-    }
+    // Tạm thời tắt SignalR cho trang chi tiết (chat & scratch)
+    // để tránh lỗi 404 khi chưa cấu hình hub cross-origin.
 
     fetchNotes();
     fetchScratchMarks();
@@ -105,11 +85,10 @@ document.addEventListener('DOMContentLoaded', function() {
 let chatHistory = [];
 
 function fetchNotes() {
-    $.getJSON(`/KyThuat/GetNotes?ticketId=${ticketId}`, function (res) {
-        if (res.success) {
-            chatHistory = res.data || [];
-            renderChat();
-        }
+    $.getJSON(`/KyThuat/GetNotes?id=${ticketId}`, function (res) {
+        // API trả về mảng TicketNote trực tiếp
+        chatHistory = Array.isArray(res) ? res : [];
+        renderChat();
     });
 }
 
@@ -123,8 +102,8 @@ function sendChatMessage(event) {
         url: '/KyThuat/AddNote',
         type: 'POST',
         data: {
-            ticketId: ticketId,
-            message: message
+            PhieuSuaChuaId: ticketId,
+            Message: message
         },
         headers: {
             'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
@@ -168,19 +147,18 @@ function renderChat() {
 let scratchMarks = [];
 
 function fetchScratchMarks() {
-    $.getJSON(`/KyThuat/GetScratchMarks?ticketId=${ticketId}`, function (res) {
-        if (res.success) {
-            scratchMarks = res.data || [];
-            if (typeof renderMarks === 'function') {
-                renderMarks();
-            }
+    $.getJSON(`/KyThuat/GetScratchMarks?id=${ticketId}`, function (res) {
+        // API trả về mảng ScratchMark trực tiếp
+        scratchMarks = Array.isArray(res) ? res : [];
+        if (typeof renderMarks === 'function') {
+            renderMarks();
         }
     });
 }
 
 function saveScratchMarks() {
     $.ajax({
-        url: `/KyThuat/SaveScratchMarks?ticketId=${ticketId}`,
+        url: `/KyThuat/SaveScratchMarks?id=${ticketId}`,
         type: 'POST',
         data: JSON.stringify(scratchMarks),
         contentType: 'application/json',

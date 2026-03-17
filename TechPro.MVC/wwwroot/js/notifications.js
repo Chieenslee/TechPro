@@ -6,23 +6,10 @@ function initNotifications() {
     // Load notifications on page load
     loadNotifications();
     
-    // Setup SignalR for real-time notifications
-    if (typeof signalR !== 'undefined') {
-        notificationConnection = new signalR.HubConnectionBuilder()
-            .withUrl("/ticketHub")
-            .build();
+    // Realtime SignalR tạm tắt để tránh lỗi kết nối khi chưa cấu hình hub cross-origin
+    // Vẫn giữ cơ chế poll định kỳ qua HTTP cho nhẹ nhàng.
 
-        notificationConnection.on("NewNotification", function (notification) {
-            showNotificationToast(notification);
-            loadNotifications(true); // Refresh list
-        });
-
-        notificationConnection.start().catch(function (err) {
-            console.error("Notification SignalR error: ", err);
-        });
-    }
-
-    // Poll for notifications every 30 seconds as fallback
+    // Poll for notifications every 30 seconds
     setInterval(loadNotifications, 30000);
 }
 

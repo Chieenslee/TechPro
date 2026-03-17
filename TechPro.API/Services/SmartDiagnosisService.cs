@@ -52,8 +52,8 @@ namespace TechPro.API.Services
             {
                 // Ưu tiên linh kiện khớp với cả Lỗi & Model máy nếu có, không có thì lấy khớp lỗi
                 var matchedPart = await query
-                    .Where(k => (k.TenLinhKien.ToLower().Contains(kw) || k.DanhMuc.ToLower().Contains(kw)) && 
-                                (string.IsNullOrEmpty(deviceFilter) || k.DanhSachModelTuongThich.ToLower().Contains(deviceFilter)))
+                    .Where(k => (((k.TenLinhKien ?? string.Empty).ToLower().Contains(kw) || (k.DanhMuc ?? string.Empty).ToLower().Contains(kw)) &&
+                                (string.IsNullOrEmpty(deviceFilter) || (k.DanhSachModelTuongThich ?? string.Empty).ToLower().Contains(deviceFilter))))
                     .OrderByDescending(k => k.SoLuongTon) 
                     .FirstOrDefaultAsync();
 
@@ -61,7 +61,7 @@ namespace TechPro.API.Services
                 if (matchedPart == null && !string.IsNullOrEmpty(deviceFilter)) 
                 {
                      matchedPart = await query
-                        .Where(k => (k.TenLinhKien.ToLower().Contains(kw) || k.DanhMuc.ToLower().Contains(kw)))
+                        .Where(k => ((k.TenLinhKien ?? string.Empty).ToLower().Contains(kw) || (k.DanhMuc ?? string.Empty).ToLower().Contains(kw)))
                         .OrderByDescending(k => k.SoLuongTon) 
                         .FirstOrDefaultAsync();
                 }

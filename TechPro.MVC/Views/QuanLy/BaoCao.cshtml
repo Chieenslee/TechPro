@@ -105,11 +105,15 @@
             const fromDate = document.getElementById('fromDate').value;
             const toDate = document.getElementById('toDate').value;
 
-            $.getJSON('/QuanLy/GetReportSummary', { fromDate, toDate }, function(response) {
+            $.getJSON('/StoreAdmin/QuanLy/GetReportSummary', { fromDate, toDate }, function(response) {
                 if (response.success) {
-                    document.getElementById('totalTickets').textContent = response.data.totalTickets || 0;
-                    document.getElementById('totalRevenue').textContent = (response.data.totalRevenue || 0).toLocaleString('vi-VN') + ' ₫';
-                    document.getElementById('completionRate').textContent = (response.data.completionRate || 0).toFixed(1) + '%';
+                    const d = response.data || {};
+                    const totalTickets = d.totalTickets ?? d.TotalTickets ?? 0;
+                    const totalRevenue = d.totalRevenue ?? d.TotalRevenue ?? 0;
+                    const completionRate = d.completionRate ?? d.CompletionRate ?? 0;
+                    document.getElementById('totalTickets').textContent = totalTickets;
+                    document.getElementById('totalRevenue').textContent = (Number(totalRevenue) || 0).toLocaleString('vi-VN') + ' ₫';
+                    document.getElementById('completionRate').textContent = (Number(completionRate) || 0).toFixed(1) + '%';
                 }
             });
         }
@@ -121,11 +125,11 @@
 
             let url = '';
             if (reportType === 'tickets') {
-                url = `/Export/ExportTicketsExcel?fromDate=${fromDate}&toDate=${toDate}`;
+                url = `/StoreAdmin/Export/ExportTicketsCsv?fromDate=${fromDate}&toDate=${toDate}`;
             } else if (reportType === 'revenue') {
-                url = `/Export/ExportRevenueExcel?fromDate=${fromDate}&toDate=${toDate}`;
+                url = `/StoreAdmin/Export/ExportRevenueCsv?fromDate=${fromDate}&toDate=${toDate}`;
             } else if (reportType === 'inventory') {
-                url = `/Export/ExportInventoryExcel`;
+                url = `/StoreAdmin/Export/ExportInventoryCsv`;
             }
 
             window.location.href = url;

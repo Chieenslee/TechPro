@@ -46,7 +46,7 @@ namespace TechPro.Controllers
             {
                 var content = await response.Content.ReadAsStringAsync();
                 var tickets = JsonSerializer.Deserialize<List<PhieuSuaChua>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                return View(tickets);
+                return View(tickets ?? new List<PhieuSuaChua>());
             }
 
             return View(new List<PhieuSuaChua>());

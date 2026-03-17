@@ -1,0 +1,95 @@
+@model IEnumerable<PhieuSuaChua>
+@{
+    ViewData["Title"] = "Giám sát Lễ Tân";
+    var searchTerm = ViewBag.SearchTerm as string ?? "";
+    var selectedStatus = ViewBag.StatusFilter as string ?? "all";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-3">
+    <div>
+        <h2 class="fw-bold mb-1">Giám sát Lễ tân</h2>
+        <p class="text-muted mb-0">Chỉ xem và theo dõi luồng tiếp nhận của cửa hàng.</p>
+    </div>
+    <form class="d-flex flex-wrap gap-2" method="get" action="/StoreAdmin/TiepNhan/Index">
+        <input type="text" class="form-control form-control-sm" name="searchTerm" value="@searchTerm" placeholder="Tìm mã phiếu / SĐT / tên..." style="min-width: 240px;" />
+        <select class="form-select form-select-sm" name="status" style="min-width: 180px;">
+            <option value="all" selected="@(selectedStatus=="all")">Tất cả</option>
+            <option value="pending" selected="@(selectedStatus=="pending")">pending</option>
+            <option value="repairing" selected="@(selectedStatus=="repairing")">repairing</option>
+            <option value="waiting_parts" selected="@(selectedStatus=="waiting_parts")">waiting_parts</option>
+            <option value="done" selected="@(selectedStatus=="done")">done</option>
+            <option value="delivered" selected="@(selectedStatus=="delivered")">delivered</option>
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm">
+            <i class="bi bi-search me-1"></i>Lọc
+        </button>
+    </form>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light">
+                <tr class="text-muted small text-uppercase" style="letter-spacing: .04em;">
+                    <th class="py-3 px-4 border-0">Mã</th>
+                    <th class="py-3 px-4 border-0">Khách hàng</th>
+                    <th class="py-3 px-4 border-0">Thiết bị</th>
+                    <th class="py-3 px-4 border-0">Ngày nhận</th>
+                    <th class="py-3 px-4 border-0 text-center">Trạng thái</th>
+                    <th class="py-3 px-4 border-0 text-end">Chi tiết</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var t in Model.OrderByDescending(x => x.NgayNhan))
+                    {
+                        <tr>
+                            <td class="px-4 py-3">
+                                <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill">@t.Id</span>
+                            </td>
+                            <td class="px-4 py-3">
+                                <div class="fw-semibold">@t.TenKhachHang</div>
+                                <div class="text-muted small font-monospace">@t.SoDienThoai</div>
+                            </td>
+                            <td class="px-4 py-3">
+                                <div class="fw-medium">@t.TenThietBi</div>
+                                <div class="text-muted small text-truncate" style="max-width: 360px;">@t.MoTaLoi</div>
+                            </td>
+                            <td class="px-4 py-3 text-muted small">@t.NgayNhan.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="px-4 py-3 text-center">
+                                @{
+                                    var cls = t.TrangThai switch
+                                    {
+                                        "pending" => "bg-warning bg-opacity-10 text-warning",
+                                        "repairing" => "bg-info bg-opacity-10 text-info",
+                                        "waiting_parts" => "bg-danger bg-opacity-10 text-danger",
+                                        "done" => "bg-success bg-opacity-10 text-success",
+                                        "delivered" => "bg-secondary bg-opacity-10 text-secondary",
+                                        _ => "bg-light text-dark"
+                                    };
+                                }
+                                <span class="badge @cls rounded-pill px-3">@t.TrangThai</span>
+                            </td>
+                            <td class="px-4 py-3 text-end">
+                                <a class="btn btn-sm btn-outline-secondary rounded-pill px-3" href="/StoreAdmin/TiepNhan/ChiTiet/@t.Id">
+                                    Xem
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox fs-1 opacity-50 d-block mb-2"></i>
+                            Không có dữ liệu phù hợp bộ lọc.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+

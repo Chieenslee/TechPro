@@ -1,4 +1,4 @@
-﻿using TechPro.Models;
+using TechPro.Models;
 
 namespace TechPro.Models.DTOs
 {
@@ -14,13 +14,13 @@ namespace TechPro.Models.DTOs
 
     public class StoreRevenueDto
     {
-        public string TenantId { get; set; }
+        public required string TenantId { get; set; }
         public decimal Revenue { get; set; }
     }
 
     public class UserWithRoleDto
     {
-        public NguoiDung User { get; set; }
-        public string Role { get; set; }
+        public required NguoiDung User { get; set; }
+        public required string Role { get; set; }
     }
 }

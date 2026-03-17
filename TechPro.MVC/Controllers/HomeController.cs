@@ -125,6 +125,13 @@ namespace TechPro.Controllers
                 }
 
                 var thietBi = await response.Content.ReadFromJsonAsync<ThietBiBan>();
+                if (thietBi == null)
+                {
+                    TempData["ErrorMessage"] = "Không tìm thấy thông tin Serial Number này trong hệ thống bán hàng.";
+                    TempData["SearchQuery"] = query;
+                    TempData["SearchMode"] = mode;
+                    return RedirectToAction("Index");
+                }
 
                 var ngayHetHan = thietBi.NgayMua.AddMonths(thietBi.ThoiHanBaoHanhThang);
                 var conBaoHanh = ngayHetHan > DateTime.UtcNow.AddHours(7);
@@ -156,11 +163,12 @@ namespace TechPro.Controllers
 
             var client = _httpClientFactory.CreateClient("TechProAPI");
 
-            // Tim truc tiep theo ID neu co
             PhieuSuaChua? phieu = null;
             if (!string.IsNullOrEmpty(id))
             {
-                 var response = await client.GetAsync($"api/TiepNhan/{id}");
+                 // Dùng search API (AllowAnonymous) để khách hàng và link chia sẻ /Support/Home/TraCuu/{id}
+                 // đều truy cập được mà không cần đăng nhập.
+                 var response = await client.GetAsync($"api/TiepNhan/search?query={Uri.EscapeDataString(id)}");
                  if (response.IsSuccessStatusCode)
                  {
                      phieu = await response.Content.ReadFromJsonAsync<PhieuSuaChua>();
@@ -169,7 +177,7 @@ namespace TechPro.Controllers
             else
             {
                 // Dung search API
-                var response = await client.GetAsync($"api/TiepNhan/search?query={Uri.EscapeDataString(q)}");
+                var response = await client.GetAsync($"api/TiepNhan/search?query={Uri.EscapeDataString(q ?? string.Empty)}");
                 if (response.IsSuccessStatusCode)
                 {
                     phieu = await response.Content.ReadFromJsonAsync<PhieuSuaChua>();

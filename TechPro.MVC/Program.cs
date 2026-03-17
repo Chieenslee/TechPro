@@ -55,8 +55,7 @@ namespace TechPro
 
 
             builder.Services.AddControllersWithViews();
-            builder.Services.AddSignalR();
-            builder.Services.AddSingleton<TechPro.Services.InternalChatStore>();
+            // SignalR was previously used for internal chat UI; keeping disabled for now.
 
             var app = builder.Build();
 
@@ -78,7 +77,7 @@ namespace TechPro
 
             // Map SignalR Hub - Moved to API
             // app.MapHub<Hubs.TicketHub>("/ticketHub");
-            app.MapHub<TechPro.Hubs.InternalChatHub>("/chatHub");
+            // app.MapHub<...> removed (internal chat deleted)
 
             // Route cho Support module (hỗ trợ URL dạng /Support/TiepNhan/ChiTiet/{id})
             app.MapControllerRoute(

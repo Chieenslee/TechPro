@@ -31,7 +31,7 @@ namespace TechPro.Controllers
             {
                 var content = await response.Content.ReadAsStringAsync();
                 var viewModel = JsonSerializer.Deserialize<DashboardViewModel>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                return View(viewModel);
+                return View(viewModel ?? new DashboardViewModel());
             }
 
             return View(new DashboardViewModel());

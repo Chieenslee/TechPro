@@ -56,7 +56,7 @@
         new { Label = "Trả xác linh kiện", Path = "/Kho/Manage", Tab = "waste", Icon = "recycle", Roles = new[] { "Storekeeper" }, ReactIcon = "RefreshCw" },
 
         // ─── Chung mọi vai trò ────────────────────────────────────────
-        new { Label = "Chat Nội Bộ", Path = "/Chat", Icon = "chat-quote", Roles = new[] { "SystemAdmin", "StoreAdmin", "Technician", "Support", "Storekeeper" }, ReactIcon = "MessageSquare" },
+        // Chat nội bộ đã bị loại bỏ (thay bằng Trung tâm tác vụ + Thông báo)
     };
     
     var filteredMenuItems = menuItems.Where(item => 
@@ -124,20 +124,34 @@
             }
             var iconClass = item.Icon switch
             {
+                // Vai trò / dashboard
                 "person-badge-fill" => "bi-person-badge-fill",
-                "tools" => "bi-tools",
-                "chat-quote" => "bi-chat-quote-fill",
-                "house" => "bi-house-heart",
-                "globe" => "bi-globe",
-                "shop" => "bi-shop",
-                "people" => "bi-people",
-                "box" => "bi-box-seam",
-                "speedometer2" => "bi-speedometer2",
-                "clipboard-check" => "bi-clipboard-check",
+                "tools"             => "bi-tools",
+                "house"             => "bi-house-heart",
+                "globe"             => "bi-globe",
+                "shop"              => "bi-shop",
+                "people"            => "bi-people",
+                "speedometer2"      => "bi-speedometer2",
+                "graph-up"          => "bi-graph-up-arrow",
+                "gear"              => "bi-gear",
+
+                // Kho & linh kiện
+                "box"               => "bi-box-seam",          // kho chung
+                "box-seam"          => "bi-box-seam",          // kho tổng / master
+                "boxes"             => "bi-boxes",             // tồn kho nhiều ô
+                "clipboard-data"    => "bi-clipboard-data",    // báo cáo tồn kho
+                "box2-heart"        => "bi-box2-heart",
+                "box2-heart-fill"   => "bi-box2-heart-fill",
+                "check2-circle"     => "bi-check2-circle",     // duyệt yêu cầu kho
+                "recycle"           => "bi-recycle",           // trả xác linh kiện
+
+                // Quy trình tiếp nhận / trả máy
+                "clipboard-check"   => "bi-clipboard-check",
                 "arrow-counterclockwise" => "bi-arrow-counterclockwise",
-                "wrench" => "bi-wrench",
-                "graph-up" => "bi-graph-up-arrow",
-                "gear" => "bi-gear",
+
+                // Kỹ thuật
+                "wrench"            => "bi-wrench",
+
                 _ => "bi-circle"
             };
             <a 

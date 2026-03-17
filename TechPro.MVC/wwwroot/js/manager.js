@@ -34,10 +34,10 @@ function initRevenueChart() {
     charts.revenue = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: revenueData.map(r => r.Name),
+            labels: revenueData.map(r => r.Name ?? r.name ?? ''),
             datasets: [{
                 label: 'Doanh Thu (₫)',
-                data: revenueData.map(r => r.Value),
+                data: revenueData.map(r => r.Value ?? r.value ?? 0),
                 borderColor: '#2563eb',
                 backgroundColor: 'rgba(37, 99, 235, 0.1)',
                 borderWidth: 3,
@@ -95,9 +95,9 @@ function initStatusChart() {
     charts.status = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: statusData.map(s => s.Name),
+            labels: statusData.map(s => s.Name ?? s.name ?? s.Status ?? s.status ?? ''),
             datasets: [{
-                data: statusData.map(s => s.Value),
+                data: statusData.map(s => s.Value ?? s.value ?? s.Count ?? s.count ?? 0),
                 backgroundColor: ['#2563eb', '#10b981', '#f59e0b', '#64748b'],
                 hoverOffset: 4,
                 borderWidth: 0
@@ -131,10 +131,10 @@ function initTopPartsChart() {
     charts.topParts = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: topParts.map(p => p.Name),
+            labels: topParts.map(p => p.Name ?? p.name ?? p.PartName ?? p.partName ?? ''),
             datasets: [{
                 label: 'Số lượng',
-                data: topParts.map(p => p.Value),
+                data: topParts.map(p => p.Value ?? p.value ?? p.Quantity ?? p.quantity ?? 0),
                 backgroundColor: '#334155',
                 borderRadius: 6,
                 barThickness: 20
@@ -181,5 +181,9 @@ function changeChartPeriod(period) {
 }
 
 function exportRevenue() {
-    toastr.success('Báo cáo đang được xử lý và sẽ tải về trong giây lát.', 'Export Thành Công');
+    // Export revenue CSV for last 30 days
+    const from = new Date(); from.setDate(from.getDate() - 30);
+    const fromDate = from.toISOString().slice(0, 10);
+    const toDate = new Date().toISOString().slice(0, 10);
+    window.location.href = `/StoreAdmin/Export/ExportRevenueCsv?fromDate=${encodeURIComponent(fromDate)}&toDate=${encodeURIComponent(toDate)}`;
 }

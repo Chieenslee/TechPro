@@ -120,7 +120,8 @@ namespace TechPro.API.Controllers
             if (ticket == null) return NotFound();
 
             ticket.KyThuatVienId = technicianId;
-            ticket.TrangThai = "fixing";
+            // Khi quản lý gán phiếu cho KTV, trạng thái chuẩn là "repairing"
+            ticket.TrangThai = PhieuSuaChua.Statuses.Repairing;
             await _context.SaveChangesAsync();
 
             await _audit.LogAsync(CallerEmail(), CallerRole(), "GanKyThuatVien", id, "PhieuSuaChua",
@@ -129,13 +130,38 @@ namespace TechPro.API.Controllers
             return Ok(new { message = "Assigned technician" });
         }
 
+        // Kỹ thuật viên tự nhận phiếu "về tay mình"
+        [HttpPost("tickets/{id}/self-assign")]
+        [Authorize(Roles = "Technician")]
+        public async Task<IActionResult> SelfAssign(string id)
+        {
+            var callerId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(callerId))
+                return Forbid();
+
+            var ticket = await _context.PhieuSuaChuas.FindAsync(id);
+            if (ticket == null) return NotFound();
+
+            if (!string.IsNullOrEmpty(ticket.KyThuatVienId) && ticket.KyThuatVienId != callerId)
+                return BadRequest(new { message = "Phiếu đã được gán cho kỹ thuật viên khác." });
+
+            ticket.KyThuatVienId = callerId;
+            ticket.TrangThai = PhieuSuaChua.Statuses.Repairing;
+            await _context.SaveChangesAsync();
+
+            await _audit.LogAsync(CallerEmail(), CallerRole(), "TuNhanPhieu", id, "PhieuSuaChua",
+                ghiChu: "Technician tự nhận phiếu", ipAddress: CallerIp());
+
+            return Ok(new { message = "Đã nhận phiếu." });
+        }
+
         // Chỉ Technician mới được tạo yêu cầu linh kiện
         [HttpPost("tickets/{id}/parts")]
         [Authorize(Roles = "Technician")]
         public async Task<IActionResult> RequestPart(string id, [FromBody] YeuCauLinhKien request)
         {
             request.PhieuSuaChuaId = id;
-            request.NgayYeuCau = DateTime.Now;
+            request.NgayYeuCau = DateTime.UtcNow;
             request.TrangThai = "pending";
             
             _context.YeuCauLinhKiens.Add(request);

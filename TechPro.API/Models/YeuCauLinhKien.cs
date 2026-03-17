@@ -14,7 +14,7 @@ namespace TechPro.API.Models
         public string PhieuSuaChuaId { get; set; } = string.Empty;
 
         [ForeignKey("PhieuSuaChuaId")]
-        public virtual PhieuSuaChua PhieuSuaChua { get; set; } = null!;
+        public virtual PhieuSuaChua? PhieuSuaChua { get; set; }
 
         [Required]
         [StringLength(100)]
@@ -25,7 +25,7 @@ namespace TechPro.API.Models
         public string LinhKienId { get; set; } = string.Empty;
 
         [ForeignKey("LinhKienId")]
-        public virtual KhoLinhKien LinhKien { get; set; } = null!;
+        public virtual KhoLinhKien? LinhKien { get; set; }
 
         [Required]
         public int SoLuong { get; set; } = 1;
@@ -35,7 +35,7 @@ namespace TechPro.API.Models
         public string TrangThai { get; set; } = "pending"; // pending | approved | rejected
 
         [Required]
-        public DateTime NgayYeuCau { get; set; } = DateTime.Now;
+        public DateTime NgayYeuCau { get; set; } = DateTime.UtcNow;
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal? GiaTaiThoiDiemYeuCau { get; set; }

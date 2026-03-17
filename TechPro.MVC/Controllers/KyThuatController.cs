@@ -1,12 +1,15 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TechPro.Models;
+using TechPro.Models.ViewModels;
 using System.Security.Claims;
 
 namespace TechPro.Controllers
 {
     // Technician = tất cả nghiệp vụ kỹ thuật (xem, cập nhật trạng thái, ghi chú)
-    [Authorize(Roles = "Technician")]
+    // Hỗ trợ cả route cũ (/KyThuat/...) và route mới có prefix (/Technician/KyThuat/...)
+    [Authorize]
+    [Route("[controller]/{action=Index}/{id?}")]
     [Route("Technician/[controller]/{action=Index}/{id?}")]
     public class KyThuatController : Controller
     {
@@ -43,9 +46,10 @@ namespace TechPro.Controllers
             if (response.IsSuccessStatusCode)
             {
                 var tickets = await response.Content.ReadFromJsonAsync<List<PhieuSuaChua>>();
-                // Highlight phiếu của mình ở View
-                ViewBag.MyUserId = userId;
-                return View(tickets);
+                // View (`Views/KyThuat/Index.cshtml`) currently expects these keys
+                ViewBag.UserId = userId;
+                ViewBag.UserRole = "Technician";
+                return View(tickets ?? new List<PhieuSuaChua>());
             }
 
             return View(new List<PhieuSuaChua>());
@@ -57,13 +61,39 @@ namespace TechPro.Controllers
             var client = _httpClientFactory.CreateClient("TechProAPI");
             var response = await client.GetAsync($"api/Technician/tickets/{id}");
 
-            if (response.IsSuccessStatusCode)
+            if (!response.IsSuccessStatusCode)
             {
-                var ticket = await response.Content.ReadFromJsonAsync<PhieuSuaChua>();
-                return View(ticket);
+                return NotFound();
             }
 
-            return NotFound();
+            var ticket = await response.Content.ReadFromJsonAsync<PhieuSuaChua>() ?? new PhieuSuaChua();
+
+            // Nạp thêm danh sách kỹ thuật viên & linh kiện cho tab Phân công + Linh kiện
+            try
+            {
+                // Danh sách kỹ thuật viên (dùng chung với StoreAdmin/Support)
+                var staffResponse = await client.GetAsync("api/AdminUsers/technicians");
+                if (staffResponse.IsSuccessStatusCode)
+                {
+                    var techs = await staffResponse.Content.ReadFromJsonAsync<List<NguoiDung>>();
+                    ViewBag.Technicians = techs ?? new List<NguoiDung>();
+                }
+
+                // Danh sách linh kiện trong kho (lấy từ dashboard inventory)
+                var invResponse = await client.GetAsync("api/Inventory/dashboard");
+                if (invResponse.IsSuccessStatusCode)
+                {
+                    var json = await invResponse.Content.ReadFromJsonAsync<InventoryDashboardView>();
+                    ViewBag.LinhKiens = json?.Inventory ?? new List<KhoLinhKien>();
+                }
+            }
+            catch
+            {
+                ViewBag.Technicians = ViewBag.Technicians ?? new List<NguoiDung>();
+                ViewBag.LinhKiens = ViewBag.LinhKiens ?? new List<KhoLinhKien>();
+            }
+
+            return View(ticket);
         }
 
         // Chỉ Technician mới được cập nhật trạng thái phiếu (phần việc của họ)
@@ -74,6 +104,21 @@ namespace TechPro.Controllers
             var client = _httpClientFactory.CreateClient("TechProAPI");
             var response = await client.PutAsJsonAsync($"api/Technician/tickets/{id}/status", trangThai);
             return Json(new { success = response.IsSuccessStatusCode });
+        }
+
+        // Technician tự nhận phiếu về tay mình
+        [HttpPost]
+        public async Task<IActionResult> GanChoToi(string id)
+        {
+            var client = _httpClientFactory.CreateClient("TechProAPI");
+            var response = await client.PostAsync($"api/Technician/tickets/{id}/self-assign", null);
+            if (response.IsSuccessStatusCode)
+            {
+                return Json(new { success = true });
+            }
+
+            var body = await response.Content.ReadAsStringAsync();
+            return Json(new { success = false, message = string.IsNullOrWhiteSpace(body) ? "Không nhận được phiếu." : body });
         }
 
         // GanChoToi đã bị xóa — Technician không tự nhận phiếu bất kỳ.
@@ -91,15 +136,31 @@ namespace TechPro.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> TaoYeuCauLinhKien(YeuCauLinhKien model)
+        public async Task<IActionResult> TaoYeuCauLinhKien(string ticketId, string partId, int quantity = 1)
         {
+            if (string.IsNullOrWhiteSpace(ticketId) || string.IsNullOrWhiteSpace(partId))
+            {
+                return Json(new { success = false, message = "Thiếu mã phiếu hoặc linh kiện." });
+            }
+
+            var model = new YeuCauLinhKien
+            {
+                PhieuSuaChuaId = ticketId,
+                LinhKienId = partId,
+                SoLuong = quantity <= 0 ? 1 : quantity,
+                TenKyThuatVien = User.Identity?.Name ?? "Technician",
+                TrangThai = "pending",
+                NgayYeuCau = DateTime.Now
+            };
+
             var client = _httpClientFactory.CreateClient("TechProAPI");
-            var response = await client.PostAsJsonAsync($"api/Technician/tickets/{model.PhieuSuaChuaId}/parts", model);
+            var response = await client.PostAsJsonAsync($"api/Technician/tickets/{ticketId}/parts", model);
             
             if (response.IsSuccessStatusCode)
                 return Json(new { success = true });
-            
-            return Json(new { success = false });
+
+            var body = await response.Content.ReadAsStringAsync();
+            return Json(new { success = false, message = string.IsNullOrWhiteSpace(body) ? "Không tạo được yêu cầu." : body });
         }
 
         [HttpPost]

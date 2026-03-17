@@ -3,10 +3,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TechPro.API.Models
 {
+    // Map rõ ràng sang bảng "KhoLinhKiens" + cột "Id" trong Postgres
+    [Table("KhoLinhKiens")]
     public class KhoLinhKien
     {
         [Key]
         [StringLength(50)]
+        [Column("Id")]
         public string Id { get; set; } = Guid.NewGuid().ToString();
 
         [Required]

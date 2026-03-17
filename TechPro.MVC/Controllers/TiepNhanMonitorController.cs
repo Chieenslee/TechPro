@@ -49,7 +49,7 @@ namespace TechPro.Controllers
             {
                 var content = await response.Content.ReadAsStringAsync();
                 var tickets = JsonSerializer.Deserialize<List<PhieuSuaChua>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                return View("Index", tickets);
+                return View("Index", tickets ?? new List<PhieuSuaChua>());
             }
 
             return View("Index", new List<PhieuSuaChua>());
@@ -64,7 +64,7 @@ namespace TechPro.Controllers
             if (response.IsSuccessStatusCode)
             {
                 var ticket = await response.Content.ReadFromJsonAsync<PhieuSuaChua>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                return View("ChiTiet", ticket);
+                return View("ChiTiet", ticket ?? new PhieuSuaChua());
             }
 
             return NotFound();

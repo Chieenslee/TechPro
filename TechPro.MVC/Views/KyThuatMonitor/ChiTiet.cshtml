@@ -1,0 +1,90 @@
+@model PhieuSuaChua
+@{
+    ViewData["Title"] = "Chi tiết phiếu (Kỹ thuật)";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="fw-bold mb-1">Chi tiết phiếu kỹ thuật</h2>
+        <p class="text-muted mb-0">Chế độ giám sát (StoreAdmin).</p>
+    </div>
+    <a class="btn btn-outline-secondary rounded-pill" href="/StoreAdmin/KyThuat">
+        <i class="bi bi-arrow-left me-1"></i>Quay lại
+    </a>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start gap-3">
+                    <div>
+                        <div class="text-muted small">Mã phiếu</div>
+                        <div class="fw-bold fs-4">@Model.Id</div>
+                        <div class="mt-2 text-muted small">Trạng thái</div>
+                        <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3">@Model.TrangThai</span>
+                    </div>
+                    <div class="text-end">
+                        <div class="text-muted small">Ngày nhận</div>
+                        <div class="fw-semibold">@Model.NgayNhan.ToString("dd/MM/yyyy HH:mm")</div>
+                        @* MVC model currently doesn't expose NgayHoanThanh *@
+                    </div>
+                </div>
+
+                <hr />
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="text-muted small">Khách hàng</div>
+                        <div class="fw-semibold">@Model.TenKhachHang</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-muted small">SĐT</div>
+                        <div class="fw-semibold font-monospace">@Model.SoDienThoai</div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="text-muted small">Thiết bị</div>
+                        <div class="fw-semibold">@Model.TenThietBi</div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="text-muted small">Kết quả kiểm tra</div>
+                        <div class="text-muted">@(!string.IsNullOrWhiteSpace(Model.KetQuaKiemTra) ? Model.KetQuaKiemTra : "—")</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body">
+                <h5 class="fw-bold mb-3">Kỹ thuật phụ trách</h5>
+                @if (Model.KyThuatVien != null)
+                {
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-info bg-opacity-10 text-info rounded-circle d-flex align-items-center justify-content-center" style="width:44px;height:44px;">
+                            <i class="bi bi-person"></i>
+                        </div>
+                        <div>
+                            <div class="fw-semibold">@Model.KyThuatVien.TenDayDu</div>
+                            <div class="text-muted small">@Model.KyThuatVien.Email</div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-muted">Chưa gán kỹ thuật viên.</div>
+                }
+
+                <hr />
+
+                <h6 class="fw-bold mb-2">Chi phí</h6>
+                <div class="d-flex justify-content-between">
+                    <span class="text-muted">Tổng tiền</span>
+                    <span class="fw-bold text-success">@Model.TongTien.ToString("N0") ₫</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

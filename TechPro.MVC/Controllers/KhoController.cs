@@ -89,41 +89,50 @@ namespace TechPro.Controllers
         // ════════════════════════════════════════════════════════════
 
         [HttpPost("DuyetYeuCau")]
-        [Authorize(Roles = "StoreAdmin,SystemAdmin")]
+        [Authorize(Roles = "Storekeeper,StoreAdmin,SystemAdmin")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DuyetYeuCau(string id)
         {
             var response = await Client().PostAsync($"api/Inventory/approve/{id}", null);
+            var body = await response.Content.ReadAsStringAsync();
             return Json(new
             {
                 success = response.IsSuccessStatusCode,
-                message = response.IsSuccessStatusCode ? "Đã duyệt và xuất kho thành công!" : "Lỗi khi duyệt yêu cầu."
+                message = response.IsSuccessStatusCode
+                    ? "Đã duyệt và xuất kho thành công!"
+                    : (string.IsNullOrWhiteSpace(body) ? "Lỗi khi duyệt yêu cầu." : body)
             });
         }
 
         [HttpPost("TuChoiYeuCau")]
-        [Authorize(Roles = "StoreAdmin,SystemAdmin")]
+        [Authorize(Roles = "Storekeeper,StoreAdmin,SystemAdmin")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> TuChoiYeuCau(string id)
         {
             var response = await Client().PostAsync($"api/Inventory/reject/{id}", null);
+            var body = await response.Content.ReadAsStringAsync();
             return Json(new
             {
                 success = response.IsSuccessStatusCode,
-                message = response.IsSuccessStatusCode ? "Đã từ chối yêu cầu." : "Lỗi khi từ chối."
+                message = response.IsSuccessStatusCode
+                    ? "Đã từ chối yêu cầu."
+                    : (string.IsNullOrWhiteSpace(body) ? "Lỗi khi từ chối." : body)
             });
         }
 
         [HttpPost("XacNhanTraXac")]
-        [Authorize(Roles = "StoreAdmin,SystemAdmin")]
+        [Authorize(Roles = "Storekeeper,StoreAdmin,SystemAdmin")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> XacNhanTraXac(string id)
         {
             var response = await Client().PostAsync($"api/Inventory/confirm-waste/{id}", null);
+            var body = await response.Content.ReadAsStringAsync();
             return Json(new
             {
                 success = response.IsSuccessStatusCode,
-                message = response.IsSuccessStatusCode ? "Đã xác nhận nhận xác linh kiện." : "Lỗi khi xác nhận."
+                message = response.IsSuccessStatusCode
+                    ? "Đã xác nhận nhận xác linh kiện."
+                    : (string.IsNullOrWhiteSpace(body) ? "Lỗi khi xác nhận." : body)
             });
         }
 

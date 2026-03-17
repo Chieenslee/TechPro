@@ -39,7 +39,9 @@ namespace TechPro.Controllers
             if (response.IsSuccessStatusCode)
             {
                 var tickets = await response.Content.ReadFromJsonAsync<List<PhieuSuaChua>>();
-                return View("Index", tickets);
+                ViewBag.UserRole = "StoreAdmin";
+                ViewBag.UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                return View("Index", tickets ?? new List<PhieuSuaChua>());
             }
 
             return View("Index", new List<PhieuSuaChua>());
@@ -53,7 +55,7 @@ namespace TechPro.Controllers
             if (response.IsSuccessStatusCode)
             {
                 var ticket = await response.Content.ReadFromJsonAsync<PhieuSuaChua>();
-                return View("ChiTiet", ticket);
+                return View("ChiTiet", ticket ?? new PhieuSuaChua());
             }
 
             return NotFound();

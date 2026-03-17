@@ -2,21 +2,35 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace TechPro.Controllers
 {
-    public class NotificationController : Controller
+    // Lightweight API stub so frontend notification JS không bị 404
+    [ApiController]
+    [Route("api/[controller]")]
+    public class NotificationController : ControllerBase
     {
-        public IActionResult Index()
+        // GET /api/Notification?unreadOnly=true|false
+        [HttpGet]
+        public IActionResult GetAll([FromQuery] bool unreadOnly = false)
         {
-             return Content("Notification module is being migrated.");
+            return Ok(new
+            {
+                success = true,
+                unreadCount = 0,
+                data = Array.Empty<object>()
+            });
         }
-        
-        public IActionResult GetNotifications()
-        {
-            return Json(new List<object>()); // Return empty list to prevent JS errors
-        }
-        
+
+        // POST /api/Notification/{id}/read
+        [HttpPost("{id}/read")]
         public IActionResult MarkAsRead(string id)
         {
-            return Ok();
+            return Ok(new { success = true });
+        }
+
+        // POST /api/Notification/read-all
+        [HttpPost("read-all")]
+        public IActionResult MarkAllAsRead()
+        {
+            return Ok(new { success = true });
         }
     }
 }

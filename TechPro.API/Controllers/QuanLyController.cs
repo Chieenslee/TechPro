@@ -39,7 +39,7 @@ namespace TechPro.API.Controllers
             {
                 // StoreAdmin only sees their store data
                 queryPhieu = queryPhieu.Where(p => p.TenantId == tenantId);
-                queryYeuCau = queryYeuCau.Where(y => y.PhieuSuaChua.TenantId == tenantId); // Assuming YeuCauLinhKien is linked to PhieuSuaChua
+                queryYeuCau = queryYeuCau.Where(y => y.PhieuSuaChua != null && y.PhieuSuaChua.TenantId == tenantId);
                 // SystemAdmin sees everything
             }
 
@@ -95,7 +95,8 @@ namespace TechPro.API.Controllers
 
             // Top Parts
             var topParts = await queryYeuCau
-                .GroupBy(y => y.LinhKien.TenLinhKien)
+                .Where(y => y.LinhKien != null)
+                .GroupBy(y => y.LinhKien!.TenLinhKien)
                 .Select(g => new TopPartDataPoint { PartName = g.Key, Quantity = g.Sum(y => y.SoLuong) })
                 .OrderByDescending(x => x.Quantity)
                 .Take(5)
@@ -149,6 +150,65 @@ namespace TechPro.API.Controllers
                 TotalRevenue = totalRevenue,
                 CompletionRate = completionRate
             };
+        }
+
+        [HttpGet("ExportTickets")]
+        public async Task<IActionResult> ExportTickets(DateTime? fromDate, DateTime? toDate)
+        {
+            var tenantId = User.FindFirst("TenantId")?.Value;
+            var isSys = User.IsInRole("SystemAdmin");
+            if (string.IsNullOrEmpty(tenantId) && !isSys) return Unauthorized();
+
+            var start = (fromDate ?? DateTime.UtcNow.AddDays(-30)).Date;
+            var end = (toDate ?? DateTime.UtcNow).Date.AddDays(1).AddTicks(-1);
+
+            var q = _context.PhieuSuaChuas.AsQueryable();
+            if (!isSys && !string.IsNullOrEmpty(tenantId))
+                q = q.Where(p => p.TenantId == tenantId);
+
+            var list = await q
+                .Where(p => p.NgayNhan >= start && p.NgayNhan <= end)
+                .OrderByDescending(p => p.NgayNhan)
+                .ToListAsync();
+
+            return Ok(list);
+        }
+
+        [HttpGet("ExportRevenueDaily")]
+        public async Task<IActionResult> ExportRevenueDaily(DateTime? fromDate, DateTime? toDate)
+        {
+            var tenantId = User.FindFirst("TenantId")?.Value;
+            var isSys = User.IsInRole("SystemAdmin");
+            if (string.IsNullOrEmpty(tenantId) && !isSys) return Unauthorized();
+
+            var start = (fromDate ?? DateTime.UtcNow.AddDays(-30)).Date;
+            var end = (toDate ?? DateTime.UtcNow).Date.AddDays(1).AddTicks(-1);
+
+            var q = _context.PhieuSuaChuas.AsQueryable();
+            if (!isSys && !string.IsNullOrEmpty(tenantId))
+                q = q.Where(p => p.TenantId == tenantId);
+
+            var raw = await q
+                .Where(p => (p.NgayHoanThanh ?? p.NgayNhan) >= start
+                    && (p.NgayHoanThanh ?? p.NgayNhan) <= end
+                    && (p.TrangThai == PhieuSuaChua.Statuses.Done || p.TrangThai == PhieuSuaChua.Statuses.Delivered))
+                .Select(p => new { Ngay = (p.NgayHoanThanh ?? p.NgayNhan), p.TongTien })
+                .ToListAsync();
+
+            var dict = raw
+                .GroupBy(x => x.Ngay.Date)
+                .ToDictionary(g => g.Key, g => g.Sum(x => x.TongTien));
+
+            var points = Enumerable.Range(0, (end.Date - start.Date).Days + 1)
+                .Select(i => start.Date.AddDays(i))
+                .Select(day => new RevenueDataPoint
+                {
+                    Name = day.ToString("yyyy-MM-dd"),
+                    Value = dict.TryGetValue(day, out var v) ? v : 0
+                })
+                .ToList();
+
+            return Ok(points);
         }
     }
 }

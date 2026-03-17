@@ -47,7 +47,7 @@ namespace TechPro.Controllers
             {
                 var content = await response.Content.ReadAsStringAsync();
                 var tickets = JsonSerializer.Deserialize<List<PhieuSuaChua>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                return View(tickets);
+                return View(tickets ?? new List<PhieuSuaChua>());
             }
 
             return View(new List<PhieuSuaChua>());
@@ -62,7 +62,7 @@ namespace TechPro.Controllers
             if (response.IsSuccessStatusCode)
             {
                 var ticket = await response.Content.ReadFromJsonAsync<PhieuSuaChua>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                return View(ticket);
+                return View(ticket ?? new PhieuSuaChua());
             }
 
             return NotFound();
@@ -83,9 +83,12 @@ namespace TechPro.Controllers
 
              // Handle checkboxes for accessories (if specific logic needed, e.g. from Request.Form)
             var accessories = Request.Form["Accessories"];
-            if (accessories.Count > 0)
+            var accessoriesValues = accessories
+                .Where(a => !string.IsNullOrWhiteSpace(a))
+                .ToArray();
+            if (accessoriesValues.Length > 0)
             {
-                phieuSuaChua.PhuKien = string.Join(", ", accessories);
+                phieuSuaChua.PhuKien = string.Join(", ", accessoriesValues);
             }
 
             var client = CreateClient();
@@ -98,7 +101,7 @@ namespace TechPro.Controllers
             {
                  var responseContent = await response.Content.ReadAsStringAsync();
                  var createdTicket = JsonSerializer.Deserialize<PhieuSuaChua>(responseContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                 return Json(new { success = true, message = "Tạo phiếu thành công! Mã: " + createdTicket.Id });
+                 return Json(new { success = true, message = "Tạo phiếu thành công! Mã: " + (createdTicket?.Id ?? "(không xác định)") });
             }
 
             return Json(new { success = false, message = "Lỗi khi tạo phiếu: " + response.ReasonPhrase });
