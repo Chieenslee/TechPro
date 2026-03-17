@@ -4,7 +4,6 @@ using TechPro.API.Models;
 using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
 using Microsoft.OpenApi.Models;
-using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -50,34 +49,51 @@ builder.Services.AddHttpClient();
 builder.Services.AddSingleton<TechPro.API.Services.ISmsSender, TechPro.API.Services.HttpSmsSender>();
 builder.Services.AddSingleton<TechPro.API.Services.IEmailSender, TechPro.API.Services.SmtpEmailSender>();
 builder.Services.AddHttpContextAccessor();
-// OpenAPI + Scalar (native .NET 10)
-builder.Services.AddOpenApi(options =>
+// Swagger (Swashbuckle — bundle local, không cần CDN)
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
 {
-    options.AddDocumentTransformer((document, context, ct) =>
+    options.SwaggerDoc("v1", new OpenApiInfo
     {
-        document.Info = new OpenApiInfo
-        {
-            Title = "TechPro API",
-            Version = "v1",
-            Description = """
-                API backend cho hệ thống quản lý sửa chữa & bảo hành thiết bị **TechPro**.
+        Title = "TechPro API",
+        Version = "v1",
+        Description = """
+            API backend cho hệ thống quản lý sửa chữa & bảo hành thiết bị **TechPro**.
 
-                ## Xác thực
-                Mọi request từ MVC phải kèm header **X-Caller-Email** chứa email người dùng đã đăng nhập.
+            ## Xác thực
+            Mọi request từ MVC phải kèm header **X-Caller-Email** chứa email người dùng đã đăng nhập.
 
-                ## Roles
-                - `SystemAdmin` – Toàn quyền hệ thống
-                - `StoreAdmin` – Quản lý cửa hàng
-                - `Support` – Tiếp nhận phiếu sửa chữa
-                - `Technician` – Kỹ thuật viên
-                - `Storekeeper` – Thủ kho
-                """,
-            Contact = new OpenApiContact { Name = "TechPro Team" }
-        };
-        return Task.CompletedTask;
+            ## Roles
+            - `SystemAdmin` – Toàn quyền hệ thống
+            - `StoreAdmin` – Quản lý cửa hàng
+            - `Support` – Tiếp nhận phiếu sửa chữa
+            - `Technician` – Kỹ thuật viên
+            - `Storekeeper` – Thủ kho
+            """,
+        Contact = new OpenApiContact { Name = "TechPro Team" }
     });
 
-    options.AddDocumentTransformer<TechPro.API.Services.ApiKeySecurityTransformer>();
+    options.AddSecurityDefinition("X-Caller-Email", new OpenApiSecurityScheme
+    {
+        Type = SecuritySchemeType.ApiKey,
+        In = ParameterLocation.Header,
+        Name = "X-Caller-Email",
+        Description = "Email người dùng đã đăng nhập. Ví dụ: admin@techpro.vn"
+    });
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "X-Caller-Email" }
+            },
+            []
+        }
+    });
+
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath)) options.IncludeXmlComments(xmlPath);
 });
 
 var app = builder.Build();
@@ -104,12 +120,11 @@ using (var scope = app.Services.CreateScope())
 }// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
-    app.MapScalarApiReference(options =>
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
     {
-        options.Title = "TechPro API Docs";
-        options.Theme = ScalarTheme.DeepSpace;
-        options.DefaultHttpClient = new(ScalarTarget.CSharp, ScalarClient.HttpClient);
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "TechPro API v1");
+        options.RoutePrefix = "swagger";
     });
 }
 
