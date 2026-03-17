@@ -42,6 +42,11 @@ builder.Services.AddControllers()
 builder.Services.AddSignalR();
 builder.Services.AddScoped<TechPro.API.Services.SmartDiagnosisService>();
 builder.Services.AddScoped<TechPro.API.Services.AuditLogService>();
+builder.Services.Configure<TechPro.API.Services.SmsOptions>(builder.Configuration.GetSection("Sms"));
+builder.Services.Configure<TechPro.API.Services.EmailOptions>(builder.Configuration.GetSection("Email"));
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<TechPro.API.Services.ISmsSender, TechPro.API.Services.HttpSmsSender>();
+builder.Services.AddSingleton<TechPro.API.Services.IEmailSender, TechPro.API.Services.SmtpEmailSender>();
 builder.Services.AddHttpContextAccessor();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();

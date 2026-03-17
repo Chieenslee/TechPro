@@ -18,12 +18,27 @@ namespace TechPro.API.Controllers
         private readonly TechProDbContext _context;
         private readonly IHubContext<TicketHub> _hubContext;
         private readonly AuditLogService _audit;
+        private readonly ISmsSender _sms;
+        private readonly SmsOptions _smsOpt;
+        private readonly IEmailSender _email;
+        private readonly EmailOptions _emailOpt;
 
-        public TechnicianController(TechProDbContext context, IHubContext<TicketHub> hubContext, AuditLogService audit)
+        public TechnicianController(
+            TechProDbContext context,
+            IHubContext<TicketHub> hubContext,
+            AuditLogService audit,
+            ISmsSender sms,
+            Microsoft.Extensions.Options.IOptions<SmsOptions> smsOpt,
+            IEmailSender email,
+            Microsoft.Extensions.Options.IOptions<EmailOptions> emailOpt)
         {
             _context = context;
             _hubContext = hubContext;
             _audit = audit;
+            _sms = sms;
+            _smsOpt = smsOpt.Value;
+            _email = email;
+            _emailOpt = emailOpt.Value;
         }
 
         private string CallerEmail() => Request.Headers["X-Caller-Email"].FirstOrDefault()
@@ -90,7 +105,9 @@ namespace TechPro.API.Controllers
         [Authorize(Roles = "Technician")]
         public async Task<IActionResult> UpdateStatus(string id, [FromBody] string status)
         {
-            var ticket = await _context.PhieuSuaChuas.FindAsync(id);
+            var ticket = await _context.PhieuSuaChuas
+                .Include(p => p.CuaHang)
+                .FirstOrDefaultAsync(p => p.Id == id);
             if (ticket == null) return NotFound();
 
             ticket.TrangThai = status;
@@ -108,7 +125,55 @@ namespace TechPro.API.Controllers
             await _audit.LogAsync(CallerEmail(), CallerRole(), "CapNhatTrangThaiPhieu", id, "PhieuSuaChua",
                 ghiChu: $"Trạng thái mới: {status}", ipAddress: CallerIp());
 
-            return Ok(new { message = "Updated status" });
+            var notifyNotes = new List<string>();
+
+            // Auto SMS notification when finished
+            if (status == PhieuSuaChua.Statuses.Done)
+            {
+                var msg = (_smsOpt.MessageTemplate ?? string.Empty)
+                    .Replace("{TicketId}", ticket.Id)
+                    .Replace("{DeviceName}", ticket.TenThietBi)
+                    .Replace("{CustomerName}", ticket.TenKhachHang)
+                    .Replace("{Status}", status);
+
+                // Fire-and-forget is acceptable here; do not block status update if SMS provider slow.
+                _ = Task.Run(() => _sms.SendAsync(ticket.SoDienThoai, msg, CancellationToken.None));
+
+                // Email notification (free via SMTP). If we don't have customer email, send to store admin or fallback.
+                var toEmail =
+                    ticket.CuaHang?.AdminEmail
+                    ?? _emailOpt.DefaultTo;
+
+                if (!string.IsNullOrWhiteSpace(toEmail))
+                {
+                    var subject = (_emailOpt.SubjectTemplate ?? string.Empty)
+                        .Replace("{TicketId}", ticket.Id)
+                        .Replace("{DeviceName}", ticket.TenThietBi)
+                        .Replace("{CustomerName}", ticket.TenKhachHang)
+                        .Replace("{Status}", status);
+
+                    var body = (_emailOpt.BodyTemplate ?? string.Empty)
+                        .Replace("{TicketId}", ticket.Id)
+                        .Replace("{DeviceName}", ticket.TenThietBi)
+                        .Replace("{CustomerName}", ticket.TenKhachHang)
+                        .Replace("{Status}", status);
+
+                    var sent = await _email.SendAsync(toEmail, subject, body, HttpContext.RequestAborted);
+                    notifyNotes.Add(sent
+                        ? $"Đã gửi email tới {toEmail}."
+                        : "Email đang tắt hoặc gửi thất bại (kiểm tra cấu hình Email).");
+                }
+                else
+                {
+                    notifyNotes.Add("Không có email để gửi (thiếu CuaHang.AdminEmail và Email:DefaultTo).");
+                }
+            }
+
+            var message = notifyNotes.Count > 0
+                ? string.Join(" ", notifyNotes)
+                : "Updated status";
+
+            return Ok(new { message });
         }
 
         // Chỉ StoreAdmin/SysAdmin mới được gán kỹ thuật viên

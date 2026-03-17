@@ -103,7 +103,23 @@ namespace TechPro.Controllers
         {
             var client = _httpClientFactory.CreateClient("TechProAPI");
             var response = await client.PutAsJsonAsync($"api/Technician/tickets/{id}/status", trangThai);
-            return Json(new { success = response.IsSuccessStatusCode });
+            string? message = null;
+            try
+            {
+                var body = await response.Content.ReadAsStringAsync();
+                if (!string.IsNullOrWhiteSpace(body))
+                {
+                    using var doc = System.Text.Json.JsonDocument.Parse(body);
+                    if (doc.RootElement.TryGetProperty("message", out var m) && m.ValueKind == System.Text.Json.JsonValueKind.String)
+                        message = m.GetString();
+                }
+            }
+            catch
+            {
+                // ignore parse errors
+            }
+
+            return Json(new { success = response.IsSuccessStatusCode, message });
         }
 
         // Technician tự nhận phiếu về tay mình
