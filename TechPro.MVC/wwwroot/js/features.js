@@ -35,8 +35,16 @@ function updateStatsDisplay(stats) {
 }
 
 function animateValue(element, start, end, duration) {
+    if (start === end || isNaN(start) || isNaN(end)) {
+        element.textContent = end.toLocaleString('vi-VN');
+        return;
+    }
     const range = end - start;
     const increment = range / (duration / 16);
+    if (increment === 0) {
+        element.textContent = end.toLocaleString('vi-VN');
+        return;
+    }
     let current = start;
 
     const timer = setInterval(function() {

@@ -1,12 +1,13 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
 namespace TechPro.API.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialWithPhase2 : Migration
+    public partial class InitialSupabase : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -15,10 +16,10 @@ namespace TechPro.API.Migrations
                 name: "AspNetRoles",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    NormalizedName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    ConcurrencyStamp = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    NormalizedName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    ConcurrencyStamp = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -26,18 +27,37 @@ namespace TechPro.API.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "AuditLogs",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    ThucHienBoi = table.Column<string>(type: "text", nullable: false),
+                    Role = table.Column<string>(type: "text", nullable: false),
+                    HanhDong = table.Column<string>(type: "text", nullable: false),
+                    DoiTuongId = table.Column<string>(type: "text", nullable: false),
+                    LoaiDoiTuong = table.Column<string>(type: "text", nullable: false),
+                    GhiChu = table.Column<string>(type: "text", nullable: true),
+                    IpAddress = table.Column<string>(type: "text", nullable: true),
+                    ThoiGian = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AuditLogs", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "CuaHangs",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    TenCuaHang = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    DiaChi = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    DoanhThu = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    TrangThai = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    LogoUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    AdminEmail = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    Hotline = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
-                    MauInHoaDon = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                    Id = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    TenCuaHang = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    DiaChi = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    DoanhThu = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    TrangThai = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    LogoUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    AdminEmail = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    Hotline = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    MauInHoaDon = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -48,10 +68,10 @@ namespace TechPro.API.Migrations
                 name: "RevenueDailies",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    Ngay = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    DoanhThu = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    TenantId = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true)
+                    Id = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Ngay = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DoanhThu = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -62,11 +82,11 @@ namespace TechPro.API.Migrations
                 name: "AspNetRoleClaims",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    RoleId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    ClaimType = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ClaimValue = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    RoleId = table.Column<string>(type: "text", nullable: false),
+                    ClaimType = table.Column<string>(type: "text", nullable: true),
+                    ClaimValue = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -83,24 +103,24 @@ namespace TechPro.API.Migrations
                 name: "AspNetUsers",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    TenDayDu = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    AvatarUrl = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    TenantId = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    NormalizedEmail = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    EmailConfirmed = table.Column<bool>(type: "bit", nullable: false),
-                    PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    SecurityStamp = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ConcurrencyStamp = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    PhoneNumberConfirmed = table.Column<bool>(type: "bit", nullable: false),
-                    TwoFactorEnabled = table.Column<bool>(type: "bit", nullable: false),
-                    LockoutEnd = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    LockoutEnabled = table.Column<bool>(type: "bit", nullable: false),
-                    AccessFailedCount = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    TenDayDu = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    AvatarUrl = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    NormalizedEmail = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    EmailConfirmed = table.Column<bool>(type: "boolean", nullable: false),
+                    PasswordHash = table.Column<string>(type: "text", nullable: true),
+                    SecurityStamp = table.Column<string>(type: "text", nullable: true),
+                    ConcurrencyStamp = table.Column<string>(type: "text", nullable: true),
+                    PhoneNumber = table.Column<string>(type: "text", nullable: true),
+                    PhoneNumberConfirmed = table.Column<bool>(type: "boolean", nullable: false),
+                    TwoFactorEnabled = table.Column<bool>(type: "boolean", nullable: false),
+                    LockoutEnd = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    LockoutEnabled = table.Column<bool>(type: "boolean", nullable: false),
+                    AccessFailedCount = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -117,13 +137,13 @@ namespace TechPro.API.Migrations
                 name: "KhoLinhKiens",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    TenLinhKien = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    SoLuongTon = table.Column<int>(type: "int", nullable: false),
-                    GiaBan = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    DanhSachModelTuongThich = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    DanhMuc = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    TenantId = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true)
+                    Id = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    TenLinhKien = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    SoLuongTon = table.Column<int>(type: "integer", nullable: false),
+                    GiaBan = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    DanhSachModelTuongThich = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    DanhMuc = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -140,16 +160,16 @@ namespace TechPro.API.Migrations
                 name: "LichHens",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    HoTen = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    SoDienThoai = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    ThietBi = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    ChiNhanh = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    NgayHen = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    GioHen = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
-                    MoTaLoi = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
-                    TenantId = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Id = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    HoTen = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    SoDienThoai = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    ThietBi = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    ChiNhanh = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    NgayHen = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    GioHen = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
+                    MoTaLoi = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -165,12 +185,12 @@ namespace TechPro.API.Migrations
                 name: "ThietBiBans",
                 columns: table => new
                 {
-                    SerialNumber = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Model = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    NgayMua = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ThoiHanBaoHanhThang = table.Column<int>(type: "int", nullable: false),
-                    TenKhachHang = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    TenantId = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true)
+                    SerialNumber = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Model = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    NgayMua = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ThoiHanBaoHanhThang = table.Column<int>(type: "integer", nullable: false),
+                    TenKhachHang = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -187,11 +207,11 @@ namespace TechPro.API.Migrations
                 name: "AspNetUserClaims",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    ClaimType = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ClaimValue = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    ClaimType = table.Column<string>(type: "text", nullable: true),
+                    ClaimValue = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -208,10 +228,10 @@ namespace TechPro.API.Migrations
                 name: "AspNetUserLogins",
                 columns: table => new
                 {
-                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    ProviderKey = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    ProviderDisplayName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    LoginProvider = table.Column<string>(type: "text", nullable: false),
+                    ProviderKey = table.Column<string>(type: "text", nullable: false),
+                    ProviderDisplayName = table.Column<string>(type: "text", nullable: true),
+                    UserId = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -228,8 +248,8 @@ namespace TechPro.API.Migrations
                 name: "AspNetUserRoles",
                 columns: table => new
                 {
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    RoleId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    RoleId = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -252,10 +272,10 @@ namespace TechPro.API.Migrations
                 name: "AspNetUserTokens",
                 columns: table => new
                 {
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Value = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    LoginProvider = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Value = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -272,17 +292,17 @@ namespace TechPro.API.Migrations
                 name: "GiaoCas",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    TenantId = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    NguoiGiaoId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
-                    NguoiNhanId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: true),
-                    ThoiGianGiao = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ThoiGianNhan = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    TienMatBanGiao = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    ThucNhanTienMat = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    TrangThai = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    GhiChu = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    NguoiGiaoId = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: false),
+                    NguoiNhanId = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: true),
+                    ThoiGianGiao = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ThoiGianNhan = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    TienMatBanGiao = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    ThucNhanTienMat = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    TrangThai = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    GhiChu = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -311,14 +331,14 @@ namespace TechPro.API.Migrations
                 name: "Notifications",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    UserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
-                    Title = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Message = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
-                    Type = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    Link = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    IsRead = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Id = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    UserId = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: false),
+                    Title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Message = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    Type = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Link = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    IsRead = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -335,16 +355,16 @@ namespace TechPro.API.Migrations
                 name: "PhieuDieuChuyens",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    TuCuaHangId = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    DenCuaHangId = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    NguoiYeuCauId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
-                    NguoiDuyetXuatId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: true),
-                    TrangThai = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    NgayYeuCau = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    NgayXuat = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    NgayNhan = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    GhiChu = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                    Id = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    TuCuaHangId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    DenCuaHangId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    NguoiYeuCauId = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: false),
+                    NguoiDuyetXuatId = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: true),
+                    TrangThai = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    NgayYeuCau = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    NgayXuat = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    NgayNhan = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    GhiChu = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -378,23 +398,24 @@ namespace TechPro.API.Migrations
                 name: "PhieuSuaChuas",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    TenKhachHang = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    SoDienThoai = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    TenThietBi = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    SerialNumber = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    TrangThai = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    NgayNhan = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    MoTaLoi = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
-                    KetQuaKiemTra = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: true),
-                    KyThuatVienId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: true),
-                    MatKhauManHinh = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    CoBaoHanh = table.Column<bool>(type: "bit", nullable: true),
-                    TenantId = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    TongTien = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    IsICloudRemoved = table.Column<bool>(type: "bit", nullable: false),
-                    IsFindMyOff = table.Column<bool>(type: "bit", nullable: false),
-                    PhuKien = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                    Id = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    TenKhachHang = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    SoDienThoai = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    TenThietBi = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    SerialNumber = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    TrangThai = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    NgayNhan = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    NgayHoanThanh = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    MoTaLoi = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    KetQuaKiemTra = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: true),
+                    KyThuatVienId = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: true),
+                    MatKhauManHinh = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    CoBaoHanh = table.Column<bool>(type: "boolean", nullable: true),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    TongTien = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    IsICloudRemoved = table.Column<bool>(type: "boolean", nullable: false),
+                    IsFindMyOff = table.Column<bool>(type: "boolean", nullable: false),
+                    PhuKien = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -417,13 +438,13 @@ namespace TechPro.API.Migrations
                 name: "ChiTietDieuChuyens",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    PhieuDieuChuyenId = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    LinhKienId = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    SoLuongYeuCau = table.Column<int>(type: "int", nullable: false),
-                    SoLuongThucThuat = table.Column<int>(type: "int", nullable: true),
-                    GhiChu = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    PhieuDieuChuyenId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    LinhKienId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    SoLuongYeuCau = table.Column<int>(type: "integer", nullable: false),
+                    SoLuongThucThuat = table.Column<int>(type: "integer", nullable: true),
+                    GhiChu = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -446,15 +467,15 @@ namespace TechPro.API.Migrations
                 name: "HoaHongs",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    PhieuSuaChuaId = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    NhanVienId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
-                    LoaiHoaHong = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    SoTien = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    TrangThai = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    NgayGhiNhan = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    GhiChu = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    PhieuSuaChuaId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    NhanVienId = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: false),
+                    LoaiHoaHong = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    SoTien = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    TrangThai = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    NgayGhiNhan = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    GhiChu = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -477,15 +498,15 @@ namespace TechPro.API.Migrations
                 name: "LichSuHuyPhieus",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    PhieuSuaChuaId = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    NguoiYeuCauId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
-                    NguoiDuyetId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: true),
-                    LyDoHuy = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    TrangThai = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    NgayYeuCau = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    NgayDuyet = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    PhieuSuaChuaId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    NguoiYeuCauId = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: false),
+                    NguoiDuyetId = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: true),
+                    LyDoHuy = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    TrangThai = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    NgayYeuCau = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    NgayDuyet = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -514,13 +535,13 @@ namespace TechPro.API.Migrations
                 name: "ScratchMarks",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    PhieuSuaChuaId = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    X = table.Column<double>(type: "float", nullable: false),
-                    Y = table.Column<double>(type: "float", nullable: false),
-                    CreatedBy = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: true),
-                    CreatedByName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Id = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    PhieuSuaChuaId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    X = table.Column<double>(type: "double precision", nullable: false),
+                    Y = table.Column<double>(type: "double precision", nullable: false),
+                    CreatedBy = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: true),
+                    CreatedByName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -537,12 +558,12 @@ namespace TechPro.API.Migrations
                 name: "TicketNotes",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    PhieuSuaChuaId = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    UserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: true),
-                    UserName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Message = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Id = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    PhieuSuaChuaId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    UserId = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: true),
+                    UserName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Message = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -559,12 +580,12 @@ namespace TechPro.API.Migrations
                 name: "TraXacs",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    PhieuSuaChuaId = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    TenKyThuatVien = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    TenLinhKien = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    TrangThai = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    NgayTra = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Id = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    PhieuSuaChuaId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    TenKyThuatVien = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    TenLinhKien = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    TrangThai = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    NgayTra = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -581,14 +602,14 @@ namespace TechPro.API.Migrations
                 name: "YeuCauLinhKiens",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    PhieuSuaChuaId = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    TenKyThuatVien = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    LinhKienId = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    SoLuong = table.Column<int>(type: "int", nullable: false),
-                    TrangThai = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    NgayYeuCau = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    GiaTaiThoiDiemYeuCau = table.Column<decimal>(type: "decimal(18,2)", nullable: true)
+                    Id = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    PhieuSuaChuaId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    TenKyThuatVien = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    LinhKienId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    SoLuong = table.Column<int>(type: "integer", nullable: false),
+                    TrangThai = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    NgayYeuCau = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    GiaTaiThoiDiemYeuCau = table.Column<decimal>(type: "numeric(18,2)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -616,8 +637,7 @@ namespace TechPro.API.Migrations
                 name: "RoleNameIndex",
                 table: "AspNetRoles",
                 column: "NormalizedName",
-                unique: true,
-                filter: "[NormalizedName] IS NOT NULL");
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetUserClaims_UserId",
@@ -648,8 +668,7 @@ namespace TechPro.API.Migrations
                 name: "UserNameIndex",
                 table: "AspNetUsers",
                 column: "NormalizedUserName",
-                unique: true,
-                filter: "[NormalizedUserName] IS NOT NULL");
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_ChiTietDieuChuyens_LinhKienId",
@@ -830,6 +849,9 @@ namespace TechPro.API.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUserTokens");
+
+            migrationBuilder.DropTable(
+                name: "AuditLogs");
 
             migrationBuilder.DropTable(
                 name: "ChiTietDieuChuyens");

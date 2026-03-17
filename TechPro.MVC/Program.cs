@@ -14,11 +14,17 @@ namespace TechPro
             var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"] 
                              ?? throw new InvalidOperationException("ApiSettings:BaseUrl is not configured.");
 
-            // Client cho API
+            // Needed by CallerEmailHandler to access current user
+            builder.Services.AddHttpContextAccessor();
+
+            // Handler that injects X-Caller-Email into every API request
+            builder.Services.AddTransient<TechPro.Services.CallerEmailHandler>();
+
+            // Client cho API — tự động đính email người dùng vào header
             builder.Services.AddHttpClient("TechProAPI", client =>
             {
                 client.BaseAddress = new Uri(apiBaseUrl);
-            });
+            }).AddHttpMessageHandler<TechPro.Services.CallerEmailHandler>();
             
             // Authentication Authentication (Cookie) without Identity
             builder.Services.AddAuthentication(options =>
@@ -49,6 +55,8 @@ namespace TechPro
 
 
             builder.Services.AddControllersWithViews();
+            builder.Services.AddSignalR();
+            builder.Services.AddSingleton<TechPro.Services.InternalChatStore>();
 
             var app = builder.Build();
 
@@ -70,7 +78,19 @@ namespace TechPro
 
             // Map SignalR Hub - Moved to API
             // app.MapHub<Hubs.TicketHub>("/ticketHub");
+            app.MapHub<TechPro.Hubs.InternalChatHub>("/chatHub");
 
+            // Route cho Support module (hỗ trợ URL dạng /Support/TiepNhan/ChiTiet/{id})
+            app.MapControllerRoute(
+                name: "support",
+                pattern: "Support/{controller=TiepNhan}/{action=Index}/{id?}");
+
+            // Route cho Technician module
+            app.MapControllerRoute(
+                name: "technician",
+                pattern: "Technician/{controller=KyThuat}/{action=Index}/{id?}");
+
+            // Route mặc định
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");

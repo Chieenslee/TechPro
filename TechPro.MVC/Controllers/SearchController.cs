@@ -32,10 +32,10 @@ namespace TechPro.Controllers
             {
                 targetPath = "/Technician/KyThuat";
             }
-            else if (role == "SystemAdmin")
+            else if (role == "StoreAdmin" || role == "SystemAdmin")
             {
-                targetPath = "/SysAdmin/Chain";
-                return Redirect($"{targetPath}");
+                // Quản lý tìm kiếm theo danh sách tiếp nhận để giám sát
+                targetPath = "/StoreAdmin/TiepNhan";
             }
 
             // Redirect to the assigned ticket list with the search term

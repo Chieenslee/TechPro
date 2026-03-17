@@ -18,11 +18,55 @@ namespace TechPro.API.Controllers
             _context = context;
         }
 
+        // GET: api/Chain/dashboard
+        [HttpGet("dashboard")]
+        public async Task<IActionResult> GetDashboardStats()
+        {
+            var stores = await _context.CuaHangs.Include(x => x.PhieuSuaChuas).ToListAsync();
+            
+            var totalRevenue = await _context.PhieuSuaChuas
+                .Where(p => p.TrangThai == PhieuSuaChua.Statuses.Done || p.TrangThai == PhieuSuaChua.Statuses.Delivered)
+                .SumAsync(p => p.TongTien);
+                
+            var users = await _context.Users.Include(u => u.CuaHang).ToListAsync();
+            var totalStaff = users.Count;
+
+            var now = DateTime.UtcNow;
+            var startOfMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+            
+            var rawRevenues = await _context.PhieuSuaChuas
+                .Where(p => p.TenantId != null && (p.NgayHoanThanh ?? p.NgayNhan) >= startOfMonth && (p.TrangThai == PhieuSuaChua.Statuses.Done || p.TrangThai == PhieuSuaChua.Statuses.Delivered))
+                .GroupBy(p => p.TenantId)
+                .Select(g => new { TenantId = g.Key, Revenue = g.Sum(x => x.TongTien) })
+                .ToListAsync();
+
+            var userRolesList = await _context.UserRoles.ToListAsync();
+            var rolesDict = await _context.Roles.ToDictionaryAsync(r => r.Id, r => r.Name);
+
+            var usersWithRoles = users.Select(u => new 
+            {
+                User = u,
+                Role = userRolesList.Where(ur => ur.UserId == u.Id)
+                                    .Select(ur => rolesDict.TryGetValue(ur.RoleId, out var r) ? r : "N/A")
+                                    .FirstOrDefault() ?? "N/A"
+            }).ToList();
+
+            return Ok(new
+            {
+                Stores = stores,
+                Users = users,
+                TotalRevenue = totalRevenue,
+                TotalStaff = totalStaff,
+                ThisMonthStoreRevenues = rawRevenues,
+                UsersWithRoles = usersWithRoles
+            });
+        }
+
         // GET: api/Chain
         [HttpGet]
         public async Task<ActionResult<IEnumerable<CuaHang>>> GetCuaHangs()
         {
-            return await _context.CuaHangs.ToListAsync();
+            return await _context.CuaHangs.Include(x => x.PhieuSuaChuas).ToListAsync();
         }
 
         // GET: api/Chain/5

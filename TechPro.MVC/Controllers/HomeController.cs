@@ -31,6 +31,7 @@ namespace TechPro.Controllers
                     "Technician" => RedirectToAction("Index", "KyThuat"),
                     "Support" => RedirectToAction("Index", "TiepNhan"),
                     "StoreAdmin" => RedirectToAction("Index", "QuanLy"),
+                    "Storekeeper" => RedirectToAction("Index", "StorekeeperDashboard"),
                     _ => RedirectToAction("Index", "TiepNhan")
                 };
             }

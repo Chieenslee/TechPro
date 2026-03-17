@@ -21,6 +21,7 @@
     </div>
 
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+        @Html.AntiForgeryToken()
         <!-- Filters -->
         <div class="card-header bg-white border-bottom p-4">
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
@@ -279,9 +280,30 @@
             toastr.info(`Đang kích hoạt quy trình Webcam quầy để chụp ảnh chứng minh bàn giao đơn ${id}...`, 'Khởi động Camera');
         }
 
-        function openPaymentModal(id) {
-            toastr.success(`Đang mở màn chốt bill & tích hợp máy POS cà thẻ/Mã QR Thanh Toán cho đơn ${id}...`, 'Khởi tạo Thanh Toán Biên Nhận');
-            // Sau này sẽ pop-up Bootstrap Modal thật tại đây
+        async function openPaymentModal(id) {
+            if (!confirm('Xác nhận khách hàng đã thanh toán và bàn giao máy?')) return;
+            
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            toastr.info(`Đang xử lý thanh toán cho đơn ${id}...`, 'Đang xử lý');
+            
+            try {
+                const res = await fetch('/Support/TraMay/ThanhToan?id=' + encodeURIComponent(id), {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': token
+                    }
+                });
+                
+                const data = await res.json();
+                if (data.success) {
+                    toastr.success(data.message, 'Thanh toán thành công');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    toastr.error(data.message, 'Lỗi Thanh Toán');
+                }
+            } catch (err) {
+                toastr.error('Lỗi kết nối đến máy chủ thanh toán.', 'Lỗi Hệ Thống');
+            }
         }
 
         function printWarranty(id) {

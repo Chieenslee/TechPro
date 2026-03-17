@@ -15,14 +15,19 @@
         _ => "support"
     };
     
+    bool HasProperty(dynamic obj, string name)
+    {
+        return obj.GetType().GetProperty(name) != null;
+    }
+    
     var menuItems = new List<dynamic>
     {
         // ─── SysAdmin Only ──────────────────────────────────────────────
         new { Label = "Trạm Master Admin", Path = "/SysAdmin", Icon = "globe", Roles = new[] { "SystemAdmin" }, ReactIcon = "Globe" },
-        new { Label = "Tổng quan chuỗi", Path = "/SysAdmin/Chain", Icon = "globe", Roles = new[] { "SystemAdmin" }, ReactIcon = "Globe" },
-        new { Label = "Quản lý cửa hàng", Path = "/SysAdmin/Chain?tab=stores", Icon = "shop", Roles = new[] { "SystemAdmin" }, ReactIcon = "Store" },
-        new { Label = "Quản trị nhân sự", Path = "/SysAdmin/Chain?tab=staff", Icon = "people", Roles = new[] { "SystemAdmin" }, ReactIcon = "Users" },
-        new { Label = "Kho tổng (Master)", Path = "/SysAdmin/Chain?tab=inventory", Icon = "box", Roles = new[] { "SystemAdmin" }, ReactIcon = "Package" },
+        new { Label = "Tổng quan chuỗi", Path = "/SysAdmin/Chain", Tab = "overview", Icon = "globe", Roles = new[] { "SystemAdmin" }, ReactIcon = "Globe" },
+        new { Label = "Quản lý cửa hàng", Path = "/SysAdmin/Chain", Tab = "stores", Icon = "shop", Roles = new[] { "SystemAdmin" }, ReactIcon = "Store" },
+        new { Label = "Quản trị nhân sự", Path = "/SysAdmin/Chain", Tab = "staff", Icon = "people", Roles = new[] { "SystemAdmin" }, ReactIcon = "Users" },
+        new { Label = "Kho tổng (Master)", Path = "/SysAdmin/Chain", Tab = "inventory", Icon = "box", Roles = new[] { "SystemAdmin" }, ReactIcon = "Package" },
 
         // ─── StoreAdmin Only ────────────────────────────────────────
         new { Label = "Trạm Quản Lý", Path = "/StoreAdmin", Icon = "person-badge-fill", Roles = new[] { "StoreAdmin" }, ReactIcon = "Briefcase" },
@@ -30,8 +35,8 @@
         new { Label = "Báo cáo", Path = "/StoreAdmin/QuanLy/BaoCao", Icon = "graph-up", Roles = new[] { "StoreAdmin" }, ReactIcon = "BarChart3" },
         new { Label = "Kho (Giám sát)", Path = "/Kho/Manage", Icon = "box", Roles = new[] { "StoreAdmin" }, ReactIcon = "Package" },
         new { Label = "Cấu hình cửa hàng", Path = "/StoreAdmin/QuanLy/CauHinh", Icon = "gear", Roles = new[] { "StoreAdmin" }, ReactIcon = "Settings" },
-        new { Label = "Diều phối Kỹ Thuật", Path = "/Technician/KyThuat", Icon = "wrench", Roles = new[] { "StoreAdmin" }, ReactIcon = "Wrench" },
-        new { Label = "Xem Lễ Tân", Path = "/Support/TiepNhan", Icon = "clipboard-check", Roles = new[] { "StoreAdmin" }, ReactIcon = "ClipboardList" },
+        new { Label = "Diều phối Kỹ Thuật", Path = "/StoreAdmin/KyThuat", Icon = "wrench", Roles = new[] { "StoreAdmin" }, ReactIcon = "Wrench" },
+        new { Label = "Xem Lễ Tân", Path = "/StoreAdmin/TiepNhan", Icon = "clipboard-check", Roles = new[] { "StoreAdmin" }, ReactIcon = "ClipboardList" },
 
         // ─── Technician Only ────────────────────────────────────────
         new { Label = "Trạm Kỹ Thuật", Path = "/Technician", Icon = "tools", Roles = new[] { "Technician" }, ReactIcon = "PenTool" },
@@ -46,9 +51,9 @@
 
         // ─── Storekeeper Only ───────────────────────────────────────
         new { Label = "Trạm Thủ Kho", Path = "/Storekeeper", Icon = "box-seam", Roles = new[] { "Storekeeper" }, ReactIcon = "HardDrive" },
-        new { Label = "Duyệt yêu cầu", Path = "/Kho/Manage?tab=requests", Icon = "check2-circle", Roles = new[] { "Storekeeper" }, ReactIcon = "CheckCircle" },
-        new { Label = "Quản lý tồn kho", Path = "/Kho/Manage?tab=inventory", Icon = "clipboard-data", Roles = new[] { "Storekeeper" }, ReactIcon = "Database" },
-        new { Label = "Trả xác linh kiện", Path = "/Kho/Manage?tab=waste", Icon = "recycle", Roles = new[] { "Storekeeper" }, ReactIcon = "RefreshCw" },
+        new { Label = "Duyệt yêu cầu", Path = "/Kho/Manage", Tab = "requests", Icon = "check2-circle", Roles = new[] { "Storekeeper" }, ReactIcon = "CheckCircle" },
+        new { Label = "Quản lý tồn kho", Path = "/Kho/Manage", Tab = "inventory", Icon = "clipboard-data", Roles = new[] { "Storekeeper" }, ReactIcon = "Database" },
+        new { Label = "Trả xác linh kiện", Path = "/Kho/Manage", Tab = "waste", Icon = "recycle", Roles = new[] { "Storekeeper" }, ReactIcon = "RefreshCw" },
 
         // ─── Chung mọi vai trò ────────────────────────────────────────
         new { Label = "Chat Nội Bộ", Path = "/Chat", Icon = "chat-quote", Roles = new[] { "SystemAdmin", "StoreAdmin", "Technician", "Support", "Storekeeper" }, ReactIcon = "MessageSquare" },
@@ -62,21 +67,29 @@
     }).ToList();
     
     // Helper function to check active state
-    bool IsActive(string itemPath, string currentPath, string currentQuery)
+    bool IsActive(dynamic item, string currentPath, string currentQuery)
     {
-        if (userRole != "SystemAdmin")
+        var itemPath = (string)item.Path;
+
+        if (!currentPath.Equals(itemPath, StringComparison.OrdinalIgnoreCase))
         {
-            return currentPath.Equals(itemPath, StringComparison.OrdinalIgnoreCase);
+            return false;
         }
-        
-        // For System Admin using query params
-        if (itemPath == "/Chain")
+
+        if (HasProperty(item, "Tab"))
         {
-            return currentPath.Equals("/Chain", StringComparison.OrdinalIgnoreCase) && 
-                   (string.IsNullOrEmpty(currentQuery) || currentQuery.Contains("tab=overview"));
+            var tabValue = (string)item.Tab;
+            if (string.IsNullOrEmpty(tabValue))
+            {
+                return true;
+            }
+
+            // Match on ?tab=<value> present in current query
+            return !string.IsNullOrEmpty(currentQuery) &&
+                   currentQuery.Contains($"tab={tabValue}", StringComparison.OrdinalIgnoreCase);
         }
-        
-        return (currentPath + currentQuery).Equals(itemPath, StringComparison.OrdinalIgnoreCase);
+
+        return true;
     }
     
     var currentPath = Context.Request.Path.Value ?? "";
@@ -102,7 +115,13 @@
         
         @foreach (var item in filteredMenuItems)
         {
-            var isActive = IsActive(item.Path, currentPath, currentQuery);
+            var isActive = IsActive(item, currentPath, currentQuery);
+            var href = (string)item.Path;
+            if (HasProperty(item, "Tab"))
+            {
+                var tabValue = (string)item.Tab;
+                href = $"{href}?tab={tabValue}";
+            }
             var iconClass = item.Icon switch
             {
                 "person-badge-fill" => "bi-person-badge-fill",
@@ -122,7 +141,7 @@
                 _ => "bi-circle"
             };
             <a 
-                href="@item.Path" 
+                href="@href" 
                 class="nav-link @(isActive ? "active" : "") @(userRole == "SystemAdmin" && isActive ? "system-admin" : "")"
                 onclick="toggleSidebar();"
             >

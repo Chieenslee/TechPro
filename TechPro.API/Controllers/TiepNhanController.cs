@@ -50,6 +50,7 @@ namespace TechPro.API.Controllers
 
         // GET: api/TiepNhan/search?query=...  (Tra cứu công khai từ trang chủ)
         [HttpGet("search")]
+        [AllowAnonymous]
         public async Task<IActionResult> Search(string query)
         {
             if (string.IsNullOrWhiteSpace(query))
@@ -99,6 +100,19 @@ namespace TechPro.API.Controllers
             phieuSuaChua.NgayNhan = DateTime.UtcNow;
             phieuSuaChua.TrangThai = PhieuSuaChua.Statuses.Pending;
 
+            // Auto-gán TenantId từ user Support đang tạo phiếu (nếu MVC không truyền vào)
+            if (string.IsNullOrEmpty(phieuSuaChua.TenantId))
+            {
+                var callerEmail = Request.Headers["X-Caller-Email"].FirstOrDefault()
+                    ?? User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+                if (!string.IsNullOrEmpty(callerEmail))
+                {
+                    var callerUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == callerEmail);
+                    if (callerUser != null && !string.IsNullOrEmpty(callerUser.TenantId))
+                        phieuSuaChua.TenantId = callerUser.TenantId;
+                }
+            }
+
             _context.PhieuSuaChuas.Add(phieuSuaChua);
             try
             {
@@ -113,6 +127,7 @@ namespace TechPro.API.Controllers
 
             return CreatedAtAction(nameof(GetPhieuSuaChua), new { id = phieuSuaChua.Id }, phieuSuaChua);
         }
+
 
         // ════════════════════════════════════════════════════════════════
         // ACTIONS
@@ -181,6 +196,58 @@ namespace TechPro.API.Controllers
         }
 
         // ════════════════════════════════════════════════════════════════
+        // THANH TOÁN & GIAO MÁY
+        // ════════════════════════════════════════════════════════════════
+
+        // POST: api/TiepNhan/{id}/ThanhToan
+        [HttpPost("{id}/ThanhToan")]
+        [Authorize(Roles = "Support,StoreAdmin,SystemAdmin")]
+        public async Task<IActionResult> ThanhToan(string id)
+        {
+            var phieu = await _context.PhieuSuaChuas
+                .Include(p => p.YeuCauLinhKiens)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (phieu == null) return NotFound(new { message = "Không tìm thấy phiếu." });
+
+            if (phieu.TrangThai != PhieuSuaChua.Statuses.Done)
+                return BadRequest(new { message = "Phiếu chưa hoàn thiện, không thể thanh toán." });
+
+            // Tính tổng tiền = Tiền linh kiện (đã duyệt) + Tiền công
+            var tienLinhKien = phieu.YeuCauLinhKiens
+                .Where(y => y.TrangThai == "approved")
+                .Sum(y => (y.GiaTaiThoiDiemYeuCau ?? 0) * y.SoLuong);
+            
+            var tienCong = phieu.CoBaoHanh == true ? 0 : 250000m;
+            phieu.TongTien = tienLinhKien + tienCong;
+
+            // Đổi trạng thái & chốt ngày hoàn thành
+            phieu.TrangThai = PhieuSuaChua.Statuses.Delivered;
+            phieu.NgayHoanThanh ??= DateTime.UtcNow.AddHours(7);
+
+            // Ghi nhận doanh thu vào RevenueDailies
+            var date = phieu.NgayHoanThanh.Value.Date;
+            var doanhThu = await _context.RevenueDailies
+                .FirstOrDefaultAsync(r => r.Ngay == date && r.TenantId == phieu.TenantId);
+            
+            if (doanhThu == null)
+            {
+                doanhThu = new RevenueDaily { Ngay = date, DoanhThu = phieu.TongTien, TenantId = phieu.TenantId };
+                _context.RevenueDailies.Add(doanhThu);
+            }
+            else
+            {
+                doanhThu.DoanhThu += phieu.TongTien;
+            }
+
+            // Giải phóng kỹ thuật viên (tùy chọn) để report không bị dính
+            // Nếu không giải phóng, KTV vẫn gắn trên phiếu để quản lý biết ai làm
+
+            await _context.SaveChangesAsync();
+            return Ok(new { success = true, message = $"Thanh toán thành công. Thu khách: {phieu.TongTien:N0}đ" });
+        }
+
+        // ════════════════════════════════════════════════════════════════
         // AI QUOTE ANALYSIS
         // ════════════════════════════════════════════════════════════════
 
@@ -205,6 +272,7 @@ namespace TechPro.API.Controllers
 
         // GET: api/TiepNhan/device-warranty?serial=...
         [HttpGet("device-warranty")]
+        [AllowAnonymous]
         public async Task<IActionResult> DeviceWarranty(string serial)
         {
             if (string.IsNullOrWhiteSpace(serial))

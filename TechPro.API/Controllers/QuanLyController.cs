@@ -21,40 +21,56 @@ namespace TechPro.API.Controllers
         [HttpGet("DashboardStats")]
         public async Task<ActionResult<DashboardViewModel>> GetDashboardStats()
         {
+            var tenantId = User.FindFirst("TenantId")?.Value;
+            if (string.IsNullOrEmpty(tenantId) && !User.IsInRole("SystemAdmin"))
+            {
+                return Unauthorized();
+            }
+
             var now = DateTime.UtcNow;
             var startOfMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
             var startOfLastMonth = startOfMonth.AddMonths(-1);
             var endOfLastMonth = startOfMonth.AddDays(-1);
 
+            var queryPhieu = _context.PhieuSuaChuas.AsQueryable();
+            var queryYeuCau = _context.YeuCauLinhKiens.AsQueryable();
+            
+            if (!string.IsNullOrEmpty(tenantId) && !User.IsInRole("SystemAdmin"))
+            {
+                // StoreAdmin only sees their store data
+                queryPhieu = queryPhieu.Where(p => p.TenantId == tenantId);
+                queryYeuCau = queryYeuCau.Where(y => y.PhieuSuaChua.TenantId == tenantId); // Assuming YeuCauLinhKien is linked to PhieuSuaChua
+                // SystemAdmin sees everything
+            }
+
             // Dùng NgayHoanThanh để tính doanh thu đúng kỳ kế toán
             // Phiếu nhận tháng 2 nhưng hoàn thành tháng 3 sẽ tính vào tháng 3
-            var currentMonthRevenue = await _context.PhieuSuaChuas
+            var currentMonthRevenue = await queryPhieu
                 .Where(p => (p.NgayHoanThanh ?? p.NgayNhan) >= startOfMonth
                     && (p.TrangThai == PhieuSuaChua.Statuses.Done || p.TrangThai == PhieuSuaChua.Statuses.Delivered))
                 .SumAsync(p => p.TongTien);
 
-            var lastMonthRevenue = await _context.PhieuSuaChuas
+            var lastMonthRevenue = await queryPhieu
                 .Where(p => (p.NgayHoanThanh ?? p.NgayNhan) >= startOfLastMonth
                     && (p.NgayHoanThanh ?? p.NgayNhan) <= endOfLastMonth
                     && (p.TrangThai == PhieuSuaChua.Statuses.Done || p.TrangThai == PhieuSuaChua.Statuses.Delivered))
                 .SumAsync(p => p.TongTien);
-
             var revenueChange = lastMonthRevenue > 0 
                 ? (double)((currentMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 
                 : 100;
 
-            var totalTickets = await _context.PhieuSuaChuas.CountAsync();
-            var thisMonthTickets = await _context.PhieuSuaChuas.CountAsync(p => p.NgayNhan >= startOfMonth);
+            var totalTickets = await queryPhieu.CountAsync();
+            var thisMonthTickets = await queryPhieu.CountAsync(p => p.NgayNhan >= startOfMonth);
 
             // Một query duy nhất group by date — thay vì 7 vòng lặp x 7 round trips DB
             // Lấy list trước rồi group in-memory để tránh EF Core không translate được
             // (p.NgayHoanThanh ?? p.NgayNhan).Date khi group trực tiếp trên SQL
             var sevenDaysAgo = now.AddDays(-6).Date;
-            var revenueRaw = await _context.PhieuSuaChuas
+            var revenueRaw = await queryPhieu
                 .Where(p => (p.NgayHoanThanh ?? p.NgayNhan) >= sevenDaysAgo
                     && (p.TrangThai == PhieuSuaChua.Statuses.Done || p.TrangThai == PhieuSuaChua.Statuses.Delivered))
                 .Select(p => new { NgayThucTe = p.NgayHoanThanh ?? p.NgayNhan, p.TongTien })
-                .ToListAsync(); // Fetch về memory, sau đó group in-memory
+                .ToListAsync(); 
 
             // Group in-memory theo Date — tránh EF Core phức tạp khi translate nullable coalesce + .Date
             var revenueByDay = revenueRaw
@@ -72,13 +88,13 @@ namespace TechPro.API.Controllers
                 .ToList();
 
             // Status Data
-            var statusData = await _context.PhieuSuaChuas
+            var statusData = await queryPhieu
                 .GroupBy(p => p.TrangThai)
                 .Select(g => new StatusDataPoint { Status = g.Key, Count = g.Count() })
                 .ToListAsync();
 
             // Top Parts
-            var topParts = await _context.YeuCauLinhKiens
+            var topParts = await queryYeuCau
                 .GroupBy(y => y.LinhKien.TenLinhKien)
                 .Select(g => new TopPartDataPoint { PartName = g.Key, Quantity = g.Sum(y => y.SoLuong) })
                 .OrderByDescending(x => x.Quantity)
@@ -87,7 +103,7 @@ namespace TechPro.API.Controllers
 
             // Tech Performance (Assuming KyThuatVien is NguoiDung)
             // Note: KyThuatVien might be null
-            var techPerformance = await _context.PhieuSuaChuas
+            var techPerformance = await queryPhieu
                 .Where(p => p.KyThuatVien != null)
                 .GroupBy(p => p.KyThuatVien!.TenDayDu)
                 .Select(g => new TechPerformanceDataPoint 

@@ -80,7 +80,13 @@ namespace TechPro.Controllers
                     // Sign In
                     await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
 
-                    return RedirectToLocal(returnUrl ?? result.RedirectUrl);
+                    // Sau khi đăng nhập, luôn đưa về Home/Index để redirect theo role (Storekeeper, Support, v.v.)
+                    if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                    {
+                        return Redirect(returnUrl);
+                    }
+
+                    return RedirectToAction("Index", "Home");
                 }
             }
 

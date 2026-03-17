@@ -610,7 +610,9 @@
     <script>
         // Initialize Lucide icons
         document.addEventListener('DOMContentLoaded', function() {
-            lucide.createIcons();
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
         });
         
         function toggleSidebar() {
@@ -640,13 +642,6 @@
             "showMethod": "fadeIn",
             "hideMethod": "fadeOut"
         };
-        
-        // Re-initialize icons after dynamic content loads
-        if (typeof lucide !== 'undefined') {
-            setInterval(() => {
-                lucide.createIcons();
-            }, 500);
-        }
     </script>
     <!-- Change Password Modal -->
     <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">

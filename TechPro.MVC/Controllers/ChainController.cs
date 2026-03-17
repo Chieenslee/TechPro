@@ -26,24 +26,41 @@ namespace TechPro.Controllers
         public async Task<IActionResult> Index(string tab = "overview")
         {
             var client = CreateClient();
-            var response = await client.GetAsync("api/Chain");
-            var stores = new List<CuaHang>();
+            var response = await client.GetAsync("api/Chain/dashboard");
             
-            if (response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync();
-                stores = JsonSerializer.Deserialize<List<CuaHang>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<CuaHang>();
-            }
-
             var vm = new TechPro.Models.ViewModels.ChainDashboardViewModel
             {
                 ActiveTab = tab,
-                Stores = stores,
-                ActiveStoresCount = stores.Count(s => s.TrangThai == "active"),
-                TotalRevenue = 500000000, // Static mock for now
-                TotalStaff = 15, // Static mock for now
-                InventoryItems = new List<KhoLinhKien>() // Empty for now unless tab == inventory
+                Stores = new List<CuaHang>(),
+                Users = new List<NguoiDung>(),
+                ActiveStoresCount = 0,
+                TotalRevenue = 0,
+                TotalStaff = 0,
+                InventoryItems = new List<KhoLinhKien>()
             };
+
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var dashData = JsonSerializer.Deserialize<TechPro.Models.DTOs.ChainDashboardDto>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                
+                if (dashData != null)
+                {
+                    vm.Stores = dashData.Stores;
+                    vm.Users = dashData.Users;
+                    vm.ActiveStoresCount = vm.Stores.Count(s => s.TrangThai == "active");
+                    vm.TotalRevenue = dashData.TotalRevenue;
+                    vm.TotalStaff = dashData.TotalStaff;
+                    
+                    ViewBag.ThisMonthStoreRevenues = dashData.ThisMonthStoreRevenues;
+                    ViewBag.UsersWithRoles = dashData.UsersWithRoles;
+                }
+            }
+            else
+            {
+                ViewBag.UsersWithRoles = new List<TechPro.Models.DTOs.UserWithRoleDto>();
+                ViewBag.ThisMonthStoreRevenues = new List<TechPro.Models.DTOs.StoreRevenueDto>();
+            }
 
             if (tab == "inventory")
             {
@@ -58,9 +75,6 @@ namespace TechPro.Controllers
                     }
                 }
             }
-
-            ViewBag.UsersWithRoles = new List<dynamic>(); // Prevent null ref in view
-            ViewBag.ThisMonthStoreRevenues = new List<dynamic>(); // Prevent null ref in view
 
             return View(vm);
         }

@@ -2,12 +2,13 @@ using Microsoft.EntityFrameworkCore;
 using TechPro.API.Data;
 using TechPro.API.Models;
 using Microsoft.AspNetCore.Identity;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddDbContext<TechProDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddIdentity<NguoiDung, IdentityRole>(options =>
 {
@@ -41,6 +42,7 @@ builder.Services.AddControllers()
 builder.Services.AddSignalR();
 builder.Services.AddScoped<TechPro.API.Services.SmartDiagnosisService>();
 builder.Services.AddScoped<TechPro.API.Services.AuditLogService>();
+builder.Services.AddHttpContextAccessor();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
@@ -76,6 +78,37 @@ app.UseHttpsRedirection();
 app.UseCors("MvcOnly"); // Chỉ MVC origin mới được gọi API
 
 app.UseAuthentication();
+
+// Middleware: đọc X-Caller-Email header từ MVC -> Tự động tạo ClaimsPrincipal
+// Giải quyết vấn đề: MVC gọi API nhưng không mang cookie Identity
+app.Use(async (context, next) =>
+{
+    var callerEmail = context.Request.Headers["X-Caller-Email"].FirstOrDefault();
+    if (!string.IsNullOrEmpty(callerEmail) && !(context.User?.Identity?.IsAuthenticated ?? false))
+    {
+        var userManager = context.RequestServices.GetRequiredService<UserManager<TechPro.API.Models.NguoiDung>>();
+        var user = await userManager.FindByEmailAsync(callerEmail);
+        if (user != null)
+        {
+            var roles = await userManager.GetRolesAsync(user);
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
+                new Claim(ClaimTypes.Email, user.Email ?? callerEmail),
+                new Claim(ClaimTypes.Name, user.UserName ?? callerEmail)
+            };
+            if (!string.IsNullOrEmpty(user.TenantId))
+            {
+                claims.Add(new Claim("TenantId", user.TenantId));
+            }
+            claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
+            var identity = new System.Security.Claims.ClaimsIdentity(claims, "XCallerEmail");
+            context.User = new System.Security.Claims.ClaimsPrincipal(identity);
+        }
+    }
+    await next();
+});
+
 app.UseAuthorization();
 
 app.MapControllers();

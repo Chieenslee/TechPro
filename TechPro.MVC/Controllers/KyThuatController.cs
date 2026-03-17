@@ -5,9 +5,8 @@ using System.Security.Claims;
 
 namespace TechPro.Controllers
 {
-    // Technician = thất cả nghiệp vụ kỹ thuật (xem, cập nhật trạng thái, ghi chú)
-    // StoreAdmin/SysAdmin = chỉ XEM + phân công (không điều khiển trạng thái phiếu)
-    [Authorize(Roles = "Technician,StoreAdmin,SystemAdmin")]
+    // Technician = tất cả nghiệp vụ kỹ thuật (xem, cập nhật trạng thái, ghi chú)
+    [Authorize(Roles = "Technician")]
     [Route("Technician/[controller]/{action=Index}/{id?}")]
     public class KyThuatController : Controller
     {
@@ -25,20 +24,14 @@ namespace TechPro.Controllers
             
             var client = _httpClientFactory.CreateClient("TechProAPI");
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var userRole = User.FindFirstValue(ClaimTypes.Role);
             var tenantId = User.FindFirstValue("TenantId");
 
-            // Filter logic moved to API params
-            // If Technician, filter by assigned? Or show all?
-            // Original logic:
-            // var query = _context.PhieuSuaChuas...
-            // if (User.IsInRole("Technician")) query = query.Where(p => p.KyThuatVienId == userId);
-            // This logic should be in API or passed as params.
-            
-            string queryParams = $"?status={status}&tenantId={tenantId}";
-            if (User.IsInRole("Technician"))
+            // Technician thấy: phiếu chưa gán (pending) + phiếu gán cho mình trong cùng Tenant
+            // Không filter assigneeId ở đây — API sẽ trả về tất cả và UI sẽ highlight phiếu của họ
+            string queryParams = $"?tenantId={tenantId}";
+            if (!string.IsNullOrEmpty(status) && status != "all")
             {
-                queryParams += $"&assigneeId={userId}";
+                queryParams += $"&status={status}";
             }
             if (!string.IsNullOrEmpty(searchTerm))
             {
@@ -50,10 +43,13 @@ namespace TechPro.Controllers
             if (response.IsSuccessStatusCode)
             {
                 var tickets = await response.Content.ReadFromJsonAsync<List<PhieuSuaChua>>();
+                // Highlight phiếu của mình ở View
+                ViewBag.MyUserId = userId;
                 return View(tickets);
             }
 
             return View(new List<PhieuSuaChua>());
+
         }
 
         public async Task<IActionResult> ChiTiet(string id)

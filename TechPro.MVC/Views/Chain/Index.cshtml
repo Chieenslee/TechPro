@@ -95,11 +95,12 @@
         </div>
     </div>
 
-    <!-- Revenue Chart by Store -->
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body">
             <h5 class="fw-semibold mb-4">Doanh thu theo cửa hàng (Tháng này)</h5>
-            <canvas id="storeRevenueChart" height="100"></canvas>
+            <div style="position: relative; height: 350px;">
+                <canvas id="storeRevenueChart"></canvas>
+            </div>
         </div>
     </div>
 
@@ -118,14 +119,14 @@ else if (Model.ActiveTab == "stores")
     <!-- Store Management -->
     <div class="row g-4">
         @{
-            var thisMonthStoreRevenues = ViewBag.ThisMonthStoreRevenues as IEnumerable<dynamic> ?? new List<dynamic>();
+            var thisMonthStoreRevenues = ViewBag.ThisMonthStoreRevenues as IEnumerable<TechPro.Models.DTOs.StoreRevenueDto> ?? new List<TechPro.Models.DTOs.StoreRevenueDto>();
         }
         @foreach (var store in Model.Stores)
         {
             var storeStaff = Model.Users.Count(u => u.TenantId == store.Id);
             var storeTickets = store.PhieuSuaChuas?.Count ?? 0;
             var thisMonthRevenue = thisMonthStoreRevenues.FirstOrDefault(sr => sr.TenantId == store.Id);
-            var storeRevenue = thisMonthRevenue?.Revenue ?? 0;
+            var storeRevenue = thisMonthRevenue?.Revenue ?? 0m;
             
             <div class="col-md-4">
                 <div class="card border-0 shadow-sm h-100">
@@ -203,12 +204,12 @@ else if (Model.ActiveTab == "staff")
                     </thead>
                     <tbody>
                         @{
-                            var usersWithRoles = ViewBag.UsersWithRoles as IEnumerable<dynamic> ?? new List<dynamic>();
+                            var usersWithRoles = ViewBag.UsersWithRoles as IEnumerable<TechPro.Models.DTOs.UserWithRoleDto> ?? new List<TechPro.Models.DTOs.UserWithRoleDto>();
                         }
                         @foreach (var item in usersWithRoles)
                         {
-                            var user = item.User as NguoiDung;
-                            var userRole = item.Role as string ?? "N/A";
+                            var user = item.User;
+                            var userRole = item.Role ?? "N/A";
                             
                             <tr>
                                 <td>
@@ -450,16 +451,19 @@ else if (Model.ActiveTab == "inventory")
         {
             <text>
             document.addEventListener('DOMContentLoaded', function() {
-                const stores = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Stores.Select(s => new { Name = s.TenCuaHang, Revenue = s.DoanhThu })));
+                @{
+                    var thisMonthStoreRevenuesJson = ViewBag.ThisMonthStoreRevenues as IEnumerable<TechPro.Models.DTOs.StoreRevenueDto> ?? new List<TechPro.Models.DTOs.StoreRevenueDto>();
+                }
+                const stores = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Stores.Select(s => new { Name = s.TenCuaHang, Revenue = thisMonthStoreRevenuesJson.FirstOrDefault(r => r.TenantId == s.Id)?.Revenue ?? 0m })));
                 const ctx = document.getElementById('storeRevenueChart');
                 if (ctx) {
                     new Chart(ctx.getContext('2d'), {
                         type: 'bar',
                         data: {
-                            labels: stores.map(s => s.Name),
+                            labels: stores.map(s => s.Name || s.name),
                             datasets: [{
                                 label: 'Doanh thu (VNĐ)',
-                                data: stores.map(s => s.Revenue),
+                                data: stores.map(s => s.Revenue || s.revenue || 0),
                                 backgroundColor: 'rgba(59, 130, 246, 0.5)',
                                 borderColor: 'rgba(59, 130, 246, 1)',
                                 borderWidth: 2,
@@ -468,6 +472,7 @@ else if (Model.ActiveTab == "inventory")
                         },
                         options: {
                             responsive: true,
+                            maintainAspectRatio: false,
                             plugins: {
                                 legend: { display: false },
                                 tooltip: {
