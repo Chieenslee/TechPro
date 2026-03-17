@@ -1,6 +1,11 @@
 @using System.Security.Claims
 <!DOCTYPE html>
-<html lang="vi">
+@{
+    var langCookie = Context.Request.Cookies["tp_lang"] ?? "vi";
+    var htmlLang = langCookie.Equals("en", StringComparison.OrdinalIgnoreCase) ? "en" : "vi";
+    var returnUrl = Context.Request.Path + Context.Request.QueryString;
+}
+<html lang="@htmlLang">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -535,6 +540,29 @@
                                 </li>
                             </ul>
                         </div>
+
+                        <!-- Language -->
+                        <div class="dropdown">
+                            <button class="notification-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Language">
+                                <i class="bi bi-translate"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-slate-200 mt-2 rounded-3" style="min-width: 160px;">
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center gap-2"
+                                       href="/Language/Set?culture=vi&returnUrl=@Uri.EscapeDataString(returnUrl)">
+                                        <span class="fw-semibold">Tiếng Việt</span>
+                                        @if (htmlLang == "vi") { <i class="bi bi-check2 ms-auto text-success"></i> }
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center gap-2"
+                                       href="/Language/Set?culture=en&returnUrl=@Uri.EscapeDataString(returnUrl)">
+                                        <span class="fw-semibold">English</span>
+                                        @if (htmlLang == "en") { <i class="bi bi-check2 ms-auto text-success"></i> }
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                         
                         <!-- User Profile -->
                         <div class="user-profile dropdown" style="cursor: pointer;" data-bs-toggle="dropdown" aria-expanded="false">
@@ -581,6 +609,30 @@
     }
     else
     {
+        <div class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+            <div class="dropdown">
+                <button class="btn btn-light border shadow-sm rounded-pill px-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-translate me-2"></i>@(htmlLang == "en" ? "English" : "Tiếng Việt")
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                    <li>
+                        <a class="dropdown-item d-flex align-items-center gap-2"
+                           href="/Language/Set?culture=vi&returnUrl=@Uri.EscapeDataString(returnUrl)">
+                            <span class="fw-semibold">Tiếng Việt</span>
+                            @if (htmlLang == "vi") { <i class="bi bi-check2 ms-auto text-success"></i> }
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item d-flex align-items-center gap-2"
+                           href="/Language/Set?culture=en&returnUrl=@Uri.EscapeDataString(returnUrl)">
+                            <span class="fw-semibold">English</span>
+                            @if (htmlLang == "en") { <i class="bi bi-check2 ms-auto text-success"></i> }
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
         @RenderBody()
     }
 

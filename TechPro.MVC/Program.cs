@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using TechPro.Models;
+using TechPro.Middleware;
+using TechPro.Services;
 
 namespace TechPro
 {
@@ -56,6 +58,9 @@ namespace TechPro
 
             builder.Services.AddControllersWithViews();
             // SignalR was previously used for internal chat UI; keeping disabled for now.
+            
+            // Auto-translate HTML (VI -> EN) using Gemini + cache
+            builder.Services.AddSingleton<HtmlTranslationService>();
 
             var app = builder.Build();
 
@@ -70,6 +75,9 @@ namespace TechPro
             app.UseStaticFiles();
 
             app.UseRouting();
+            
+            // Translate full HTML responses when tp_lang=en
+            app.UseMiddleware<HtmlAutoTranslateMiddleware>();
 
             // Middleware xác thực và phân quyền
             app.UseAuthentication();
