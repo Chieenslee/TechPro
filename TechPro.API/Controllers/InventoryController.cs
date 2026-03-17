@@ -97,7 +97,7 @@ namespace TechPro.API.Controllers
         }
 
         [HttpPost("approve/{id}")]
-        [Authorize(Roles = "StoreAdmin,SystemAdmin")]
+        [Authorize(Roles = "Storekeeper,StoreAdmin,SystemAdmin")]
         public async Task<IActionResult> ApproveRequest(string id)
         {
             var yeuCau = await _context.YeuCauLinhKiens
@@ -111,10 +111,18 @@ namespace TechPro.API.Controllers
             if (linhKien == null)
                 return BadRequest(new { message = "Không tìm thấy linh kiện." });
 
-            if (linhKien.SoLuongTon < yeuCau.SoLuong)
-                return BadRequest(new { message = "Không đủ tồn kho. Tồn kho hiện tại: " + linhKien.SoLuongTon });
+            // Dùng raw SQL UPDATE atomic để tránh race condition tồn kho âm:
+            // Nếu 2 request duyệt cùng lúc, chỉ 1 cái UPDATE thành công (WHERE SoLuongTon >= SoLuong)
+            var rowsAffected = await _context.Database.ExecuteSqlRawAsync(
+                "UPDATE KhoLinhKiens SET SoLuongTon = SoLuongTon - {0} WHERE Id = {1} AND SoLuongTon >= {0}",
+                yeuCau.SoLuong, linhKien.Id);
 
-            linhKien.SoLuongTon -= yeuCau.SoLuong;
+            if (rowsAffected == 0)
+                return BadRequest(new { message = "Không đủ tồn kho hoặc đã được duyệt bởi người khác." });
+
+            // Reload để lấy giá trị mới nhất sau UPDATE
+            await _context.Entry(linhKien).ReloadAsync();
+
             yeuCau.TrangThai = "approved";
             yeuCau.GiaTaiThoiDiemYeuCau = linhKien.GiaBan;
 
@@ -136,7 +144,7 @@ namespace TechPro.API.Controllers
         }
 
         [HttpPost("reject/{id}")]
-        [Authorize(Roles = "StoreAdmin,SystemAdmin")]
+        [Authorize(Roles = "Storekeeper,StoreAdmin,SystemAdmin")]
         public async Task<IActionResult> RejectRequest(string id)
         {
             var yeuCau = await _context.YeuCauLinhKiens.FindAsync(id);
@@ -159,7 +167,7 @@ namespace TechPro.API.Controllers
         }
 
         [HttpPost("confirm-waste/{id}")]
-        [Authorize(Roles = "StoreAdmin,SystemAdmin")]
+        [Authorize(Roles = "Storekeeper,StoreAdmin,SystemAdmin")]
         public async Task<IActionResult> ConfirmWaste(string id)
         {
             var traXac = await _context.TraXacs.FindAsync(id);
@@ -182,7 +190,7 @@ namespace TechPro.API.Controllers
         }
 
         [HttpGet("low-stock")]
-        [Authorize(Roles = "StoreAdmin,SystemAdmin")]
+        [Authorize(Roles = "Storekeeper,StoreAdmin,SystemAdmin")]
         public async Task<IActionResult> GetLowStockItems(int threshold = 5, string? tenantId = null)
         {
             // Note: tenantId logic should typically come from User claims in API

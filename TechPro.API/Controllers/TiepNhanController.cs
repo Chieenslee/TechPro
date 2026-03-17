@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TechPro.API.Data;
 using TechPro.API.Models;
+using TechPro.API.Services;
 
 namespace TechPro.API.Controllers
 {
@@ -12,10 +13,12 @@ namespace TechPro.API.Controllers
     public class TiepNhanController : ControllerBase
     {
         private readonly TechProDbContext _context;
+        private readonly AuditLogService _audit;
 
-        public TiepNhanController(TechProDbContext context)
+        public TiepNhanController(TechProDbContext context, AuditLogService audit)
         {
             _context = context;
+            _audit = audit;
         }
 
         // ════════════════════════════════════════════════════════════════
@@ -89,7 +92,8 @@ namespace TechPro.API.Controllers
             if (string.IsNullOrEmpty(phieuSuaChua.Id))
             {
                 var now = DateTime.UtcNow.AddHours(7);
-                phieuSuaChua.Id = "PSC" + now.ToString("yyMMddHHmmss");
+                // Dùng Guid suffix để tránh race condition khi 2 phiếu được tạo cùng giây
+                phieuSuaChua.Id = "PSC" + now.ToString("yyMMddHHmm") + Guid.NewGuid().ToString("N")[..6].ToUpper();
             }
 
             phieuSuaChua.NgayNhan = DateTime.UtcNow;
@@ -116,7 +120,9 @@ namespace TechPro.API.Controllers
 
         // POST: api/TiepNhan/{id}/Huy  (Lễ tân hủy phiếu)
         [HttpPost("{id}/Huy")]
-        public async Task<IActionResult> HuyPhieu(string id)
+        // Dùng [FromQuery] thay [FromBody] vì MVC caller gửi null body (PostAsync(..., null))
+        // [FromBody] với null body và không có Content-Type sẽ gây HTTP 415
+        public async Task<IActionResult> HuyPhieu(string id, [FromQuery] string? lyDoHuy = null)
         {
             var phieu = await _context.PhieuSuaChuas.FindAsync(id);
             if (phieu == null) return NotFound(new { message = "Không tìm thấy phiếu." });
@@ -125,7 +131,35 @@ namespace TechPro.API.Controllers
                 return BadRequest(new { message = "Không thể hủy phiếu đã hoàn thành." });
 
             phieu.TrangThai = "cancelled";
+
+            // Ghi lịch sử hủy phiếu để traceability — ai hủy, lúc nào, lý do gì
+            var callerEmail = Request.Headers["X-Caller-Email"].FirstOrDefault() ?? "unknown";
+            var caller = await _context.Users.FirstOrDefaultAsync(u => u.Email == callerEmail);
+            if (caller != null)
+            {
+                _context.LichSuHuyPhieus.Add(new LichSuHuyPhieu
+                {
+                    PhieuSuaChuaId = id,
+                    NguoiYeuCauId  = caller.Id,
+                    LyDoHuy        = lyDoHuy ?? "Không có lý do",
+                    TrangThai      = "DaHuy",
+                    NgayYeuCau     = DateTime.UtcNow.AddHours(7),
+                    NgayDuyet      = DateTime.UtcNow.AddHours(7)
+                });
+            }
+
             await _context.SaveChangesAsync();
+
+            // Ghi audit log
+            await _audit.LogAsync(
+                thucHienBoi: callerEmail,
+                role: Request.Headers["X-Caller-Role"].FirstOrDefault() ?? "unknown",
+                hanhDong: "HuyPhieu",
+                doiTuongId: id,
+                loaiDoiTuong: "PhieuSuaChua",
+                ghiChu: lyDoHuy ?? "Không có lý do",
+                ipAddress: HttpContext.Connection.RemoteIpAddress?.ToString()
+            );
 
             return Ok(new { message = "Đã hủy phiếu thành công." });
         }

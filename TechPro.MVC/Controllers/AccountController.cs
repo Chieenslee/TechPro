@@ -62,6 +62,7 @@ namespace TechPro.Controllers
                     // Create Claims Principal
                     var claims = new List<Claim>
                     {
+                        new Claim(ClaimTypes.NameIdentifier, result.User.Id), // ID để filter phiếu đúng Technician
                         new Claim(ClaimTypes.Name, result.User.Email),
                         new Claim(ClaimTypes.Email, result.User.Email),
                         new Claim("FullName", result.User.Name), // Custom claim

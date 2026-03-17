@@ -9,7 +9,7 @@ namespace TechPro.API.Data
         public static async Task SeedAsync(UserManager<NguoiDung> userManager, RoleManager<IdentityRole> roleManager, TechProDbContext context)
         {
             // 1. Tạo Roles
-            string[] roles = { "SystemAdmin", "StoreAdmin", "Technician", "Support" };
+            string[] roles = { "SystemAdmin", "StoreAdmin", "Technician", "Support", "Storekeeper" };
             foreach (var roleName in roles)
             {
                 if (!await roleManager.RoleExistsAsync(roleName))
@@ -45,7 +45,7 @@ namespace TechPro.API.Data
                 ("sysadmin@techpro.com", "Admin Chuỗi", "SystemAdmin", null),
                 ("admin@techpro.com", "Quản Lý Cửa Hàng", "StoreAdmin", "STORE-001"),
                 ("support@techpro.com", "Lễ Tân", "Support", "STORE-001"),
-                ("kho@techpro.com", "Thủ Kho", "StoreAdmin", "STORE-001"),
+                ("kho@techpro.com", "Thủ Kho", "Storekeeper", "STORE-001"),
                 ("tech@techpro.com", "Kỹ Thuật Viên 1", "Technician", "STORE-001"),
                 ("tech2@techpro.com", "Kỹ Thuật Viên 2", "Technician", "STORE-001")
             };

@@ -26,14 +26,17 @@ namespace TechPro.API.Controllers
             var startOfLastMonth = startOfMonth.AddMonths(-1);
             var endOfLastMonth = startOfMonth.AddDays(-1);
 
-            // Revenue Logic (Assuming PhieuSuaChua has TongTien and TrangThai)
-            // Note: In real app, check for PaymentStatus. Here simplified to Status = 'completed' or 'delivered'
+            // Dùng NgayHoanThanh để tính doanh thu đúng kỳ kế toán
+            // Phiếu nhận tháng 2 nhưng hoàn thành tháng 3 sẽ tính vào tháng 3
             var currentMonthRevenue = await _context.PhieuSuaChuas
-                .Where(p => p.NgayNhan >= startOfMonth && (p.TrangThai == PhieuSuaChua.Statuses.Done || p.TrangThai == PhieuSuaChua.Statuses.Delivered))
+                .Where(p => (p.NgayHoanThanh ?? p.NgayNhan) >= startOfMonth
+                    && (p.TrangThai == PhieuSuaChua.Statuses.Done || p.TrangThai == PhieuSuaChua.Statuses.Delivered))
                 .SumAsync(p => p.TongTien);
 
             var lastMonthRevenue = await _context.PhieuSuaChuas
-                .Where(p => p.NgayNhan >= startOfLastMonth && p.NgayNhan <= endOfLastMonth && (p.TrangThai == PhieuSuaChua.Statuses.Done || p.TrangThai == PhieuSuaChua.Statuses.Delivered))
+                .Where(p => (p.NgayHoanThanh ?? p.NgayNhan) >= startOfLastMonth
+                    && (p.NgayHoanThanh ?? p.NgayNhan) <= endOfLastMonth
+                    && (p.TrangThai == PhieuSuaChua.Statuses.Done || p.TrangThai == PhieuSuaChua.Statuses.Delivered))
                 .SumAsync(p => p.TongTien);
 
             var revenueChange = lastMonthRevenue > 0 
@@ -43,17 +46,30 @@ namespace TechPro.API.Controllers
             var totalTickets = await _context.PhieuSuaChuas.CountAsync();
             var thisMonthTickets = await _context.PhieuSuaChuas.CountAsync(p => p.NgayNhan >= startOfMonth);
 
-            // Revenue Data (Last 7 days)
-            var revenueData = new List<RevenueDataPoint>();
-            for (int i = 6; i >= 0; i--)
-            {
-                var day = now.AddDays(-i).Date;
-                var nextDay = day.AddDays(1);
-                var dayRevenue = await _context.PhieuSuaChuas
-                    .Where(p => p.NgayNhan >= day && p.NgayNhan < nextDay && (p.TrangThai == PhieuSuaChua.Statuses.Done || p.TrangThai == PhieuSuaChua.Statuses.Delivered))
-                    .SumAsync(p => p.TongTien);
-                revenueData.Add(new RevenueDataPoint { Name = day.ToString("dd/MM"), Value = dayRevenue });
-            }
+            // Một query duy nhất group by date — thay vì 7 vòng lặp x 7 round trips DB
+            // Lấy list trước rồi group in-memory để tránh EF Core không translate được
+            // (p.NgayHoanThanh ?? p.NgayNhan).Date khi group trực tiếp trên SQL
+            var sevenDaysAgo = now.AddDays(-6).Date;
+            var revenueRaw = await _context.PhieuSuaChuas
+                .Where(p => (p.NgayHoanThanh ?? p.NgayNhan) >= sevenDaysAgo
+                    && (p.TrangThai == PhieuSuaChua.Statuses.Done || p.TrangThai == PhieuSuaChua.Statuses.Delivered))
+                .Select(p => new { NgayThucTe = p.NgayHoanThanh ?? p.NgayNhan, p.TongTien })
+                .ToListAsync(); // Fetch về memory, sau đó group in-memory
+
+            // Group in-memory theo Date — tránh EF Core phức tạp khi translate nullable coalesce + .Date
+            var revenueByDay = revenueRaw
+                .GroupBy(p => p.NgayThucTe.Date)
+                .ToDictionary(g => g.Key, g => g.Sum(p => p.TongTien));
+
+            // Map đủ 7 ngày, ngày không có doanh thu thì = 0
+            var revenueData = Enumerable.Range(0, 7)
+                .Select(i => now.AddDays(-6 + i).Date)
+                .Select(day => new RevenueDataPoint
+                {
+                    Name  = day.ToString("dd/MM"),
+                    Value = revenueByDay.TryGetValue(day, out var val) ? val : 0
+                })
+                .ToList();
 
             // Status Data
             var statusData = await _context.PhieuSuaChuas

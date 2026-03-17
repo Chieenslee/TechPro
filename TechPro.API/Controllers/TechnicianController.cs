@@ -94,6 +94,14 @@ namespace TechPro.API.Controllers
             if (ticket == null) return NotFound();
 
             ticket.TrangThai = status;
+
+            // Set NgayHoanThanh khi phiếu chuyển sang trạng thái hoàn thành/giao máy
+            // để tính doanh thu đúng kỳ kế toán (không dùng NgayNhan)
+            if (status == PhieuSuaChua.Statuses.Done || status == PhieuSuaChua.Statuses.Delivered)
+            {
+                ticket.NgayHoanThanh ??= DateTime.UtcNow.AddHours(7);
+            }
+
             await _context.SaveChangesAsync();
             await _hubContext.Clients.All.SendAsync("TicketStatusChanged", id, status);
 

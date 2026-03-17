@@ -122,10 +122,14 @@ namespace TechPro.API.Controllers
                               ?? User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
             var callerRole  = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
 
-            if (!string.IsNullOrEmpty(callerEmail)
-                && callerEmail != "unknown"
-                && callerEmail != user.Email
-                && callerRole != "SystemAdmin")
+            // Fail-secure: không xác định được danh tính người gọi → từ chối ngay
+            // Tránh bypass khi callerEmail = null làm mất điều kiện kiểm tra
+            if (string.IsNullOrEmpty(callerEmail) || callerEmail == "unknown")
+            {
+                return Forbid();
+            }
+
+            if (callerEmail != user.Email && callerRole != "SystemAdmin")
             {
                 return Forbid();  // 403 — không phải chính chủ
             }
@@ -147,6 +151,7 @@ namespace TechPro.API.Controllers
             "StoreAdmin"  => "/StoreAdmin",
             "Technician"  => "/Technician",
             "Support"     => "/Support",
+            "Storekeeper" => "/Storekeeper",
             _             => "/"
         };
     }

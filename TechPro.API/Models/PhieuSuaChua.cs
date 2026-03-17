@@ -41,6 +41,10 @@ namespace TechPro.API.Models
         [Required]
         public DateTime NgayNhan { get; set; } = DateTime.UtcNow;
 
+        // Ngày hoàn thành thực tế — dùng để tính doanh thu đúng kỳ kế toán
+        // Được set khi TrangThai chuyển sang "done" hoặc "delivered"
+        public DateTime? NgayHoanThanh { get; set; }
+
         [StringLength(1000)]
         public string? MoTaLoi { get; set; }
 

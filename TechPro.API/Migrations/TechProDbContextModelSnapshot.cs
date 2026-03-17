@@ -729,6 +729,10 @@ namespace TechPro.API.Migrations
                     b.Property<DateTime>("NgayNhan")
                         .HasColumnType("datetime2");
 
+                    // Thêm NgayHoanThanh — dùng để tính doanh thu đúng kỳ kế toán
+                    b.Property<DateTime?>("NgayHoanThanh")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("PhuKien")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");

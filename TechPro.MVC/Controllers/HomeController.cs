@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using TechPro.Models;
 using TechPro.Models.ViewModels;
-using TechPro.Models;
 using System.Text.Json;
 using System.Text;
 

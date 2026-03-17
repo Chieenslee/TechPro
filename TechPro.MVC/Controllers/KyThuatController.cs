@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using TechPro.Models; // For ViewModels if any
 using TechPro.Models;
 using System.Security.Claims;
 

@@ -56,10 +56,10 @@ namespace TechPro.Controllers
         // Technician xem yêu cầu của mình tại: /Technician/KyThuat/LinhKien (domain riêng)
 
         // ════════════════════════════════════════════════════════════
-        // MANAGE — StoreAdmin: duyệt/từ chối/nhập-xuất/cảnh báo
+        // MANAGE — Storekeeper / StoreAdmin: duyệt/từ chối/nhập-xuất/cảnh báo
         // ════════════════════════════════════════════════════════════
         [HttpGet("Manage")]
-        [Authorize(Roles = "StoreAdmin,SystemAdmin")]
+        [Authorize(Roles = "Storekeeper,StoreAdmin,SystemAdmin")]
         [ActionName("Manage")]
         public async Task<IActionResult> KhoManage(string? tab = "requests", string? searchTerm = null)
         {

@@ -20,6 +20,19 @@ builder.Services.AddIdentity<NguoiDung, IdentityRole>(options =>
     .AddEntityFrameworkStores<TechProDbContext>()
     .AddDefaultTokenProviders();
 
+// CORS: chỉ cho phép MVC gọi vào API — không mở public
+// TODO: Cần thêm JWT Bearer Auth cho production. Hiện tại dùng Cookie Identity
+// (MVC gọi server-to-server + X-Caller-Email header để định danh)
+var mvcOrigin = builder.Configuration["ApiSettings:MvcOrigin"] ?? "https://localhost:7041";
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("MvcOnly", policy =>
+        policy.WithOrigins(mvcOrigin)
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials());
+});
+
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -59,6 +72,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("MvcOnly"); // Chỉ MVC origin mới được gọi API
 
 app.UseAuthentication();
 app.UseAuthorization();
