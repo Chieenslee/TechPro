@@ -79,10 +79,25 @@ cd d:\TechPro\full\TechPro.MVC
 dotnet run
 ```
 
-Ports tham khảo (xem chính xác trong `Properties/launchSettings.json`):
+Ports (xem chính xác trong `Properties/launchSettings.json`):
 
-- API: `http://localhost:5078` / `https://localhost:7103`
-- MVC: thường là `http://localhost:5077` (tuỳ launchSettings)
+| Project | HTTP | HTTPS |
+|---|---|---|
+| TechPro.API | `http://localhost:5078` | `https://localhost:7103` |
+| TechPro.MVC | `http://localhost:5077` | `https://localhost:7127` |
+
+---
+
+## API Documentation (Swagger)
+
+Swagger UI chạy tự động ở môi trường **Development**:
+
+| URL | Mô tả |
+|---|---|
+| **`https://localhost:7103/scalar/v1`** | 🎨 Scalar UI – giao diện API docs |
+| `https://localhost:7103/swagger/v1/swagger.json` | 📄 Raw OpenAPI JSON spec |
+
+> **Xác thực**: nhập email người dùng vào ô `X-Caller-Email` trên Scalar UI để test các endpoint yêu cầu đăng nhập.
 
 ---
 
@@ -124,13 +139,49 @@ Debug nhanh:
 
 Các role chính:
 
-- `SystemAdmin`
-- `StoreAdmin`
-- `Storekeeper`
-- `Support`
-- `Technician`
+| Role | Quyền hạn |
+|---|---|
+| `SystemAdmin` | Toàn bộ hệ thống, quản lý chuỗi cửa hàng |
+| `StoreAdmin` | Quản lý 1 cửa hàng, xem báo cáo |
+| `Support` | Tiếp nhận, tạo/đóng phiếu sửa chữa |
+| `Technician` | Sửa chữa, yêu cầu linh kiện |
+| `Storekeeper` | Quản lý kho, duyệt yêu cầu linh kiện |
 
 Thông tin account seed phụ thuộc `TechPro.API/Data/DbInitializer.cs`.
+
+---
+
+## Danh sách trang (35 trang)
+
+| Nhóm | URL | Mô tả |
+|---|---|---|
+| Public | `/` | Trang chủ |
+| Public | `/Home/TraCuu` | Tra cứu phiếu sửa chữa |
+| Public | `/Home/DatLich` | Đặt lịch hẹn |
+| Public | `/Home/Warranty` | Tra cứu bảo hành |
+| Public | `/TraMay` | Tra máy theo Serial Number |
+| Public | `/Account/Login` | Đăng nhập |
+| Support | `/TiepNhan` | Danh sách phiếu tiếp nhận |
+| Support | `/TiepNhan/ChiTiet/{id}` | Chi tiết phiếu sửa chữa |
+| Support | `/Support` | Màn hình Support tổng quan |
+| Technician | `/KyThuat` | Danh sách phiếu kỹ thuật |
+| Technician | `/KyThuat/ChiTiet/{id}` | Chi tiết sửa chữa |
+| Technician | `/KyThuat/LinhKien` | Quản lý linh kiện yêu cầu |
+| Technician | `/TechnicianDashboard` | Dashboard kỹ thuật viên |
+| Kho | `/Kho` | Tổng quan kho |
+| Kho | `/Kho/Manage` | Quản lý tồn kho |
+| Kho | `/Kho/Request` | Duyệt yêu cầu linh kiện |
+| Kho | `/Kho/View` | Xem chi tiết kho |
+| Kho | `/StorekeeperDashboard` | Dashboard thủ kho |
+| Quản lý | `/QuanLy` | Tổng quan quản lý |
+| Quản lý | `/QuanLy/BaoCao` | Báo cáo thống kê |
+| Quản lý | `/QuanLy/CauHinh` | Cấu hình cửa hàng |
+| Quản lý | `/StoreAdminDashboard` | Dashboard quản lý cửa hàng |
+| Monitor | `/TiepNhanMonitor` | Monitor tiếp nhận realtime |
+| Monitor | `/KyThuatMonitor` | Monitor kỹ thuật realtime |
+| SystemAdmin | `/SysAdminDashboard` | Dashboard hệ thống |
+| SystemAdmin | `/Chain` | Danh sách chuỗi cửa hàng |
+| SystemAdmin | `/Chain/ChiTietCuaHang/{id}` | Chi tiết cửa hàng |
 
 ---
 

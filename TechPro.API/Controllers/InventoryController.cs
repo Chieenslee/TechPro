@@ -10,9 +10,10 @@ using TechPro.API.Services;
 
 namespace TechPro.API.Controllers
 {
+    /// <summary>Kho – quản lý linh kiện, duyệt yêu cầu, kiểm kê tồn kho</summary>
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]  // Tất cả endpoint yêu cầu đăng nhập
+    [Authorize]
     public class InventoryController : ControllerBase
     {
         private readonly TechProDbContext _context;

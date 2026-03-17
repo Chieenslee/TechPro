@@ -8,6 +8,7 @@ using TechPro.API.Models.DTOs;
 
 namespace TechPro.API.Controllers
 {
+    /// <summary>Xác thực người dùng – đăng nhập, thông tin phiên làm việc</summary>
     [Route("api/[controller]")]
     [ApiController]
     public class AuthController : ControllerBase

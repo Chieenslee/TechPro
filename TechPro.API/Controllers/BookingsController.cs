@@ -5,9 +5,10 @@ using TechPro.API.Models;
 
 namespace TechPro.API.Controllers
 {
+    /// <summary>Đặt lịch hẹn – khách hàng đặt lịch online, quản lý lịch hẹn sửa chữa</summary>
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]  // Mặc định yêu cầu auth, trừ endpoint override AlløwAnonymous
+    [Authorize]
     public class BookingsController : ControllerBase
     {
         private readonly TechProDbContext _context;

@@ -3,6 +3,8 @@ using TechPro.API.Data;
 using TechPro.API.Models;
 using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
+using Microsoft.OpenApi.Models;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,8 +50,35 @@ builder.Services.AddHttpClient();
 builder.Services.AddSingleton<TechPro.API.Services.ISmsSender, TechPro.API.Services.HttpSmsSender>();
 builder.Services.AddSingleton<TechPro.API.Services.IEmailSender, TechPro.API.Services.SmtpEmailSender>();
 builder.Services.AddHttpContextAccessor();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+// OpenAPI + Scalar (native .NET 10)
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer((document, context, ct) =>
+    {
+        document.Info = new OpenApiInfo
+        {
+            Title = "TechPro API",
+            Version = "v1",
+            Description = """
+                API backend cho hệ thống quản lý sửa chữa & bảo hành thiết bị **TechPro**.
+
+                ## Xác thực
+                Mọi request từ MVC phải kèm header **X-Caller-Email** chứa email người dùng đã đăng nhập.
+
+                ## Roles
+                - `SystemAdmin` – Toàn quyền hệ thống
+                - `StoreAdmin` – Quản lý cửa hàng
+                - `Support` – Tiếp nhận phiếu sửa chữa
+                - `Technician` – Kỹ thuật viên
+                - `Storekeeper` – Thủ kho
+                """,
+            Contact = new OpenApiContact { Name = "TechPro Team" }
+        };
+        return Task.CompletedTask;
+    });
+
+    options.AddDocumentTransformer<TechPro.API.Services.ApiKeySecurityTransformer>();
+});
 
 var app = builder.Build();
 
@@ -76,6 +105,12 @@ using (var scope = app.Services.CreateScope())
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference(options =>
+    {
+        options.Title = "TechPro API Docs";
+        options.Theme = ScalarTheme.DeepSpace;
+        options.DefaultHttpClient = new(ScalarTarget.CSharp, ScalarClient.HttpClient);
+    });
 }
 
 app.UseHttpsRedirection();

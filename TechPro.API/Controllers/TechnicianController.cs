@@ -10,9 +10,10 @@ using TechPro.API.Services;
 
 namespace TechPro.API.Controllers
 {
+    /// <summary>Kỹ thuật viên – nhận phiếu, cập nhật tiến độ sửa chữa, yêu cầu linh kiện</summary>
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]  // Yêu cầu đăng nhập cho TẤT CẢ endpoint trong controller này
+    [Authorize]
     public class TechnicianController : ControllerBase
     {
         private readonly TechProDbContext _context;

@@ -7,6 +7,7 @@ using TechPro.API.Services;
 
 namespace TechPro.API.Controllers
 {
+    /// <summary>Tiếp nhận – quản lý phiếu sửa chữa (tạo, tra cứu, cập nhật trạng thái)</summary>
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]  // Mọi endpoint yêu cầu đăng nhập

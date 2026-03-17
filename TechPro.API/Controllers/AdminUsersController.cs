@@ -7,6 +7,7 @@ using TechPro.API.Models;
 
 namespace TechPro.API.Controllers
 {
+    /// <summary>Quản trị người dùng – tạo tài khoản, phân role, quản lý nhân viên (chỉ SystemAdmin)</summary>
     [Route("api/[controller]")]
     [ApiController]
     [Authorize(Roles = "SystemAdmin")]

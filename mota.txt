@@ -1,0 +1,243 @@
+================================================================
+       TECHPRO - SƠ ĐỒ HOẠT ĐỘNG & DANH SÁCH TRANG
+================================================================
+
+================================================================
+PHẦN 1: SƠ ĐỒ HOẠT ĐỘNG HỆ THỐNG
+================================================================
+
+1. KIẾN TRÚC TỔNG THỂ
+─────────────────────────────────────────────────────────────────
+
+┌──────────────────────────────────────────────────────────────────┐
+│                     NGƯỜI DÙNG (Browser)                         │
+└──────────────────────────┬───────────────────────────────────────┘
+                           │ HTTPS + Cookie Session
+                           ▼
+┌──────────────────────────────────────────────────────────────────┐
+│                   TechPro.MVC  (Razor + JS)                      │
+│                                                                  │
+│  ┌──────────────┐  ┌──────────────┐  ┌────────────────────────┐ │
+│  │  AccountCtrl │  │  Middleware  │  │  HtmlTranslation       │ │
+│  │  (Login/Out) │  │ AutoTranslate│  │  Service (Gemini AI)   │ │
+│  └──────────────┘  └──────────────┘  └────────────────────────┘ │
+│                                                                  │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │            Controllers (23 routes)                        │   │
+│  │  TiepNhan │ KyThuat │ Kho │ QuanLy │ Customer │ Admin   │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                                                                  │
+│   CallerEmailHandler ─► thêm header X-Caller-Email vào request  │
+└──────────────────────────┬───────────────────────────────────────┘
+                           │ HTTP + X-Caller-Email
+                           ▼
+┌──────────────────────────────────────────────────────────────────┐
+│                    TechPro.API  (Web API)                        │
+│                                                                  │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  Middleware: X-Caller-Email ─► ClaimsPrincipal (roles)     │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                                                                  │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌───────┐ ┌────────┐  │
+│  │   Auth   │ │TiepNhan  │ │Technician│ │Kho/   │ │QuanLy  │  │
+│  │Controller│ │Controller│ │Controller│ │Invent.│ │/Chain  │  │
+│  └──────────┘ └──────────┘ └──────────┘ └───────┘ └────────┘  │
+│                                                                  │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │              Services Layer                                │  │
+│  │  AuditLog │ SmartDiagnosis │ Email │ SMS                  │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                                                                  │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │   SignalR Hub (/ticketHub)                               │   │
+│  │   NotifyStatus │ NewTicket │ Chat │ Notification        │   │
+│  └──────────────────────────────────────────────────────────┘   │
+└──────────────────────────┬───────────────────────────────────────┘
+                           │
+              ┌────────────┼────────────┐
+              ▼            ▼            ▼
+        PostgreSQL     SMTP Email    SMS Gateway
+        (Supabase)      Server
+
+
+2. LUỒNG XỬ LÝ PHIẾU SỬA CHỮA (Workflow Chính)
+─────────────────────────────────────────────────────────────────
+
+KH đến cửa hàng
+      │
+      ▼
+[Support] Tạo Phiếu Sửa Chữa ──────► Trạng thái: pending
+      │
+      ▼
+[Kỹ thuật viên] Nhận phiếu ─────────► Trạng thái: repairing
+      │
+      ├── Cần linh kiện? ──YES──► Gửi YeuCauLinhKien
+      │                                │
+      │                                ▼
+      │                    [Thủ kho] Duyệt / Từ chối
+      │                                │
+      │                    Trạng thái: waiting_parts / repairing
+      │
+      ▼
+[Kỹ thuật viên] Sửa xong ───────────► Trạng thái: done
+      │
+      ▼
+[QA / TraXac] Kiểm tra chất lượng
+      │
+      ▼
+[Support] Trả máy cho KH ───────────► Trạng thái: delivered
+      │
+      ▼
+SMS + Email thông báo cho KH
+
+
+3. LUỒNG XÁC THỰC (Authentication)
+─────────────────────────────────────────────────────────────────
+
+[MVC] Đăng nhập ──► AccountController
+         │
+         ▼
+   POST /api/auth/login
+         │
+         ▼
+   API xác thực NguoiDung + Tenant
+         │
+         ▼
+   Trả về user info + roles
+         │
+         ▼
+   MVC lưu Cookie (30 ngày, sliding)
+         │
+         ▼
+   Mọi request tiếp theo:
+   MVC ──► [X-Caller-Email header] ──► API
+                                        │
+                                        ▼
+                              Middleware resolve roles
+                                        │
+                                        ▼
+                              [Authorize] check pass
+
+
+4. REAL-TIME (SignalR)
+─────────────────────────────────────────────────────────────────
+
+API thay đổi dữ liệu
+        │
+        ▼
+  TicketHub.Notify...()
+        │
+   ┌────┴────────┐
+   ▼             ▼
+MVC Browser   MVC Browser
+(Technician)  (Support/Monitor)
+   └──── Cập nhật UI tức thì ────┘
+
+
+5. PHÂN QUYỀN NGƯỜI DÙNG
+─────────────────────────────────────────────────────────────────
+
+  Role          │ Quyền hạn
+  ─────────────────────────────────────────────────────────────
+  SystemAdmin   │ Toàn bộ hệ thống, quản lý chuỗi cửa hàng
+  StoreAdmin    │ Quản lý 1 cửa hàng, xem báo cáo
+  Support       │ Tiếp nhận, tạo / đóng phiếu sửa chữa
+  Technician    │ Sửa chữa, yêu cầu linh kiện
+  Storekeeper   │ Quản lý kho, duyệt yêu cầu linh kiện
+
+
+================================================================
+PHẦN 2: DANH SÁCH TẤT CẢ CÁC TRANG
+================================================================
+
+TechPro Web Application
+│
+├── 🌐 PUBLIC (Không cần đăng nhập)
+│   ├── /                          → Home/Index          (Trang chủ)
+│   ├── /Home/TraCuu               → Tra cứu phiếu sửa chữa
+│   ├── /Home/DatLich              → Đặt lịch hẹn
+│   ├── /Home/Warranty             → Tra cứu bảo hành
+│   ├── /Home/Privacy              → Chính sách bảo mật
+│   ├── /TraMay                    → Tra máy (Serial Number)
+│   └── /Account/Login             → Đăng nhập
+│
+├── 🎧 SUPPORT (Tiếp nhận)
+│   ├── /TiepNhan                  → Danh sách phiếu tiếp nhận
+│   ├── /TiepNhan/ChiTiet/{id}     → Chi tiết phiếu sửa chữa
+│   └── /Support                   → Màn hình Support tổng quan
+│
+├── 🔧 KỸ THUẬT VIÊN (Technician)
+│   ├── /KyThuat                   → Danh sách phiếu kỹ thuật
+│   ├── /KyThuat/ChiTiet/{id}      → Chi tiết sửa chữa
+│   ├── /KyThuat/LinhKien          → Quản lý linh kiện yêu cầu
+│   └── /TechnicianDashboard       → Dashboard kỹ thuật viên
+│
+├── 📦 KHO (Storekeeper)
+│   ├── /Kho                       → Tổng quan kho
+│   ├── /Kho/Manage                → Quản lý tồn kho
+│   ├── /Kho/Request               → Duyệt yêu cầu linh kiện
+│   ├── /Kho/View                  → Xem chi tiết kho
+│   └── /StorekeeperDashboard      → Dashboard thủ kho
+│
+├── 📊 QUẢN LÝ (StoreAdmin)
+│   ├── /QuanLy                    → Tổng quan quản lý
+│   ├── /QuanLy/BaoCao             → Báo cáo thống kê
+│   ├── /QuanLy/CauHinh            → Cấu hình cửa hàng
+│   └── /StoreAdminDashboard       → Dashboard quản lý cửa hàng
+│
+├── 🖥️ MONITOR (Màn hình giám sát - Realtime)
+│   ├── /TiepNhanMonitor           → Monitor tiếp nhận
+│   ├── /TiepNhanMonitor/ChiTiet   → Chi tiết monitor tiếp nhận
+│   ├── /KyThuatMonitor            → Monitor kỹ thuật
+│   └── /KyThuatMonitor/ChiTiet    → Chi tiết monitor kỹ thuật
+│
+├── 🏢 HỆ THỐNG (SystemAdmin)
+│   ├── /SysAdminDashboard         → Dashboard hệ thống tổng
+│   ├── /Chain                     → Danh sách chuỗi cửa hàng
+│   └── /Chain/ChiTietCuaHang/{id} → Chi tiết từng cửa hàng
+│
+└── ⚙️ TIỆN ÍCH (Utilities)
+    ├── /Chatbot                   → Chatbot AI hỗ trợ
+    ├── /Notification              → Thông báo người dùng
+    ├── /Search                    → Tìm kiếm toàn hệ thống
+    ├── /Export                    → Xuất báo cáo (Excel/PDF)
+    ├── /Language                  → Đổi ngôn ngữ VI/EN
+    ├── /Customer                  → Tra cứu thông tin khách
+    └── /Features                  → Danh sách tính năng
+
+
+PHÂN QUYỀN TRUY CẬP THEO ROLE
+─────────────────────────────────────────────────────────────────
+
+                    ┌─────────────────────────────────────────┐
+                    │              Trang Public               │
+                    │  /, /TraCuu, /DatLich, /TraMay, /Login  │
+                    └─────────────────────────────────────────┘
+                                       │
+                                  Đăng nhập
+                                       │
+          ┌────────────┬───────────────┼──────────────┬──────────────┐
+          ▼            ▼               ▼              ▼              ▼
+     [Support]    [Technician]   [Storekeeper]  [StoreAdmin]  [SystemAdmin]
+          │            │               │              │              │
+    /TiepNhan     /KyThuat          /Kho          /QuanLy      /SysAdmin
+    /TiepNhan     /KyThuat          /Kho          /QuanLy       Dashboard
+     /ChiTiet      /ChiTiet        /Manage        /BaoCao      /Chain
+    /Support      /LinhKien        /Request       /CauHinh     /Chain/
+               /Technician        /View        /StoreAdmin     ChiTiet
+               Dashboard        /Storekeeper    Dashboard      CuaHang
+                               Dashboard
+          │            │               │              │              │
+          └────────────┴───────────────┴──────────────┴──────────────┘
+                                       │
+                               (Tất cả roles sau đăng nhập)
+                          ┌────────────────────────────────┐
+                          │  /TiepNhanMonitor               │
+                          │  /KyThuatMonitor                │
+                          │  /Notification                  │
+                          │  /Search                        │
+                          │  /Language                      │
+                          └────────────────────────────────┘
+
+Tổng cộng: 35 trang chính
+================================================================

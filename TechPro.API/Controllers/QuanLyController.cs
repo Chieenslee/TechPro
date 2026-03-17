@@ -6,9 +6,10 @@ using TechPro.API.Models;
 
 namespace TechPro.API.Controllers
 {
+    /// <summary>Quản lý – báo cáo doanh thu, thống kê hiệu suất theo cửa hàng (StoreAdmin, SystemAdmin)</summary>
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "StoreAdmin,SystemAdmin")]  // Chỉ quản lý mới xem được báo cáo
+    [Authorize(Roles = "StoreAdmin,SystemAdmin")]
     public class QuanLyController : ControllerBase
     {
         private readonly TechProDbContext _context;

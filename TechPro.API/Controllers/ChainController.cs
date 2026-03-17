@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace TechPro.API.Controllers
 {
+    /// <summary>Chuỗi cửa hàng – quản lý đa chi nhánh (chỉ SystemAdmin)</summary>
     [Route("api/[controller]")]
     [ApiController]
     [Authorize(Roles = "SystemAdmin")]
