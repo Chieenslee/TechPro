@@ -94,8 +94,8 @@ Swagger UI chạy tự động ở môi trường **Development**:
 
 | URL | Mô tả |
 |---|---|
-| **`https://localhost:7103/swagger`** | 🎨 Swagger UI |
-| `https://localhost:7103/swagger/v1/swagger.json` | 📄 Raw OpenAPI JSON spec |
+| **`http://localhost:5078/swagger`** | 🎨 Swagger UI |
+| `http://localhost:5078/swagger/v1/swagger.json` | 📄 Raw OpenAPI JSON spec |
 
 > **Xác thực**: nhập email người dùng vào ô `X-Caller-Email` trên Scalar UI để test các endpoint yêu cầu đăng nhập.
 
