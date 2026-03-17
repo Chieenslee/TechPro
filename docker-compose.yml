@@ -1,0 +1,97 @@
+version: "3.9"
+
+services:
+  # ─── PostgreSQL (self-hosted, thay Supabase) ──────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: techpro-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-techpro}
+      POSTGRES_USER: ${DB_USER:-techpro}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Nếu có file dump từ Supabase, PostgreSQL sẽ tự load khi khởi động lần đầu
+      - ./db-seed:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "5432:5432"          # Có thể tắt nếu không cần truy cập trực tiếp
+    networks:
+      - techpro-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-techpro} -d ${DB_NAME:-techpro}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── TechPro.API ──────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: TechPro.API/Dockerfile
+    container_name: techpro-api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=${DB_NAME:-techpro};Username=${DB_USER:-techpro};Password=${DB_PASSWORD};SslMode=Disable"
+      ApiSettings__MvcOrigin: ${MVC_ORIGIN:-http://localhost:5000}
+      Gemini__ApiKey: ${GEMINI_API_KEY:-}
+      Sms__ApiKey: ${SMS_API_KEY:-}
+      Sms__Url: ${SMS_URL:-}
+      Email__Host: ${EMAIL_HOST:-}
+      Email__Port: ${EMAIL_PORT:-587}
+      Email__Username: ${EMAIL_USERNAME:-}
+      Email__Password: ${EMAIL_PASSWORD:-}
+      Email__FromEmail: ${EMAIL_FROM:-}
+    ports:
+      - "5078:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - techpro-net
+
+  # ─── TechPro.MVC ──────────────────────────────────────────────────────────
+  mvc:
+    build:
+      context: .
+      dockerfile: TechPro.MVC/Dockerfile
+    container_name: techpro-mvc
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ApiSettings__BaseUrl: http://api:8080
+      ApiSettings__MvcOrigin: ${MVC_ORIGIN:-http://localhost:5000}
+      Gemini__ApiKey: ${GEMINI_API_KEY:-}
+    ports:
+      - "5077:8080"
+    depends_on:
+      - api
+    networks:
+      - techpro-net
+
+  # ─── Nginx Reverse Proxy (tuỳ chọn, bỏ comment nếu dùng) ─────────────────
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: techpro-nginx
+  #   restart: unless-stopped
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+  #     - ./certs:/etc/nginx/certs:ro
+  #   depends_on:
+  #     - api
+  #     - mvc
+  #   networks:
+  #     - techpro-net
+
+volumes:
+  pgdata:
+
+networks:
+  techpro-net:
+    driver: bridge
