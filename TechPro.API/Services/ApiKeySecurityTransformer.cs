@@ -1,2 +1,2 @@
-// ApiKeySecurityTransformer không dùng nữa — security scheme được cấu hình trực tiếp trong AddSwaggerGen()
+// ApiKeySecurityTransformer không dùng — Microsoft.OpenApi v2.x thay đổi API
 namespace TechPro.API.Services;

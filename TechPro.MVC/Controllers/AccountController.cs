@@ -90,11 +90,23 @@ namespace TechPro.Controllers
                 }
             }
 
-            // Failure
-            var errorResponse = await response.Content.ReadFromJsonAsync<LoginResponse>(); // Try to get error message
-            TempData["Error"] = errorResponse?.Message ?? (loginMode == "store" 
-                ? "Mã cửa hàng, email hoặc mật khẩu không chính xác." 
-                : "Email hoặc mật khẩu không chính xác.");
+            // Failure — đọc raw string trước, tránh crash nếu API trả về HTML/empty
+            string errorMessage = loginMode == "store"
+                ? "Mã cửa hàng, email hoặc mật khẩu không chính xác."
+                : "Email hoặc mật khẩu không chính xác.";
+            try
+            {
+                var rawBody = await response.Content.ReadAsStringAsync();
+                if (!string.IsNullOrWhiteSpace(rawBody) && rawBody.TrimStart().StartsWith("{"))
+                {
+                    var errorResponse = JsonSerializer.Deserialize<LoginResponse>(rawBody,
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    if (!string.IsNullOrEmpty(errorResponse?.Message))
+                        errorMessage = errorResponse.Message;
+                }
+            }
+            catch { /* giữ errorMessage mặc định */ }
+            TempData["Error"] = errorMessage;
             TempData["LoginMode"] = loginMode;
             TempData["TenantId"] = tenantId ?? "";
             return View();
